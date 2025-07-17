@@ -25,14 +25,14 @@
     <div class="first-in-queue-container">
         <h2>Próximos en la Cola</h2>
         <div class="queue-list">
-            {% for queue_name, data in first_in_queue.items() %}
+            {% for queue_name, slot_info in first_in_queue.items() %}
                 <div class="queue-item">
                     <h3>{{ queue_name | capitalize }}</h3>
-                    {% if data %}
-                        <p><strong>Quién:</strong> {{ data.booked_by }}</p>
-                        <p><strong>Cuándo:</strong> {{ data.date }} a las {{ data.time }}</p>
+                    {% if slot_info.date != 'N/A' %}
+                        <p><strong>Cuándo:</strong> {{ slot_info.date }} a las {{ slot_info.time }}</p>
+                        <p>¡Slot disponible!</p>
                     {% else %}
-                        <p>No hay reservas próximas.</p>
+                        <p>{{ slot_info.message }}</p>
                     {% endif %}
                 </div>
             {% endfor %}
