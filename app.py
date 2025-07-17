@@ -119,7 +119,7 @@ def get_bookings_for_display(target_date_obj):
             if time_str not in bookings_data[queue]:
                  bookings_data[queue][time_str] = {"available": True, "booked_by": None}
         
-        sorted_times = sorted(bookings_data[queue].Fitems(), key=lambda x: datetime.strptime(x[0], "%H:%M").time())
+        sorted_times = sorted(bookings_data[queue].items(), key=lambda x: datetime.strptime(x[0], "%H:%M").time())
         bookings_data[queue] = {time_str: details for time_str, details in sorted_times}
 
     return bookings_data
