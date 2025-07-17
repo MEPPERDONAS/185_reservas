@@ -131,43 +131,31 @@ def index():
     ordered_display_dates[tomorrow_local.isoformat()] = tomorrow_bookings
     
     # --- Lógica para 'first_in_queue' ---
-    # Inicializa el diccionario para almacenar la primera reserva disponible por cola
     first_in_queue = {}
     
-    # Itera sobre cada tipo de cola
     for queue_name in QUEUES:
         found_first = False
-        # Primero busca en los bookings de HOY
-        for hour_str, details in ordered_display_dates[today_local.isoformat()][queue_name].items():
-            slot_time = datetime.strptime(hour_str, "%H:%M").time()
-            
-            # Convierte la hora actual UTC a un objeto time para comparar con slot_time
-            # Ojo: la hora actual en Render es UTC. Si tus slots son siempre en hora local,
-            # asegúrate de que la comparación de "pasado" sea consistente.
-            # Aquí, solo consideramos slots futuros para "first_in_queue"
-            
-            if details["available"] and (today_local > date.today() or slot_time.hour >= current_hour_utc):
-                first_in_queue[queue_name] = {
-                    "date": today_local.isoformat(),
-                    "time": hour_str,
-                    "queue": queue_name
-                }
-                found_first = True
-                break # Salimos del bucle de horas para esta cola
         
-        # Si no se encontró ninguna disponible para hoy, busca en los bookings de MAÑANA
-        if not found_first:
-            for hour_str, details in ordered_display_dates[tomorrow_local.isoformat()][queue_name].items():
-                if details["available"]:
+        for d_obj in [today_local, tomorrow_local]: # Itera sobre hoy y mañana
+            if found_first: # Si ya encontramos uno para esta cola, pasamos a la siguiente
+                break
+
+            current_day_bookings = ordered_display_dates[d_obj.isoformat()]
+            for hour_str, details in current_day_bookings[queue_name].items():
+                slot_time_obj = datetime.strptime(hour_str, "%H:%M").time()
+                
+                # Para hoy, verifica si el slot ya pasó. Para mañana, todos los slots son futuros.
+                is_past_slot_today = (d_obj == today_local and slot_time_obj.hour < current_hour_utc)
+
+                if details["available"] and not is_past_slot_today:
                     first_in_queue[queue_name] = {
-                        "date": tomorrow_local.isoformat(),
+                        "date": d_obj.isoformat(),
                         "time": hour_str,
                         "queue": queue_name
                     }
                     found_first = True
-                    break # Salimos del bucle de horas para esta cola
+                    break
         
-        # Si aún no se encontró nada (ej. todo reservado), asigna un valor por defecto
         if not found_first:
             first_in_queue[queue_name] = {
                 "date": "N/A",
@@ -177,15 +165,54 @@ def index():
             }
     # --- Fin de la lógica para 'first_in_queue' ---
 
-
     return render_template(
         'index.html',
         bookings=ordered_display_dates,
         queues=QUEUES,
         today=today_local.isoformat(),
         now_utc=now_utc.strftime("%Y-%m-%d %H:%M:%S UTC"),
-        first_in_queue=first_in_queue # <-- ¡Aquí pasamos la nueva variable!
+        first_in_queue=first_in_queue
     )
+
+# --- AÑADE ESTA FUNCIÓN AQUÍ ABAJO ---
+@app.route('/book', methods=['POST'])
+def book_slot():
+    with app.app_context():
+        date_str = request.form['date']
+        queue_type = request.form['queue']
+        time_slot = request.form['time']
+        booked_by = request.form['booked_by']
+
+        # Validar la entrada (opcional pero recomendado)
+        if not all([date_str, queue_type, time_slot, booked_by]):
+            flash('Error: Todos los campos son requeridos.', 'error')
+            return redirect(url_for('index'))
+
+        try:
+            booking_date_obj = datetime.strptime(date_str, '%Y-%m-%d').date()
+            
+            # Buscar el slot en la base de datos
+            slot = Booking.query.filter_by(
+                booking_date=booking_date_obj,
+                time_slot=time_slot,
+                queue_type=queue_type
+            ).first()
+
+            if slot and slot.available:
+                slot.booked_by = booked_by
+                slot.available = False
+                db.session.commit()
+                flash(f'Slot de {time_slot} en {queue_type} para el {date_str} reservado por {booked_by}.', 'success')
+            else:
+                flash(f'Error: El slot de {time_slot} en {queue_type} para el {date_str} no está disponible.', 'error')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Ocurrió un error al reservar: {e}', 'error')
+        
+    return redirect(url_for('index'))
+
+# --- FIN DE LA FUNCIÓN A AÑADIR ---
+
 
 if __name__ == '__main__':
     with app.app_context():
