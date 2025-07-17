@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Programación Diaria</title>
+    <!-- Enlaza el CSS usando url_for de Flask -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>EMPIRE #185</h1>
+
+    <!-- Mensajes Flash de Flask -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul class="flashes">
+        {% for category, message in messages %}
+          <li class="{{ category }}">{{ message }}</li>
+        {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    <!-- Nueva sección para mostrar los primeros en la cola -->
+    <div class="first-in-queue-container">
+        <h2>Próximos en la Cola</h2>
+        <div class="queue-list">
+            {% for queue_name, data in first_in_queue.items() %}
+                <div class="queue-item">
+                    <h3>{{ queue_name | capitalize }}</h3>
+                    {% if data %}
+                        <p><strong>Quién:</strong> {{ data.booked_by }}</p>
+                        <p><strong>Cuándo:</strong> {{ data.date }} a las {{ data.time }}</p>
+                    {% else %}
+                        <p>No hay reservas próximas.</p>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div id="calendar-container">
+        <!-- Las tablas se generarán aquí con Jinja2 y los datos de Flask -->
+        {% for date_str, day_bookings in bookings.items() %}
+            <table data-date="{{ date_str }}">
+                <caption>{{ date_str }}</caption> {# Puedes formatear la fecha aquí si quieres un formato más amigable #}
+                <thead>
+                    <tr>
+                        <th>Hora</th>
+                        {% for queue in queues %}
+                            <th>{{ queue | capitalize }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for hour in range(24) %}
+                        {% set time_str = '%02d:00' | format(hour) %}
+                        <tr>
+                            <td>{{ time_str }}</td>
+                            {% for queue in queues %}
+                                {% set slot_data = day_bookings[queue][time_str] %}
+                                <td class="slot 
+                                    {% if not slot_data.available %}
+                                        booked {% if slot_data.booked_by == 'Pasado' %} past-slot {% endif %}
+                                    {% else %} 
+                                        available 
+                                    {% endif %}"
+                                    data-date="{{ date_str }}" 
+                                    data-queue="{{ queue }}" 
+                                    data-time="{{ time_str }}">
+                                    {% if slot_data.booked_by and slot_data.booked_by != 'Pasado' %}
+                                        {{ slot_data.booked_by }}
+                                    {% else %}
+                                        {% if slot_data.booked_by == 'Pasado' %}
+                                            Pasado
+                                        {% else %}
+                                            Disponible
+                                        {% endif %}
+                                    {% endif %}
+                                </td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endfor %}
+    </div>
+
+    <!-- Formulario oculto para enviar reservas -->
+    <form id="booking-form" action="{{ url_for('book_slot') }}" method="POST" style="display: none;">
+        <input type="hidden" name="date" id="form-date">
+        <input type="hidden" name="queue" id="form-queue">
+        <input type="hidden" name="time" id="form-time">
+        <input type="text" name="booked_by" id="form-booked-by" placeholder="Tu nombre" required>
+    </form>
+
+    <!-- Enlaza el JavaScript usando url_for de Flask -->
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

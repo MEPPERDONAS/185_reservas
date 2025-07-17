@@ -1,0 +1,890 @@
+{
+    "2025-07-14": {
+        "research": {
+            "00:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "01:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "02:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "03:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "04:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "05:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "06:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "07:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "08:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "09:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "10:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "11:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "12:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "13:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "14:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "15:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "16:00": {
+                "available": false,
+                "booked_by": "MEPPERDONAS"
+            },
+            "17:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "18:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "19:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "20:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "21:00": {
+                "available": false,
+                "booked_by": "holasoy yo"
+            },
+            "22:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "23:00": {
+                "available": true,
+                "booked_by": null
+            }
+        },
+        "building": {
+            "00:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "01:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "02:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "03:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "04:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "05:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "06:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "07:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "08:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "09:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "10:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "11:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "12:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "13:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "14:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "15:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "16:00": {
+                "available": false,
+                "booked_by": "HOLA"
+            },
+            "17:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "18:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "19:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "20:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "21:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "22:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "23:00": {
+                "available": true,
+                "booked_by": null
+            }
+        },
+        "training": {
+            "00:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "01:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "02:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "03:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "04:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "05:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "06:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "07:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "08:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "09:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "10:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "11:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "12:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "13:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "14:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "15:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "16:00": {
+                "available": false,
+                "booked_by": "MRMRMRMRMMRMR"
+            },
+            "17:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "18:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "19:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "20:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "21:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "22:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "23:00": {
+                "available": true,
+                "booked_by": null
+            }
+        }
+    },
+    "2025-07-15": {
+        "research": {
+            "00:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "01:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "02:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "03:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "04:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "05:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "06:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "07:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "08:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "09:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "10:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "11:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "12:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "13:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "14:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "15:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "16:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "17:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "18:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "19:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "20:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "21:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "22:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "23:00": {
+                "available": true,
+                "booked_by": null
+            }
+        },
+        "building": {
+            "00:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "01:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "02:00": {
+                "available": false,
+                "booked_by": "uu"
+            },
+            "03:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "04:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "05:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "06:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "07:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "08:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "09:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "10:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "11:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "12:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "13:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "14:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "15:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "16:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "17:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "18:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "19:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "20:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "21:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "22:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "23:00": {
+                "available": true,
+                "booked_by": null
+            }
+        },
+        "training": {
+            "00:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "01:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "02:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "03:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "04:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "05:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "06:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "07:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "08:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "09:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "10:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "11:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "12:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "13:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "14:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "15:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "16:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "17:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "18:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "19:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "20:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "21:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "22:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "23:00": {
+                "available": true,
+                "booked_by": null
+            }
+        }
+    },
+    "2025-07-16": {
+        "research": {
+            "00:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "01:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "02:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "03:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "04:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "05:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "06:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "07:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "08:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "09:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "10:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "11:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "12:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "13:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "14:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "15:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "16:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "17:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "18:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "19:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "20:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "21:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "22:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "23:00": {
+                "available": true,
+                "booked_by": null
+            }
+        },
+        "building": {
+            "00:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "01:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "02:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "03:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "04:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "05:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "06:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "07:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "08:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "09:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "10:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "11:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "12:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "13:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "14:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "15:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "16:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "17:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "18:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "19:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "20:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "21:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "22:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "23:00": {
+                "available": true,
+                "booked_by": null
+            }
+        },
+        "training": {
+            "00:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "01:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "02:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "03:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "04:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "05:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "06:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "07:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "08:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "09:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "10:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "11:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "12:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "13:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "14:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "15:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "16:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "17:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "18:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "19:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "20:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "21:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "22:00": {
+                "available": true,
+                "booked_by": null
+            },
+            "23:00": {
+                "available": true,
+                "booked_by": null
+            }
+        }
+    }
+}
