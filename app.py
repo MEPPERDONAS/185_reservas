@@ -224,8 +224,63 @@ def book_slot():
         
     return redirect(url_for('index'))
 
-# --- FIN DE LA FUNCIÓN A AÑADIR ---
+@app.route('/admin')
+def admin_panel():
+    """
+    Muestra un panel de administración con todas las reservas.
+    ¡ADVERTENCIA: Esta ruta no tiene autenticación!
+    """
+    with app.app_context():
+        # Obtener todas las reservas, ordenadas por fecha y hora para facilitar la visualización
+        all_bookings = Booking.query.filter_by(available=False).order_by(Booking.booking_date, Booking.time_slot).all()
+    return render_template('admin.html', all_bookings=all_bookings, queues=QUEUES)
 
+
+@app.route('/admin/delete/<int:booking_id>', methods=['POST'])
+def delete_booking(booking_id):
+    """
+    Borra una reserva específica de la base de datos.
+    ¡ADVERTENCIA: Esta ruta no tiene autenticación!
+    """
+    with app.app_context():
+        booking_to_delete = Booking.query.get_or_404(booking_id) # Busca la reserva por ID o devuelve 404 si no existe
+        try:
+            db.session.delete(booking_to_delete)
+            db.session.commit()
+            flash(f'Reserva ID {booking_id} eliminada exitosamente.', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error al eliminar la reserva: {e}', 'error')
+    return redirect(url_for('admin_panel'))
+
+
+@app.route('/admin/edit/<int:booking_id>', methods=['GET', 'POST'])
+def edit_booking(booking_id):
+    """
+    Muestra un formulario para editar una reserva y procesa la actualización.
+    ¡ADVERTENCIA: Esta ruta no tiene autenticación!
+    """
+    with app.app_context():
+        booking_to_edit = Booking.query.get_or_404(booking_id)
+
+        if request.method == 'POST':
+            # Actualizar los datos de la reserva con la información del formulario
+            booking_to_edit.booked_by = request.form['booked_by']
+            # El checkbox 'available' envía 'on' si está marcado, nada si no lo está
+            booking_to_edit.available = ('available' in request.form)
+
+            try:
+                db.session.commit()
+                flash(f'Reserva ID {booking_id} actualizada exitosamente.', 'success')
+                return redirect(url_for('admin_panel')) # Redirige al panel después de editar
+            except Exception as e:
+                db.session.rollback()
+                flash(f'Error al actualizar la reserva: {e}', 'error')
+        
+        # Para solicitudes GET, renderiza el formulario con los datos actuales
+        return render_template('edit_booking.html', booking=booking_to_edit, queues=QUEUES)
+
+# --- FIN DE LA FUNCIÓN A AÑADIR ---
 
 if __name__ == '__main__':
     with app.app_context():

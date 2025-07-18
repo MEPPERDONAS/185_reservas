@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración - Reservas</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>Panel de Administración</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <ul class="flashes">
+            {% for category, message in messages %}
+                <li class="{{ category }} flash-message">{{ message }}</li>
+            {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+
+    <p><a href="{{ url_for('index') }}">Volver a la vista principal</a></p>
+
+    <h2>Todas las Reservas</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Fecha</th>
+                <th>Hora</th>
+                <th>Tipo de Cola</th>
+                <th>Reservado Por</th>
+                <th>Disponible</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for booking in all_bookings %}
+            <tr>
+                <td>{{ booking.id }}</td>
+                <td>{{ booking.booking_date }}</td>
+                <td>{{ booking.time_slot }}</td>
+                <td>{{ booking.queue_type | capitalize }}</td>
+                <td>{% if booking.booked_by %}{{ booking.booked_by }}{% else %}N/A{% endif %}</td>
+                <td>{% if booking.available %}Sí{% else %}No{% endif %}</td>
+                <td class="action-buttons">
+                    <a href="{{ url_for('edit_booking', booking_id=booking.id) }}">Editar</a>
+                    <form action="{{ url_for('delete_booking', booking_id=booking.id) }}" method="POST" style="display:inline;">
+                        <button type="submit" onclick="return confirm('¿Estás seguro de que quieres eliminar esta reserva?');">Borrar</button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="7">No hay reservas en la base de datos.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

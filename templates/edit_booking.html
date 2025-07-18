@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Reserva - ID: {{ booking.id }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+</head>
+<body>
+    <h1>Editar Reserva ID: {{ booking.id }}</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <ul class="flashes">
+            {% for category, message in messages %}
+                <li class="{{ category }} flash-message">{{ message }}</li>
+            {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+
+    <form action="{{ url_for('edit_booking', booking_id=booking.id) }}" method="POST">
+        <p class="info">
+            **Nota:** Actualmente, solo se pueden editar el nombre y la disponibilidad. <br>
+            Para cambiar la fecha, hora o tipo de cola, sería necesario borrar y crear una nueva reserva.
+        </p>
+        
+        <label for="booking_date">Fecha:</label>
+        <input type="date" id="booking_date" name="booking_date" value="{{ booking.booking_date }}" disabled>
+        
+        <label for="time_slot">Hora:</label>
+        <input type="time" id="time_slot" name="time_slot" value="{{ booking.time_slot }}" disabled>
+        
+        <label for="queue_type">Tipo de Cola:</label>
+        <input type="text" id="queue_type" name="queue_type" value="{{ booking.queue_type | capitalize }}" disabled>
+        
+        <label for="booked_by">Reservado Por:</label>
+        <input type="text" id="booked_by" name="booked_by" value="{{ booking.booked_by if booking.booked_by else '' }}">
+        
+        <label for="available">
+            <input type="checkbox" id="available" name="available" {% if booking.available %}checked{% endif %}>
+            Disponible
+        </label>
+        
+        <button type="submit">Actualizar Reserva</button>
+    </form>
+
+    <p><a href="{{ url_for('admin_panel') }}">Volver al Panel de Administración</a></p>
+</body>
+</html>
