@@ -29,8 +29,8 @@
                 <div class="queue-item">
                     <h3>{{ queue_name | capitalize }}</h3>
                     {% if slot_info.date != 'N/A' %}
+                        <p><strong>Quién:</strong> {{ slot_info.booked_by }}</p>
                         <p><strong>Cuándo:</strong> {{ slot_info.date }} a las {{ slot_info.time }}</p>
-                        <p>¡Slot disponible!</p>
                     {% else %}
                         <p>{{ slot_info.message }}</p>
                     {% endif %}

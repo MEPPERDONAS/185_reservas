@@ -130,38 +130,51 @@ def index():
     tomorrow_bookings = get_bookings_for_display(tomorrow_local)
     ordered_display_dates[tomorrow_local.isoformat()] = tomorrow_bookings
     
-    # --- Lógica para 'first_in_queue' ---
+    # --- Lógica para 'first_in_queue' - Muestra el próximo turno tomado ---
     first_in_queue = {}
     
+    # Itera sobre cada tipo de cola
     for queue_name in QUEUES:
-        found_first = False
+        found_next_booked_slot = False
         
-        for d_obj in [today_local, tomorrow_local]: # Itera sobre hoy y mañana
-            if found_first: # Si ya encontramos uno para esta cola, pasamos a la siguiente
+        # Iterar sobre hoy y mañana para encontrar el próximo turno tomado
+        for d_obj in [today_local, tomorrow_local]:
+            if found_next_booked_slot: # Si ya encontramos uno para esta cola, pasamos a la siguiente
                 break
 
             current_day_bookings = ordered_display_dates[d_obj.isoformat()]
             for hour_str, details in current_day_bookings[queue_name].items():
                 slot_time_obj = datetime.strptime(hour_str, "%H:%M").time()
                 
-                # Para hoy, verifica si el slot ya pasó. Para mañana, todos los slots son futuros.
-                is_past_slot_today = (d_obj == today_local and slot_time_obj.hour < current_hour_utc)
+                # Comprobar si es un slot futuro (no ha pasado todavía)
+                # La hora actual en Render es UTC. La comparación debe ser consistente.
+                is_future_slot = False
+                if d_obj == today_local:
+                    if slot_time_obj.hour >= current_hour_utc: # Para hoy, solo slots de la hora actual o futura
+                        is_future_slot = True
+                elif d_obj > today_local: # Para cualquier día futuro (como mañana), todos los slots son futuros
+                    is_future_slot = True
 
-                if details["available"] and not is_past_slot_today:
+                # Buscamos un slot que NO esté disponible (es decir, que esté reservado)
+                # y que sea un slot futuro (no "Pasado")
+                if not details["available"] and details["booked_by"] != "Pasado" and is_future_slot:
                     first_in_queue[queue_name] = {
                         "date": d_obj.isoformat(),
                         "time": hour_str,
-                        "queue": queue_name
+                        "queue": queue_name,
+                        "booked_by": details["booked_by"] # ¡Aquí incluimos quién lo reservó!
                     }
-                    found_first = True
-                    break
+                    found_next_booked_slot = True
+                    break # Salimos del bucle de horas para esta cola
         
-        if not found_first:
+        # Si no se encontró ningún turno tomado para hoy o mañana
+        if not found_next_booked_slot:
             first_in_queue[queue_name] = {
                 "date": "N/A",
                 "time": "N/A",
                 "queue": queue_name,
-                "message": "No hay slots disponibles"
+                "booked_by": "N/A",
+                "message": "No hay turnos próximos tomados"
             }
     # --- Fin de la lógica para 'first_in_queue' ---
 
