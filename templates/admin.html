@@ -4,58 +4,134 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de Administración - Reservas</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* Estilos básicos para el panel admin (puedes mover esto a style.css si lo prefieres) */
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; color: #333; }
+        h1, h2 { color: #0056b3; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; background-color: #fff; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background-color: #e9ecef; font-weight: bold; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        .flash-message { padding: 12px; margin-bottom: 15px; border-radius: 5px; font-weight: bold; }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .back-link { display: block; margin-bottom: 20px; text-decoration: none; color: #007bff; font-weight: bold; }
+        .back-link:hover { text-decoration: underline; }
+
+        /* --- NUEVOS ESTILOS PARA LOS BOTONES DE ICONOS --- */
+        .action-buttons {
+            display: flex; /* Usar flexbox para alinear los íconos */
+            gap: 5px; /* Espacio entre los íconos */
+            justify-content: flex-start; /* Alinea al inicio de la celda */
+            align-items: center; /* Centra verticalmente */
+        }
+
+        .action-buttons a, .action-buttons button {
+            padding: 8px; /* Un padding uniforme para que el área de clic sea decente */
+            border-radius: 4px; /* Un poco de borde redondeado */
+            cursor: pointer;
+            font-size: 1.1em; /* Ajusta el tamaño del icono */
+            display: inline-flex; /* Permite alinear el icono */
+            align-items: center; /* Centra verticalmente el contenido */
+            justify-content: center; /* Centra horizontalmente el contenido */
+            transition: background-color 0.3s ease, transform 0.1s ease; /* Transición suave al pasar el ratón */
+            min-width: 35px; /* Asegura un tamaño mínimo para el botón */
+            min-height: 35px; /* Asegura un tamaño mínimo para el botón */
+            box-sizing: border-box; /* Asegura que padding y border se incluyan en el tamaño */
+            text-decoration: none; /* Eliminar subrayado de los enlaces */
+        }
+        
+        /* Estilos para el icono de Editar */
+        .action-buttons a {
+            background-color: #007bff; /* Color azul para editar */
+            color: white;
+            border: none;
+        }
+        .action-buttons a:hover {
+            background-color: #0056b3;
+            transform: translateY(-1px); /* Efecto ligero al pasar el ratón */
+        }
+        
+        /* Estilos para el icono de Borrar */
+        .action-buttons button {
+            background-color: #dc3545; /* Color rojo para borrar */
+            color: white;
+            border: none;
+            /* Eliminar estilos de form si aplica, pero aquí el display:inline-block ya fue suficiente */
+        }
+        .action-buttons button:hover {
+            background-color: #c82333;
+            transform: translateY(-1px);
+        }
+        
+        /* Asegura que los íconos dentro de los botones no tengan margen extra */
+        .action-buttons i {
+            margin: 0;
+        }
+
+        /* El formulario que contiene el botón de borrar debe ser inline-block para no romper la línea */
+        .action-buttons form {
+            display: inline-block;
+        }
+    </style>
 </head>
 <body>
-    <h1>Panel de Administración</h1>
+    <div class="container">
+        <h1>Panel de Administración</h1>
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            <ul class="flashes">
-            {% for category, message in messages %}
-                <li class="{{ category }} flash-message">{{ message }}</li>
-            {% endfor %}
-            </ul>
-        {% endif %}
-    {% endwith %}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <ul class="flashes" style="list-style: none; padding: 0;">
+                {% for category, message in messages %}
+                    <li class="{{ category }} flash-message">{{ message }}</li>
+                {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
 
-    <p><a href="{{ url_for('index') }}">Volver a la vista principal</a></p>
+        <a href="{{ url_for('index') }}" class="back-link">&larr; Volver a la vista principal</a>
 
-    <h2>Todas las Reservas</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Fecha</th>
-                <th>Hora</th>
-                <th>Tipo de Cola</th>
-                <th>Reservado Por</th>
-                <th>Disponible</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for booking in all_bookings %}
-            <tr>
-                <td>{{ booking.id }}</td>
-                <td>{{ booking.booking_date }}</td>
-                <td>{{ booking.time_slot }}</td>
-                <td>{{ booking.queue_type | capitalize }}</td>
-                <td>{% if booking.booked_by %}{{ booking.booked_by }}{% else %}N/A{% endif %}</td>
-                <td>{% if booking.available %}Sí{% else %}No{% endif %}</td>
-                <td class="action-buttons">
-                    <a href="{{ url_for('edit_booking', booking_id=booking.id) }}">Editar</a>
-                    <form action="{{ url_for('delete_booking', booking_id=booking.id) }}" method="POST" style="display:inline;">
-                        <button type="submit" onclick="return confirm('¿Estás seguro de que quieres eliminar esta reserva?');">Borrar</button>
-                    </form>
-                </td>
-            </tr>
-            {% else %}
-            <tr>
-                <td colspan="7">No hay reservas en la base de datos.</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+        <h2>Reservas Ocupadas</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Fecha</th>
+                    <th>Hora</th>
+                    <th>Tipo de Cola</th>
+                    <th>Reservado Por</th>
+                    <th>Disponible</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for booking in all_bookings %}
+                <tr>
+                    <td>{{ booking.id }}</td>
+                    <td>{{ booking.booking_date }}</td>
+                    <td>{{ booking.time_slot }}</td>
+                    <td>{{ booking.queue_type | capitalize }}</td>
+                    <td>{% if booking.booked_by %}{{ booking.booked_by }}{% else %}N/A{% endif %}</td>
+                    <td>{% if booking.available %}Sí{% else %}No{% endif %}</td>
+                    <td class="action-buttons">
+                        <a href="{{ url_for('edit_booking', booking_id=booking.id) }}" title="Editar reserva">
+                            <i class="fas fa-edit"></i> </a>
+                        <form action="{{ url_for('delete_booking', booking_id=booking.id) }}" method="POST" style="display:inline-block;">
+                            <button type="submit" onclick="return confirm('¿Estás seguro de que quieres eliminar la reserva de {{ booking.booked_by }} el {{ booking.booking_date }} a las {{ booking.time_slot }}?');" title="Borrar reserva">
+                                <i class="fas fa-trash-alt"></i> </button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7">No hay reservas ocupadas en la base de datos.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </body>
 </html>
