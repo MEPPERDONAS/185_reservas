@@ -416,6 +416,18 @@ def manage_bonuses():
                 db.session.add(new_bonus)
                 db.session.commit()
                 flash('Bonificación añadida exitosamente.', 'success')
+                # --- Notificación a Discord ---
+                bonus_start_dt_utc = datetime.combine(start_date, datetime.strptime(start_time_formatted, "%H:%M").time()).replace(tzinfo=timezone.utc)
+                bonus_end_dt_utc = bonus_start_dt_utc + timedelta(hours=duration_hours)
+
+                message = (
+                    f"✨ **¡Bonificación Activada!** La cola de **{queue_type.capitalize()}** "
+                    f"tendrá una bonificación desde el **{start_date_str} a las {start_time_formatted} UTC** "
+                    f"por **{duration_hours} hora(s)** (hasta las {bonus_end_dt_utc.strftime('%H:%M')} UTC)."
+                )
+                send_discord_notification(message)
+                # --- Fin de la notificación ---
+
             except ValueError:
                 # Esto atrapará errores si start_date_str no es un formato de fecha válido
                 flash('Error: Formato de fecha de inicio inválido.', 'error')
