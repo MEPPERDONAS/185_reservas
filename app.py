@@ -1,5 +1,6 @@
 import os
 from datetime import datetime, timedelta, date, time, timezone
+import requests
 
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
@@ -11,7 +12,9 @@ except ImportError:
     pass
 
 app = Flask(__name__)
-app.secret_key = os.getenv('SECRET_KEY', 'una_clave_secreta_super_segura_y_larga_por_defecto_aqui')
+app.secret_key = os.getenv('SECRET_KEY', 'desarrollo')  # Cambia esto en producción
+DISCORD_BOT_TOKEN = os.getenv("TOKEN") # El mismo TOKEN que usa tu bot
+DISCORD_ANNOUNCEMENT_CHANNEL_ID = os.getenv("CANAL_AVISOS_ID")
 
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL').replace("postgres://", "postgresql://", 1) if os.getenv('DATABASE_URL') else 'sqlite:///reservas.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -250,7 +253,35 @@ def index():
         bonuses_for_display=bonuses_for_display # Esto es opcional si ya no lo usas
     )
 
-# ... (El resto de tu app.py, incluyendo las rutas /book, /admin, etc.)
+def send_discord_notification(message, channel_id=None):
+    """Envía un mensaje al canal de Discord especificado o al canal de anuncios por defecto."""
+    if not DISCORD_BOT_TOKEN:
+        print("Error: TOKEN de Discord no configurado en variables de entorno.")
+        return
+
+    target_channel_id = channel_id if channel_id else DISCORD_ANNOUNCEMENT_CHANNEL_ID
+    if not target_channel_id:
+        print("Error: ID del canal de anuncios de Discord no configurado.")
+        return
+
+    headers = {
+        "Authorization": f"Bot {DISCORD_BOT_TOKEN}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "content": message
+    }
+    # URL de la API de Discord para enviar mensajes a un canal
+    url = f"https://discord.com/api/v10/channels/{target_channel_id}/messages"
+
+    try:
+        response = requests.post(url, headers=headers, json=payload)
+        response.raise_for_status()  # Lanza una excepción para errores HTTP (4xx o 5xx)
+        print(f"Notificación de Discord enviada: {message}")
+    except requests.exceptions.RequestException as e:
+        print(f"Error al enviar notificación de Discord: {e}")
+    except Exception as e:
+        print(f"Error inesperado al enviar notificación de Discord: {e}")
 
 # --- AÑADE ESTA FUNCIÓN AQUÍ ABAJO ---
 @app.route('/book', methods=['POST'])
@@ -281,12 +312,18 @@ def book_slot():
                 slot.available = False
                 db.session.commit()
                 flash(f'Slot de {time_slot} en {queue_type} para el {date_str} reservado por {booked_by}.', 'success')
+                
+                message = (
+                    f"📢 **¡Nueva Reserva!** {booked_by} ha reservado un slot de **{queue_type.capitalize()}** "
+                    f"el **{date_str} a las {time_slot} UTC**."
+                )
+                send_discord_notification(message)
             else:
                 flash(f'Error: El slot de {time_slot} en {queue_type} para el {date_str} no está disponible.', 'error')
         except Exception as e:
             db.session.rollback()
             flash(f'Ocurrió un error al reservar: {e}', 'error')
-        
+            
     return redirect(url_for('index'))
 
 @app.route('/admin')
