@@ -45,24 +45,23 @@
         }
         
         /* Estilos para el icono de Editar */
-        .action-buttons a {
+        .action-buttons a.edit-btn { /* Cambié el selector para ser más específico */
             background-color: #007bff; /* Color azul para editar */
             color: white;
             border: none;
         }
-        .action-buttons a:hover {
+        .action-buttons a.edit-btn:hover {
             background-color: #0056b3;
             transform: translateY(-1px); /* Efecto ligero al pasar el ratón */
         }
         
         /* Estilos para el icono de Borrar */
-        .action-buttons button {
+        .action-buttons button.delete-btn { /* Cambié el selector para ser más específico */
             background-color: #dc3545; /* Color rojo para borrar */
             color: white;
             border: none;
-            /* Eliminar estilos de form si aplica, pero aquí el display:inline-block ya fue suficiente */
         }
-        .action-buttons button:hover {
+        .action-buttons button.delete-btn:hover {
             background-color: #c82333;
             transform: translateY(-1px);
         }
@@ -75,6 +74,31 @@
         /* El formulario que contiene el botón de borrar debe ser inline-block para no romper la línea */
         .action-buttons form {
             display: inline-block;
+        }
+
+        /* Estilos para el nuevo enlace de bonificaciones */
+        .admin-links {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e6f7ff;
+            border: 1px solid #91d5ff;
+            border-radius: 5px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .admin-links a {
+            color: #0056b3;
+            text-decoration: none;
+            font-weight: bold;
+            padding: 8px 12px;
+            border: 1px solid #007bff;
+            border-radius: 4px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .admin-links a:hover {
+            background-color: #007bff;
+            color: white;
         }
     </style>
 </head>
@@ -93,6 +117,11 @@
         {% endwith %}
 
         <a href="{{ url_for('index') }}" class="back-link">&larr; Volver a la vista principal</a>
+
+        <div class="admin-links">
+            <a href="{{ url_for('manage_bonuses') }}"><i class="fas fa-star"></i> Administrar Bonificaciones</a>
+            {# Puedes añadir más enlaces de administración aquí si los necesitas en el futuro #}
+        </div>
 
         <h2>Reservas Ocupadas</h2>
         <table>
@@ -117,11 +146,13 @@
                     <td>{% if booking.booked_by %}{{ booking.booked_by }}{% else %}N/A{% endif %}</td>
                     <td>{% if booking.available %}Sí{% else %}No{% endif %}</td>
                     <td class="action-buttons">
-                        <a href="{{ url_for('edit_booking', booking_id=booking.id) }}" title="Editar reserva">
-                            <i class="fas fa-edit"></i> </a>
+                        <a href="{{ url_for('edit_booking', booking_id=booking.id) }}" class="edit-btn" title="Editar reserva">
+                            <i class="fas fa-edit"></i> 
+                        </a>
                         <form action="{{ url_for('delete_booking', booking_id=booking.id) }}" method="POST" style="display:inline-block;">
-                            <button type="submit" onclick="return confirm('¿Estás seguro de que quieres eliminar la reserva de {{ booking.booked_by }} el {{ booking.booking_date }} a las {{ booking.time_slot }}?');" title="Borrar reserva">
-                                <i class="fas fa-trash-alt"></i> </button>
+                            <button type="submit" class="delete-btn" onclick="return confirm('¿Estás seguro de que quieres eliminar la reserva de {{ booking.booked_by }} el {{ booking.booking_date }} a las {{ booking.time_slot }}?');" title="Borrar reserva">
+                                <i class="fas fa-trash-alt"></i> 
+                            </button>
                         </form>
                     </td>
                 </tr>

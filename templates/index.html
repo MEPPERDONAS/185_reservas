@@ -4,13 +4,33 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Programación Diaria</title>
-    <!-- Enlaza el CSS usando url_for de Flask -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* CSS para el icono de bonificación */
+        .bonus-icon {
+            margin-left: 5px;
+            color: gold; /* O el color que prefieras para el icono */
+            font-weight: bold;
+            /* Si usas Font Awesome: */
+            /* font-family: 'Font Awesome 5 Free'; */
+            /* font-weight: 900; */
+            /* content: '\f005'; (código para un icono de estrella, por ejemplo) */
+        }
+        /* Clase para slots bonificados en la tabla */
+        .bonused-slot {
+            background-color: #fffacd; /* Color de fondo suave para bonificación, un amarillo pálido */
+        }
+        /* Estilo para el icono en "Próximos en la Cola" */
+        .queue-item .bonus-active-indicator {
+            color: gold;
+            font-size: 1.2em;
+            margin-left: 5px;
+        }
+    </style>
 </head>
 <body>
     <h1>EMPIRE #185</h1>
 
-    <!-- Mensajes Flash de Flask -->
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         <ul class="flashes">
@@ -21,13 +41,18 @@
       {% endif %}
     {% endwith %}
 
-    <!-- Nueva sección para mostrar los primeros en la cola -->
     <div class="first-in-queue-container">
         <h2>Próximos en la Cola</h2>
         <div class="queue-list">
             {% for queue_name, slot_info in first_in_queue.items() %}
                 <div class="queue-item">
-                    <h3>{{ queue_name | capitalize }}</h3>
+                    <h3>{{ queue_name | capitalize }}
+                        {# Mostrar icono si hay una bonificación activa AHORA para esta cola #}
+                        {% if bonused_queues_now[queue_name] %}
+                            <span class="bonus-active-indicator" title="¡Bonificación Activa Ahora!">⭐</span> 
+                            {# Puedes cambiar ⭐ por un <i> de Font Awesome si lo tienes configurado, ej: <i class="fas fa-star"></i> #}
+                        {% endif %}
+                    </h3>
                     {% if slot_info.date != 'N/A' %}
                         <p><strong>Quién:</strong> {{ slot_info.booked_by }}</p>
                         <p><strong>Cuándo:</strong> {{ slot_info.date }} a las {{ slot_info.time }}</p>
@@ -40,10 +65,9 @@
     </div>
 
     <div id="calendar-container">
-        <!-- Las tablas se generarán aquí con Jinja2 y los datos de Flask -->
         {% for date_str, day_bookings in bookings.items() %}
             <table data-date="{{ date_str }}">
-                <caption>{{ date_str }}</caption> {# Puedes formatear la fecha aquí si quieres un formato más amigable #}
+                <caption>{{ date_str }}</caption>
                 <thead>
                     <tr>
                         <th>Hora</th>
@@ -59,12 +83,14 @@
                             <td>{{ time_str }}</td>
                             {% for queue in queues %}
                                 {% set slot_data = day_bookings[queue][time_str] %}
+                                {% set is_bonused = date_str in bonused_slots[queue] and time_str in bonused_slots[queue][date_str] %}
                                 <td class="slot 
                                     {% if not slot_data.available %}
                                         booked {% if slot_data.booked_by == 'Pasado' %} past-slot {% endif %}
                                     {% else %} 
                                         available 
-                                    {% endif %}"
+                                    {% endif %}
+                                    {% if is_bonused %} bonused-slot {% endif %} {# Añadir clase para slots bonificados #}"
                                     data-date="{{ date_str }}" 
                                     data-queue="{{ queue }}" 
                                     data-time="{{ time_str }}">
@@ -77,6 +103,11 @@
                                             Disponible
                                         {% endif %}
                                     {% endif %}
+                                    {# Mostrar icono si este slot está bonificado #}
+                                    {% if is_bonused %}
+                                        <span class="bonus-icon" title="¡Bonificación Activa!">⭐</span>
+                                        {# Puedes cambiar ⭐ por un <i> de Font Awesome si lo tienes configurado, ej: <i class="fas fa-star"></i> #}
+                                    {% endif %}
                                 </td>
                             {% endfor %}
                         </tr>
@@ -86,7 +117,6 @@
         {% endfor %}
     </div>
 
-    <!-- Formulario oculto para enviar reservas -->
     <form id="booking-form" action="{{ url_for('book_slot') }}" method="POST" style="display: none;">
         <input type="hidden" name="date" id="form-date">
         <input type="hidden" name="queue" id="form-queue">
@@ -94,7 +124,6 @@
         <input type="text" name="booked_by" id="form-booked-by" placeholder="Tu nombre" required>
     </form>
 
-    <!-- Enlaza el JavaScript usando url_for de Flask -->
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

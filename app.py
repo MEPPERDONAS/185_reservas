@@ -33,6 +33,18 @@ class Booking(db.Model):
     def __repr__(self):
         return f"<Booking {self.booking_date} {self.time_slot} {self.queue_type} - Available: {self.available}, Booked By: {self.booked_by}>"
 
+class Bonus(db.Model):
+    __tablename__ = 'bonuses'
+    id = db.Column(db.Integer, primary_key=True)
+    queue_type = db.Column(db.String(50), nullable=False)
+    start_date = db.Column(db.Date, nullable=False)
+    start_time = db.Column(db.String(5), nullable=False) # e.g., "10:00"
+    duration_hours = db.Column(db.Integer, nullable=False)
+    active = db.Column(db.Boolean, default=True, nullable=False)
+
+    def __repr__(self):
+        return f"<Bonus {self.queue_type} from {self.start_date} {self.start_time} for {self.duration_hours}h (Active: {self.active})>"
+
 # --- Funciones de Utilidad para la Base de Datos ---
 
 def initialize_all_slots_for_day(target_date_obj):
@@ -108,9 +120,10 @@ def index():
         update_daily_bookings_in_db()
 
     now_utc = datetime.now(timezone.utc)
-    current_hour_utc = now_utc.hour
+    current_hour_utc = now_utc.hour # Puedes mantener esto si solo comparas horas, pero para slots completos, usaremos now_utc.
 
     today_local = date.today()
+    tomorrow_local = today_local + timedelta(days=1) # Definir tomorrow_local aquí
 
     ordered_display_dates = {}
 
@@ -119,55 +132,49 @@ def index():
     for queue in QUEUES:
         for hour_str, details in today_bookings[queue].items():
             slot_hour = int(hour_str.split(':')[0])
-            if slot_hour < current_hour_utc:
+            # Para la lógica de "Pasado", es mejor comparar el datetime completo
+            slot_dt_obj = datetime.combine(today_local, datetime.strptime(hour_str, "%H:%M").time()).replace(tzinfo=timezone.utc)
+            if slot_dt_obj < now_utc: # Compara el slot completo (aware) con la hora actual (aware)
                 details["available"] = False
                 if details["booked_by"] is None:
                     details["booked_by"] = "Pasado"
     ordered_display_dates[today_local.isoformat()] = today_bookings
 
     # Procesar "Mañana"
-    tomorrow_local = today_local + timedelta(days=1)
     tomorrow_bookings = get_bookings_for_display(tomorrow_local)
+    # No se marcan como "Pasado" aquí porque es un día futuro completo
     ordered_display_dates[tomorrow_local.isoformat()] = tomorrow_bookings
-    
+
     # --- Lógica para 'first_in_queue' - Muestra el próximo turno tomado ---
     first_in_queue = {}
-    
-    # Itera sobre cada tipo de cola
+
     for queue_name in QUEUES:
         found_next_booked_slot = False
-        
-        # Iterar sobre hoy y mañana para encontrar el próximo turno tomado
         for d_obj in [today_local, tomorrow_local]:
-            if found_next_booked_slot: # Si ya encontramos uno para esta cola, pasamos a la siguiente
+            if found_next_booked_slot:
                 break
 
             current_day_bookings = ordered_display_dates[d_obj.isoformat()]
             for hour_str, details in current_day_bookings[queue_name].items():
                 slot_time_obj = datetime.strptime(hour_str, "%H:%M").time()
-                
-                # Comprobar si es un slot futuro (no ha pasado todavía)
-                # La hora actual en Render es UTC. La comparación debe ser consistente.
+
+                # Convertir el slot a un objeto datetime UTC-aware para una comparación precisa
+                slot_datetime_aware = datetime.combine(d_obj, slot_time_obj).replace(tzinfo=timezone.utc)
+
                 is_future_slot = False
-                if d_obj == today_local:
-                    if slot_time_obj.hour >= current_hour_utc: # Para hoy, solo slots de la hora actual o futura
-                        is_future_slot = True
-                elif d_obj > today_local: # Para cualquier día futuro (como mañana), todos los slots son futuros
+                if slot_datetime_aware > now_utc: # Ahora ambas son aware y se pueden comparar
                     is_future_slot = True
 
-                # Buscamos un slot que NO esté disponible (es decir, que esté reservado)
-                # y que sea un slot futuro (no "Pasado")
                 if not details["available"] and details["booked_by"] != "Pasado" and is_future_slot:
                     first_in_queue[queue_name] = {
                         "date": d_obj.isoformat(),
                         "time": hour_str,
                         "queue": queue_name,
-                        "booked_by": details["booked_by"] # ¡Aquí incluimos quién lo reservó!
+                        "booked_by": details["booked_by"]
                     }
                     found_next_booked_slot = True
-                    break # Salimos del bucle de horas para esta cola
-        
-        # Si no se encontró ningún turno tomado para hoy o mañana
+                    break
+
         if not found_next_booked_slot:
             first_in_queue[queue_name] = {
                 "date": "N/A",
@@ -178,14 +185,72 @@ def index():
             }
     # --- Fin de la lógica para 'first_in_queue' ---
 
+    # --- Lógica para obtener Bonificaciones Activas y determinar bonused_slots ---
+    # Obtenemos todas las bonificaciones activas
+    active_bonuses = Bonus.query.filter(Bonus.active == True).all()
+
+    # bonused_slots almacenará qué slots específicos (fecha, hora, cola) tienen una bonificación
+    # Ejemplo: {'building': {'2025-07-18': {'10:00', '11:00'}, '2025-07-19': set()}, ...}
+    bonused_slots = {queue: {today_local.isoformat(): set(), tomorrow_local.isoformat(): set()} for queue in QUEUES}
+
+    # Guardaremos qué colas tienen una bonificación activa AHORA (para el panel "Próximos en cola")
+    bonused_queues_now = {queue: False for queue in QUEUES}
+
+    for bonus in active_bonuses:
+        # Convertir la fecha y hora de inicio de la bonificación a un objeto datetime UTC-aware
+        bonus_start_dt = datetime.combine(bonus.start_date, datetime.strptime(bonus.start_time, "%H:%M").time()).replace(tzinfo=timezone.utc)
+        bonus_end_dt = bonus_start_dt + timedelta(hours=bonus.duration_hours)
+
+        # Verificar si la bonificación está activa AHORA
+        if bonus_start_dt <= now_utc < bonus_end_dt:
+            bonused_queues_now[bonus.queue_type] = True
+
+        # Iterar por cada hora que dura la bonificación para marcar los slots
+        current_slot_dt = bonus_start_dt
+        while current_slot_dt < bonus_end_dt:
+            # Solo marcamos si el slot cae en hoy o mañana
+            if current_slot_dt.date() == today_local or current_slot_dt.date() == tomorrow_local:
+                # Asegúrate de que la fecha de la bonificación sea la misma que la fecha del slot para evitar problemas
+                if current_slot_dt.date().isoformat() in bonused_slots[bonus.queue_type]:
+                     bonused_slots[bonus.queue_type][current_slot_dt.date().isoformat()].add(current_slot_dt.strftime("%H:%M"))
+            current_slot_dt += timedelta(hours=1)
+
+            # Prevenir bucles infinitos si la duración es muy larga o cruza el día de forma inusual
+            # Si pasamos al día siguiente y ya procesamos un día completo, podemos romper.
+            if current_slot_dt.date() > bonus_end_dt.date() and bonus_end_dt.date() >= bonus_start_dt.date():
+                break
+            if current_slot_dt.date() > tomorrow_local: # No vamos más allá de mañana
+                break
+
+    # Las bonificaciones se pueden mostrar en el panel principal si es necesario
+    bonuses_for_display = []
+    for bonus in active_bonuses:
+        bonus_start_dt = datetime.combine(bonus.start_date, datetime.strptime(bonus.start_time, "%H:%M").time()).replace(tzinfo=timezone.utc)
+        bonus_end_dt = bonus_start_dt + timedelta(hours=bonus.duration_hours)
+
+        if bonus_end_dt > now_utc: # Solo mostrar bonificaciones que están activas o comenzarán pronto
+            bonuses_for_display.append({
+                "queue_type": bonus.queue_type.capitalize(),
+                "start_time": bonus_start_dt.strftime("%Y-%m-%d %H:%M"),
+                "end_time": bonus_end_dt.strftime("%H:%M"),
+                "duration": bonus.duration_hours
+            })
+    bonuses_for_display.sort(key=lambda x: datetime.strptime(x['start_time'], "%Y-%m-%d %H:%M"))
+
+
     return render_template(
         'index.html',
         bookings=ordered_display_dates,
         queues=QUEUES,
         today=today_local.isoformat(),
         now_utc=now_utc.strftime("%Y-%m-%d %H:%M:%S UTC"),
-        first_in_queue=first_in_queue
+        first_in_queue=first_in_queue,
+        bonused_slots=bonused_slots, # PASAR ESTO A LA PLANTILLA
+        bonused_queues_now=bonused_queues_now, # PASAR ESTO TAMBIÉN
+        bonuses_for_display=bonuses_for_display # Esto es opcional si ya no lo usas
     )
+
+# ... (El resto de tu app.py, incluyendo las rutas /book, /admin, etc.)
 
 # --- AÑADE ESTA FUNCIÓN AQUÍ ABAJO ---
 @app.route('/book', methods=['POST'])
@@ -279,6 +344,78 @@ def edit_booking(booking_id):
         
         # Para solicitudes GET, renderiza el formulario con los datos actuales
         return render_template('edit_booking.html', booking=booking_to_edit, queues=QUEUES)
+# PARA AÑADIR BONUS
+@app.route('/admin/bonuses', methods=['GET', 'POST'])
+def manage_bonuses():
+    with app.app_context():
+        if request.method == 'POST':
+            queue_type = request.form['queue_type']
+            start_date_str = request.form['start_date']
+            
+            # --- CAMBIO AQUÍ: Formatear la hora recibida del select ---
+            start_hour_selected = request.form['start_time'] # Recibimos '00', '01', ..., '23'
+            start_time_formatted = f"{start_hour_selected}:00" # Lo convertimos a '00:00', '01:00', ...
+            # --- FIN DEL CAMBIO ---
+
+            duration_hours = int(request.form['duration_hours'])
+
+            try:
+                start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+                
+                # Opcional pero recomendado: validación de la duración
+                if duration_hours <= 0:
+                    flash('Error: La duración debe ser al menos 1 hora.', 'error')
+                    return redirect(url_for('manage_bonuses'))
+
+                new_bonus = Bonus(
+                    queue_type=queue_type,
+                    start_date=start_date,
+                    # --- USAR LA HORA FORMATEADA AQUÍ ---
+                    start_time=start_time_formatted, 
+                    # --- FIN DEL CAMBIO ---
+                    duration_hours=duration_hours,
+                    active=True
+                )
+                db.session.add(new_bonus)
+                db.session.commit()
+                flash('Bonificación añadida exitosamente.', 'success')
+            except ValueError:
+                # Esto atrapará errores si start_date_str no es un formato de fecha válido
+                flash('Error: Formato de fecha de inicio inválido.', 'error')
+                db.session.rollback()
+            except Exception as e:
+                db.session.rollback()
+                flash(f'Ocurrió un error al añadir bonificación: {e}', 'error')
+            return redirect(url_for('manage_bonuses'))
+
+        all_bonuses = Bonus.query.order_by(Bonus.start_date, Bonus.start_time).all()
+        return render_template('manage_bonuses.html', bonuses=all_bonuses, queues=QUEUES)
+
+@app.route('/admin/bonuses/toggle/<int:bonus_id>', methods=['POST'])
+def toggle_bonus_active(bonus_id):
+    with app.app_context():
+        bonus = Bonus.query.get_or_404(bonus_id)
+        bonus.active = not bonus.active
+        try:
+            db.session.commit()
+            flash(f'Estado de bonificación ID {bonus_id} cambiado a {"activo" if bonus.active else "inactivo"}.', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error al cambiar estado de bonificación: {e}', 'error')
+    return redirect(url_for('manage_bonuses'))
+
+@app.route('/admin/bonuses/delete/<int:bonus_id>', methods=['POST'])
+def delete_bonus(bonus_id):
+    with app.app_context():
+        bonus_to_delete = Bonus.query.get_or_404(bonus_id)
+        try:
+            db.session.delete(bonus_to_delete)
+            db.session.commit()
+            flash(f'Bonificación ID {bonus_id} eliminada exitosamente.', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error al eliminar bonificación: {e}', 'error')
+    return redirect(url_for('manage_bonuses'))
 
 # --- FIN DE LA FUNCIÓN A AÑADIR ---
 
