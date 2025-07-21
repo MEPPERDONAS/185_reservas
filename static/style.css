@@ -1,190 +1,243 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=MedievalSharp&display=swap');
+
+/* --- Variables de Color (Paleta Age of Empires Mobile) --- */
+:root {
+    --aoe-dark-bg: #2C201C; /* Base oscura, como tierra o madera profunda */
+    --aoe-panel-bg: #4A3728; /* Marrón para paneles, como madera o piedra oscura */
+    --aoe-border: #6B5B4C; /* Borde de piedra o metal envejecido */
+    --aoe-accent-gold: #B89A5A; /* Dorado/Bronce para acentos y elementos importantes */
+    --aoe-text-light: #D4C29D; /* Color de texto crema/pergamino para contraste */
+    --aoe-text-dark: #1E1714; /* Texto muy oscuro */
+    --aoe-success: #5C6F5A; /* Verde suave para éxito (bosque, naturaleza) */
+    --aoe-error: #8A4F4F; /* Rojo oxidado para errores (sangre, metal corroído) */
+    --aoe-info: #3D5A6C; /* Azul grisáceo para información (acero, cielo nocturno) */
+    --aoe-warning: #B89A5A; /* Dorado para advertencias */
+    --aoe-header-bg: #3A2B27; /* Fondo para encabezados de tabla/secciones */
+}
+
+/* --- Estilo General del Cuerpo --- */
 body {
-    font-family: 'Inter', sans-serif; /* Usando Inter como se sugiere */
-    margin: 20px;
-    background-color: #f4f4f4;
-    color: #333;
+    font-family: 'MedievalSharp', cursive, 'Inter', sans-serif; /* Prioriza MedievalSharp, con Inter/sans-serif como fallback */
+    margin: 0; /* Elimina el margen predeterminado del body */
+    background-color: var(--aoe-dark-bg); /* Fondo oscuro general */
+    /* background-image: url('/static/images/stone_texture.png'); Si tienes una imagen de textura de piedra */
+    background-size: cover; /* o 'repeat' si es un patrón pequeño */
+    color: var(--aoe-text-light); /* Texto general color claro para contraste */
     display: flex;
     flex-direction: column;
     align-items: center;
     min-height: 100vh;
+    padding: 20px; /* Padding para evitar que el contenido toque los bordes de la ventana */
+    box-sizing: border-box; /* Asegura que el padding no afecte el ancho/alto total */
 }
 
+/* --- Estilos de Títulos --- */
 h1 {
+    font-family: 'Cinzel', serif; /* Fuente épica para el título principal */
     text-align: center;
-    color: #0056b3;
+    color: var(--aoe-accent-gold); /* Títulos en dorado */
     margin-bottom: 30px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7); /* Sombra para dar profundidad */
+    font-size: 2.5em; /* Un poco más grande para el h1 */
 }
 
-/* Estilos para la nueva sección de "Próximos en la Cola" */
-.first-in-queue-container {
-    background-color: #e6f2ff; /* Un azul muy claro */
-    border: 1px solid #b3d9ff;
-    border-radius: 10px;
-    padding: 20px;
-    margin-bottom: 30px;
+h2, h3 { /* Aplicar también a otros títulos de sección */
+    font-family: 'Cinzel', serif;
+    color: var(--aoe-accent-gold);
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+/* --- Contenedores Generales y Paneles (Como los de los menús de AoE) --- */
+.first-in-queue-container, /* Y otros contenedores como formularios */
+.login-container, /* Asegura que tu panel de login use este estilo */
+/*form, /* <-- Deja 'form' aquí, sin :not() */
+form button:not(.delete-btn):not(.toggle-btn):not(.edit-btn), /* <--- AÑADIR ESTA LÍNEA */
+form a:not(.edit-btn) { /* <--- Y AÑADIR ESTA LÍNEA (para cualquier enlace dentro de form que NO sea edit-btn) */
+    background-color: var(--aoe-panel-bg); /* Fondo de panel marrón */
+    border: 3px solid var(--aoe-border); /* Borde grueso como de piedra/madera */
+    border-radius: 8px; /* Ligeramente redondeado */
+    padding: 25px; /* Más padding para que respire */
+    margin: 20px auto;
     width: 90%;
     max-width: 800px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.5), inset 2px 2px 5px rgba(255, 255, 255, 0.2); /* Sombra para profundidad y relieve */
     text-align: center;
+    box-sizing: border-box;
 }
 
 .first-in-queue-container h2 {
-    color: #0056b3;
+    color: var(--aoe-accent-gold); /* Título de la sección en dorado */
     margin-top: 0;
     margin-bottom: 20px;
-    font-size: 1.8em;
+    font-size: 2em; /* Más prominente */
 }
 
 .queue-list {
     display: flex;
     justify-content: center;
     flex-wrap: wrap;
-    gap: 25px; /* Espacio entre los ítems de la cola */
+    gap: 25px;
 }
 
 .queue-item {
-    background-color: #ffffff;
-    border: 1px solid #cce0ff;
+    background-color: rgba(74, 55, 40, 0.7); /* Fondo ligeramente transparente para ver la textura si hay */
+    border: 1px solid var(--aoe-border);
     border-radius: 8px;
     padding: 15px 20px;
-    flex: 1; /* Permite que los ítems se distribuyan */
+    flex: 1;
     min-width: 200px;
     max-width: 280px;
     text-align: left;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-    transition: transform 0.2s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3), inset 1px 1px 3px rgba(255, 255, 255, 0.1); /* Relieve */
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .queue-item:hover {
-    transform: translateY(-3px); /* Pequeño efecto al pasar el ratón */
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5), inset 1px 1px 5px rgba(255, 255, 255, 0.2);
 }
 
 .queue-item h3 {
-    color: #007bff;
+    font-family: 'Cinzel', serif;
+    color: var(--aoe-accent-gold); /* Título del ítem en dorado */
     margin-top: 0;
     margin-bottom: 10px;
-    font-size: 1.3em;
-    border-bottom: 1px solid #e0f0ff;
+    font-size: 1.5em;
+    border-bottom: 1px solid var(--aoe-border); /* Borde separador */
     padding-bottom: 5px;
 }
 
 .queue-item p {
     margin: 5px 0;
-    font-size: 0.95em;
-    color: #555;
+    font-size: 1em; /* Texto un poco más grande para legibilidad */
+    color: var(--aoe-text-light); /* Color de texto del panel */
 }
 
 .queue-item p strong {
-    color: #333;
+    color: var(--aoe-accent-gold); /* Nombres/valores importantes en dorado */
 }
 
-
+/* --- Contenedor del Calendario/Tablas --- */
 #calendar-container {
-    display: flex; /* Muestra las tablas una al lado de la otra */
-    justify-content: center; /* Centra las tablas */
-    flex-wrap: wrap; /* Permite que las tablas se envuelvan si no hay espacio */
-    gap: 20px; /* Espacio entre las tablas */
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 25px; /* Más espacio entre tablas */
     width: 100%;
-    max-width: 1200px; /* Ancho máximo para el contenedor de tablas */
+    max-width: 1200px;
 }
 
 table {
-    flex: 1; /* Permite que las tablas crezcan y se encojan */
-    min-width: 300px; /* Ancho mínimo para que no se vea muy pequeño */
-    max-width: 380px; /* Ancho máximo para cada tabla */
+    flex: 1;
+    min-width: 320px; /* Un poco más de ancho mínimo */
+    max-width: 400px; /* Ancho máximo para cada tabla */
     border-collapse: collapse;
     margin-bottom: 20px;
-    background-color: #fff;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Sombra más pronunciada */
-    border-radius: 10px; /* Bordes redondeados */
-    overflow: hidden; /* Asegura que el contenido se ajuste a los bordes redondeados */
+    background-color: var(--aoe-panel-bg); /* Fondo de tabla como un panel */
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4), inset 2px 2px 5px rgba(255, 255, 255, 0.1); /* Sombra y relieve */
+    border-radius: 10px;
+    overflow: hidden;
+    border: 2px solid var(--aoe-border); /* Borde de tabla */
 }
 
 caption {
-    font-size: 1.4em; /* Título más grande */
+    font-family: 'Cinzel', serif; /* Fuente de título */
+    font-size: 1.6em; /* Título más grande */
     font-weight: bold;
     padding: 15px;
-    background-color: #007bff; /* Fondo azul para el título */
-    color: white;
-    border-bottom: 2px solid #0056b3;
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
+    background-color: var(--aoe-header-bg); /* Fondo oscuro para el título */
+    color: var(--aoe-accent-gold); /* Color dorado */
+    border-bottom: 2px solid var(--aoe-border);
+    border-top-left-radius: 8px; /* Ajusta el radio para que coincida con la tabla */
+    border-top-right-radius: 8px;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 th, td {
-    border: 1px solid #e0e0e0; /* Borde más suave */
-    padding: 12px 10px; /* Más padding */
-    text-align: center; /* Centrar texto en celdas de datos */
+    border: 1px solid rgba(107, 91, 76, 0.5); /* Borde más suave que combine con el tema */
+    padding: 14px 12px; /* Más padding */
+    text-align: center;
+    color: var(--aoe-text-light); /* Color de texto claro */
 }
 
 th {
-    background-color: #e9ecef; /* Fondo claro para encabezados */
+    background-color: var(--aoe-header-bg); /* Fondo para encabezados */
     font-weight: bold;
-    color: #495057;
-    text-transform: uppercase; /* Mayúsculas para encabezados */
-    font-size: 0.9em;
+    color: var(--aoe-accent-gold); /* Color dorado para encabezados */
+    text-transform: uppercase;
+    font-size: 0.95em;
+    font-family: 'Cinzel', serif;
 }
 
 /* Columna de horas */
 td:first-child {
-    background-color: #f8f9fa; /* Fondo muy claro para la columna de horas */
+    background-color: rgba(44, 32, 28, 0.7); /* Fondo más oscuro para la columna de horas */
     font-weight: bold;
-    color: #6c757d;
-    width: 70px; /* Ancho fijo para la columna de horas */
+    color: var(--aoe-accent-gold); /* Horas en dorado */
+    width: 80px; /* Un poco más de ancho fijo */
+    text-shadow: 0 0 3px rgba(0, 0, 0, 0.5);
 }
 
 /* Estilos para las filas impares/pares */
 tbody tr:nth-child(odd) {
-    background-color: #ffffff;
+    background-color: rgba(74, 55, 40, 0.4); /* Fondo ligeramente transparente */
 }
 tbody tr:nth-child(even) {
-    background-color: #f2f2f2;
+    background-color: rgba(74, 55, 40, 0.6); /* Fondo ligeramente más oscuro */
 }
 
 /* Estilos para los slots (celdas de datos) */
 .slot {
     cursor: pointer;
-    transition: background-color 0.2s ease, transform 0.1s ease;
-    border-radius: 5px; /* Pequeño redondeo dentro de las celdas */
+    transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+    border-radius: 5px;
+    /* Efecto de un slot que se puede presionar */
+    box-shadow: inset 0 0 0px rgba(0,0,0,0); /* Sin sombra por defecto */
 }
 
 .slot.available {
-    background-color: #d4edda; /* Verde claro para disponible */
-    color: #155724;
+    background-color: var(--aoe-success); /* Verde para disponible */
+    color: var(--aoe-text-dark); /* Texto oscuro para contraste en verde */
+    font-weight: bold;
 }
 
 .slot.available:hover {
-    background-color: #28a745; /* Verde más oscuro al pasar el ratón */
+    background-color: #728F70; /* Verde más oscuro al pasar el ratón */
     color: white;
-    transform: scale(1.02); /* Efecto de zoom sutil */
+    transform: scale(1.03); /* Efecto de zoom */
+    box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.3), 0 0 10px rgba(0, 0, 0, 0.5); /* Brillo y sombra al pasar el ratón */
 }
 
 .slot.booked {
-    background-color: #f8d7da; /* Rojo claro para reservado */
-    color: #721c24;
+    background-color: var(--aoe-error); /* Rojo oscuro para reservado */
+    color: var(--aoe-text-light); /* Texto claro para contraste en rojo */
     cursor: not-allowed;
     font-style: italic;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 .slot.past-slot {
-    background-color: #e2e3e5; /* Gris para slots pasados */
-    color: #6c757d;
+    background-color: #5A5A5A; /* Gris oscuro para slots pasados */
+    color: #C0C0C0; /* Texto gris claro */
     cursor: not-allowed;
     font-style: italic;
     text-decoration: line-through;
+    opacity: 0.7;
 }
 
-/* Estilos para mensajes flash */
+/* --- Estilos para Mensajes Flash --- */
 .flashes {
     list-style: none;
-    padding: 10px 20px;
+    padding: 15px 25px; /* Más padding */
     margin: 20px auto;
     border-radius: 8px;
     width: 80%;
     max-width: 600px;
     text-align: center;
     font-weight: bold;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3), inset 1px 1px 3px rgba(255, 255, 255, 0.1);
+    font-family: 'MedievalSharp', cursive, Arial, sans-serif; /* Consistencia en la fuente */
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .flashes li {
@@ -192,64 +245,337 @@ tbody tr:nth-child(even) {
 }
 
 .flashes .success {
-    background-color: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
+    background-color: var(--aoe-success);
+    color: var(--aoe-text-dark); /* Texto oscuro para que se lea en verde */
+    border: 1px solid darken(var(--aoe-success), 10%); /* Borde ligeramente más oscuro */
 }
 
 .flashes .error {
-    background-color: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
+    background-color: var(--aoe-error);
+    color: var(--aoe-text-light); /* Texto claro para que se lea en rojo */
+    border: 1px solid darken(var(--aoe-error), 10%);
 }
 
-/* Responsive adjustments */
+.flashes .warning { /* Añadido si no existía */
+    background-color: var(--aoe-warning);
+    color: var(--aoe-text-dark);
+    border: 1px solid darken(var(--aoe-warning), 10%);
+}
+
+.flashes .info {
+    background-color: var(--aoe-info);
+    color: var(--aoe-text-light);
+    border: 1px solid darken(var(--aoe-info), 10%);
+}
+
+
+/* --- Estilos para Icono de Bonificación (estrella) --- */
+.bonus-icon {
+    color: var(--aoe-accent-gold); /* Dorado para la estrella */
+    margin-left: 5px;
+    font-size: 1.2em; /* Un poco más grande para destacar */
+    text-shadow: 0 0 8px rgba(255, 215, 0, 0.8), 0 0 2px rgba(0, 0, 0, 0.5); /* Efecto de brillo y sombra */
+}
+
+
+/* --- Estilos para Formularios (Comunes a index, admin, manage_bonuses, login) --- */
+/* Ya hemos aplicado un estilo base a `form` y `.login-container` al principio */
+
+label {
+    display: block;
+    margin-bottom: 8px; /* Más espacio */
+    font-weight: bold;
+    color: var(--aoe-accent-gold); /* Labels en dorado */
+    font-family: 'Cinzel', serif; /* Fuente de título */
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+input[type="text"],
+input[type="date"],
+input[type="number"],
+input[type="password"],
+select {
+    width: calc(100% - 24px); /* Ajuste por padding y borde */
+    padding: 10px 12px; /* Más padding para un mejor tacto */
+    margin-bottom: 15px;
+    background-color: #2A1F1B; /* Fondo muy oscuro, casi negro */
+    border: 2px solid var(--aoe-border); /* Borde de panel */
+    color: var(--aoe-text-light); /* Texto claro */
+    border-radius: 5px; /* Bordes suaves */
+    font-family: 'MedievalSharp', cursive, 'Inter', sans-serif; /* Consistencia con la fuente del cuerpo */
+    box-sizing: border-box;
+    box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.5); /* Sombra interna para efecto hundido */
+}
+
+/* Estilo para el select de hora que hicimos */
+select {
+    appearance: none; /* Elimina estilos por defecto del sistema operativo */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23D4C29D%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13.6-6.4H19.4c-7.5%200-13.6%205.7-13.6%2012.8s6.1%2012.8%2013.6%2012.8h253.9c7.5%200%2013.6-5.7%2013.6-12.8%200-2.9-1.1-5.7-3.4-8.3z%22%2F%3E%3C%2Fsvg%3E'); /* Icono de flecha personalizado */
+    background-repeat: no-repeat;
+    background-position: right 10px top 50%;
+    background-size: 12px auto;
+    padding-right: 30px; /* Espacio para la flecha personalizada */
+}
+
+
+input[type="checkbox"] {
+    margin-right: 10px;
+    /* Necesitaría más CSS para estilizar el checkbox si quieres que no sea el nativo */
+}
+
+/* --- Botones --- */
+button, .button, input[type="submit"] {
+    font-family: 'Cinzel', serif;
+    background: linear-gradient(to bottom, var(--aoe-accent-gold), #8A7340); /* Degradado dorado/bronce */
+    color: var(--aoe-text-dark); /* Texto oscuro para contraste en botón dorado */
+    border: 2px solid #5C4A28; /* Borde oscuro que imita metal */
+    border-radius: 5px;
+    padding: 12px 25px; /* Más padding para que parezca un botón de juego */
+    font-size: 1.2em; /* Texto más grande */
+    cursor: pointer;
+    text-transform: uppercase;
+    box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.6), inset 1px 1px 4px rgba(255, 255, 255, 0.3); /* Sombra y relieve */
+    transition: all 0.2s ease;
+    font-weight: bold;
+}
+
+button:hover, .button:hover, input[type="submit"]:hover {
+    background: linear-gradient(to bottom, #CCA34C, var(--aoe-accent-gold)); /* Degradado más claro */
+    box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.8), inset 1px 1px 5px rgba(255, 255, 255, 0.4);
+    transform: translateY(-2px); /* Efecto de "levantarse" */
+}
+
+button:active, .button:active, input[type="submit"]:active {
+    transform: translateY(1px); /* Efecto de "presionarse" */
+    box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Estilo para botón de eliminación */
+.delete-button {
+    background: linear-gradient(to bottom, #8A4F4F, #6A3F3F); /* Rojo oscuro para eliminar */
+    border: 2px solid #5C3A3A;
+    color: white;
+}
+.delete-button:hover {
+    background: linear-gradient(to bottom, #A46A6A, #8A4F4F);
+}
+
+/* Estilo para botón de cerrar sesión */
+.logout-link {
+    background: linear-gradient(to bottom, #6C757D, #4A5258); /* Gris oscuro */
+    border: 2px solid #454E53;
+    color: white;
+    /* Ajusta el padding y font-size para que coincida con otros botones si es un botón */
+    padding: 12px 25px;
+    font-size: 1.2em;
+    text-decoration: none; /* Si es un <a> */
+    display: inline-block; /* Si es un <a> */
+    margin-top: 20px;
+    border-radius: 5px;
+    box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.6), inset 1px 1px 4px rgba(255, 255, 255, 0.3);
+    transition: all 0.2s ease;
+}
+
+.logout-link:hover {
+    background: linear-gradient(to bottom, #8A929A, #6C757D);
+    box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.8), inset 1px 1px 5px rgba(255, 255, 255, 0.4);
+    transform: translateY(-2px);
+}
+
+.logout-link:active {
+    transform: translateY(1px);
+    box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* --- Estilos Adicionales (que estaban al final de tu CSS y duplicados) --- */
+/* Los estilos para `body`, `h1`, `form`, `label`, `input`, `button`
+   ya han sido integrados y mejorados arriba.
+   Asegúrate de eliminar las partes duplicadas o en línea de tus HTML. */
+
+p.info {
+    margin-top: 15px;
+    font-size: 1em;
+    color: var(--aoe-text-light); /* Color de texto del panel */
+    text-align: center;
+}
+
+/* --- Responsive adjustments (Mantener y ajustar) --- */
 @media (max-width: 768px) {
     .first-in-queue-container {
         width: 95%;
+        padding: 15px; /* Menos padding en móviles */
     }
     .queue-list {
-        flex-direction: column; /* Apila los ítems en pantallas pequeñas */
+        flex-direction: column;
         align-items: center;
     }
     .queue-item {
-        width: 95%; /* Ocupa casi todo el ancho disponible */
-        max-width: 300px;
+        width: 95%;
+        max-width: 350px; /* Un poco más de ancho en móviles si es necesario */
     }
     #calendar-container {
-        flex-direction: column; /* Apila las tablas en pantallas pequeñas */
+        flex-direction: column;
         align-items: center;
     }
     table {
-        width: 95%; /* Ocupa casi todo el ancho disponible */
-        max-width: 400px; /* Limita el ancho en pantallas muy grandes */
+        width: 98%; /* Ocupa casi todo el ancho disponible */
+        max-width: 450px; /* Limita el ancho en pantallas muy grandes */
+    }
+    th, td {
+        padding: 10px 8px; /* Reducir padding en celdas para pantallas pequeñas */
+        font-size: 0.9em;
+    }
+    td:first-child {
+        width: 60px; /* Reducir ancho de columna de horas */
+    }
+    input[type="text"], input[type="date"], input[type="number"], input[type="password"], select {
+        width: calc(100% - 20px); /* Ajuste en móviles */
     }
 }
 
-        /* Estilos básicos para el formulario de edición, puedes mover esto a style.css */
-    body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; }
-    h1 { color: #333; }
-    form { background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); max-width: 500px; margin: 20px auto; }
-    label { display: block; margin-bottom: 5px; font-weight: bold; }
-    input[type="text"], input[type="date"], input[type="time"], select {
-        width: calc(100% - 22px);
-        padding: 10px;
-        margin-bottom: 15px;
-        border: 1px solid #ddd;
-         border-radius: 4px;
+/* Media query para pantallas muy pequeñas (ej. smartphones en vertical) */
+@media (max-width: 480px) {
+    h1 {
+        font-size: 2em; /* Reducir tamaño de título principal */
     }
-    input[type="checkbox"] { margin-right: 10px; }
-    button {
-        background-color: #28a745;
-        color: white;
+    .first-in-queue-container h2 {
+        font-size: 1.6em;
+    }
+    button, .button, input[type="submit"] {
         padding: 10px 15px;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 16px;
+        font-size: 1em;
     }
-    button:hover { opacity: 0.9; }
-    p.info { margin-top: 10px; font-size: 0.9em; color: #666; }
-    .flash-message { padding: 10px; margin-bottom: 10px; border-radius: 5px; }
-    .success { background-color: #d4edda; color: #155724; border-color: #c3e6cb; }
-    .error { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+}
+/* --- Estilos para la tabla de bonificaciones (mantenemos estos estilos generales de tabla) --- */
+.bonus-table {
+    width: 95%;
+    max-width: 1000px;
+    border-collapse: collapse;
+    margin: 30px auto;
+    background-color: var(--aoe-panel-bg);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4), inset 2px 2px 5px rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    overflow: hidden;
+    border: 2px solid var(--aoe-border);
+}
+
+.bonus-table th, .bonus-table td {
+    border: 1px solid rgba(107, 91, 76, 0.5);
+    padding: 10px 8px;
+    text-align: center;
+    color: var(--aoe-text-light);
+    font-size: 0.9em;
+}
+
+/* Columna de ACCIONES: Aseguramos que tenga espacio para los botones */
+.bonus-table th:last-child,
+.bonus-table td:last-child {
+    width: 120px;
+    min-width: 100px;
+    white-space: nowrap;
+}
+
+/* Reglas extremadamente específicas para los botones de ícono dentro de los formularios */
+form .delete-btn, /* Esto apunta a un button.delete-btn DENTRO de un form */
+form .toggle-btn, /* Esto apunta a un button.toggle-btn DENTRO de un form */
+.edit-btn { /* El edit-btn es un <a>, no necesita el 'form' selector */
+    /* RESETEO TOTAL de apariencia de botón y estilos de "caja" */
+    background: transparent !important; /* Fondo completamente transparente y forzado */
+    border: none !important; /* Sin bordes y forzado */
+    box-shadow: none !important; /* Sin sombras y forzado */
+    padding: 0 !important; /* Sin relleno y forzado */
+    margin: 0 5px !important; /* Solo un pequeño margen entre íconos */
+    border-radius: 0 !important; /* Sin bordes redondeados y forzado */
+
+    /* Para anular cualquier estilo de botón nativo del navegador */
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+
+    /* Asegura que el ícono sea el tamaño y se vea bien */
+    font-size: 1.6em !important; /* Ajusta este tamaño si lo necesitas */
+    line-height: 1 !important;
+    vertical-align: middle !important;
+    cursor: pointer;
+    transition: color 0.2s ease, transform 0.1s ease !important; /* Transición suave solo para color y escala */
+
+    /* Oculta cualquier texto si el botón lo tuviera, dejando solo el ícono visible */
+    text-indent: -9999px !important;
+    overflow: hidden !important;
+    white-space: nowrap !important;
+    position: relative !important;
+    display: inline-block !important; /* Asegura que se comporten como bloques en línea */
+    width: 2em; /* Darles un ancho fijo basado en el font-size para que el ícono pueda centrarse */
+    height: 2em; /* Darles un alto fijo también */
+}
+
+
+/* El elemento <i> de Font Awesome es el que contendrá el ícono visible */
+form .delete-btn .fas, /* Más específico */
+form .toggle-btn .fas, /* Más específico */
+.edit-btn .fas {
+    text-indent: 0 !important; /* Asegura que el ícono se vea */
+    position: absolute !important; /* Posiciona el ícono para que no ocupe espacio del texto oculto */
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important; /* Centra el ícono */
+    display: block !important; /* Asegura que el ícono sea un bloque para centrarlo */
+}
+
+
+/* Efecto al pasar el ratón: solo escala, sin cambios de fondo/borde */
+form .delete-btn:hover,
+form .toggle-btn:hover,
+.edit-btn:hover {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    transform: scale(1.1) !important; /* Ligeramente más grande */
+}
+
+/* Efecto al hacer clic: solo escala, sin cambios de fondo/borde */
+form .delete-btn:active,
+form .toggle-btn:active,
+.edit-btn:active {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    transform: scale(1.05) !important; /* Sutil efecto de "presionado" */
+}
+
+/* --- COLORES ESPECÍFICOS PARA LOS ÍCONOS --- */
+/* Color para el icono de editar */
+.edit-btn .fas {
+    color: var(--aoe-accent-gold) !important; /* Dorado para editar */
+    text-shadow: 0 0 5px rgba(255, 215, 0, 0.5) !important;
+}
+
+/* Color para el icono de borrar (tanto de reservas como de bonificaciones) */
+form .delete-btn .fas { /* Ahora abarca ambos por el selector 'form' */
+    color: var(--aoe-error) !important; /* Rojo oscuro para borrar */
+    text-shadow: 0 0 5px rgba(139, 0, 0, 0.5) !important;
+}
+
+
+/* Colores para el icono de toggle (mantener los de antes) */
+form .toggle-btn .fa-toggle-on {
+    color: var(--aoe-success) !important;
+    text-shadow: 0 0 8px rgba(0, 128, 0, 0.8) !important;
+}
+
+form .toggle-btn .fa-toggle-off {
+    color: var(--aoe-border) !important; /* O un gris oscuro si prefieres */
+    text-shadow: none !important;
+}
+
+/* --- Responsive adjustments para botones de ícono en móviles --- */
+@media (max-width: 768px) {
+    form .delete-btn,
+    form .toggle-btn,
+    .edit-btn {
+        font-size: 1.4em !important; /* Íconos un poco más pequeños en móviles */
+        margin: 0 2px !important; /* Margen más pequeño en móviles */
+    }
+}

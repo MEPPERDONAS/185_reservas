@@ -5,71 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Administrar Bonificaciones</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <style>
-        /* Estilos específicos para manage_bonuses.html */
-        .bonus-form {
-            margin-bottom: 30px;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            background-color: #f9f9f9;
-        }
-        .bonus-form label, .bonus-form input, .bonus-form select, .bonus-form button {
-            display: block;
-            margin-bottom: 10px;
-        }
-        .bonus-form input[type="text"], 
-        .bonus-form input[type="date"], 
-        .bonus-form input[type="time"],
-        .bonus-form input[type="number"],
-        .bonus-form select {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-sizing: border-box; /* Para que el padding no afecte el ancho total */
-        }
-        .bonus-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        .bonus-table th, .bonus-table td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-        .bonus-table th {
-            background-color: #f2f2f2;
-        }
-        .bonus-table form {
-            display: inline-block;
-            margin-right: 5px;
-        }
-        .bonus-table button {
-            padding: 5px 10px;
-            border-radius: 3px;
-            cursor: pointer;
-        }
-        .bonus-table .toggle-btn {
-            background-color: #007bff;
-            color: white;
-            border: none;
-        }
-        .bonus-table .delete-btn {
-            background-color: #dc3545;
-            color: white;
-            border: none;
-        }
-        .status-active {
-            color: green;
-            font-weight: bold;
-        }
-        .status-inactive {
-            color: red;
-            font-weight: bold;
-        }
-    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 <body>
     <h1>Administrar Bonificaciones</h1>
@@ -143,12 +79,16 @@
                         </td>
                         <td>
                             <form action="{{ url_for('toggle_bonus_active', bonus_id=bonus.id) }}" method="POST" style="display: inline;">
-                                <button type="submit" class="toggle-btn">
-                                    {{ 'Desactivar' if bonus.active else 'Activar' }}
+                                <button type="submit" class="toggle-btn" title="{{ 'Desactivar' if bonus.active else 'Activar' }}">
+                                    {% if bonus.active %}
+                                        <i class="fas fa-toggle-on"></i> {% else %}
+                                        <i class="fas fa-toggle-off"></i> {% endif %}
                                 </button>
                             </form>
+
                             <form action="{{ url_for('delete_bonus', bonus_id=bonus.id) }}" method="POST" style="display: inline;" onsubmit="return confirm('¿Estás seguro de que quieres eliminar esta bonificación?');">
-                                <button type="submit" class="delete-btn">Eliminar</button>
+                                <button type="submit" class="delete-btn" title="Eliminar Bonificación">
+                                    <i class="fas fa-trash"></i> </button>
                             </form>
                         </td>
                     </tr>
