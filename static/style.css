@@ -117,6 +117,10 @@ form a:not(.edit-btn) { /* Otros enlaces dentro de form */
     box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.5), inset 2px 2px 5px rgba(255, 255, 255, 0.2);
     text-align: center;
     box-sizing: border-box;
+    
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
 }
 
 .first-in-queue-container h2 {
@@ -131,6 +135,7 @@ form a:not(.edit-btn) { /* Otros enlaces dentro de form */
     justify-content: center;
     flex-wrap: wrap;
     gap: 25px;
+    margin-top: 20px;
 }
 
 .queue-item {
@@ -144,6 +149,7 @@ form a:not(.edit-btn) { /* Otros enlaces dentro de form */
     text-align: center;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3), inset 1px 1px 3px rgba(255, 255, 255, 0.1);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-sizing: border-box;
 }
 
 .queue-item:hover {
@@ -152,23 +158,24 @@ form a:not(.edit-btn) { /* Otros enlaces dentro de form */
 }
 
 .queue-item h3 {
-    font-family: 'Cinzel', serif;
-    color: var(--aoe-accent-gold);
+    font-family: 'Cinzel', serif; /* Mantén esta si ya la tienes */
+    color: var(--aoe-accent-gold); /* Este es el color dorado que te sugerí */
     margin-top: 0;
     margin-bottom: 10px;
-    font-size: 1.5em;
-    border-bottom: 1px solid var(--aoe-border);
+    font-size: 1.5em; /* Tu tamaño de fuente está bien */
+    border-bottom: 1px solid var(--aoe-border); /* Separador debajo del título */
     padding-bottom: 5px;
 }
 
 .queue-item p {
     margin: 5px 0;
-    font-size: 1em;
-    color: var(--aoe-text-light);
+    font-size: 1em; /* Tu tamaño de fuente está bien */
+    color: var(--aoe-text-light); /* Color de texto claro que te sugerí */
+    line-height: 1.4; /* Puedes añadir para mejor legibilidad */
 }
 
 .queue-item p strong {
-    color: var(--aoe-accent-gold);
+    color: var(--aoe-accent-gold); /* Color dorado para el texto en negrita */
 }
 
 /* --- 5. Contenedor del Calendario/Tablas (General) --- */
@@ -645,6 +652,9 @@ button.toggle-btn .fa-toggle-off {
 
     .first-in-queue-container h2 {
         font-size: 1.6em;
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
     }
 
     .queue-list {
