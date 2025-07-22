@@ -314,7 +314,7 @@ def book_slot():
                 flash(f'Slot de {time_slot} en {queue_type} para el {date_str} reservado por {booked_by}.', 'success')
                 
                 message = (
-                    f"📢 **¡Nueva Reserva!** >> {booked_by} << ha reservado un slot de **{queue_type.capitalize()}** "
+                    f"📢 **¡Nueva Reserva!**  {booked_by}  ha reservado un slot de **{queue_type.capitalize()}** "
                     f"el **{date_str} a las {time_slot} UTC**."
                 )
                 send_discord_notification(message)

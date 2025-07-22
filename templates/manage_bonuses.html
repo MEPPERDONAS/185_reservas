@@ -20,7 +20,7 @@
       {% endif %}
     {% endwith %}
 
-    <div class="bonus-form">
+    <div class="bonus-form"> {# <-- Mantén este div si tiene estilos de formulario general, pero sin 'table-responsive' #}
         <h2>Añadir Nueva Bonificación</h2>
         <form action="{{ url_for('manage_bonuses') }}" method="POST">
             <label for="queue_type">Tipo de Cola:</label>
@@ -52,19 +52,20 @@
 
     <h2>Bonificaciones Existentes</h2>
     {% if bonuses %}
-        <table class="bonus-table">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Cola</th>
-                    <th>Fecha Inicio</th>
-                    <th>Hora Inicio</th>
-                    <th>Duración (h)</th>
-                    <th>Activa</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
+        <div class="table-responsive"> {# <--- CORRECTO: ESTE DIV ENVUELVE SOLO LA TABLA #}
+            <table class="bonus-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Cola</th>
+                        <th>Fecha Inicio</th>
+                        <th>Hora Inicio</th>
+                        <th>Duración (h)</th>
+                        <th>Activa</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
                 {% for bonus in bonuses %}
                     <tr>
                         <td>{{ bonus.id }}</td>
@@ -93,16 +94,17 @@
                         </td>
                     </tr>
                 {% endfor %}
-            </tbody>
-        </table>
+                </tbody>
+            </table>
+        </div> {# <--- CIERRE CORRECTO DEL DIV #}
     {% else %}
         <p>No hay bonificaciones configuradas.</p>
     {% endif %}
 
-<div class="admin-return-buttons">
-    <a href="{{ url_for('admin_panel') }}" class="nav-button">Volver al Panel de Administración</a>
-    <a href="{{ url_for('index') }}" class="nav-button">Volver a la Página Principal</a>
-</div>
+    <div class="admin-return-buttons">
+        <a href="{{ url_for('admin_panel') }}" class="nav-button">Volver al Panel de Administración</a>
+        <a href="{{ url_for('index') }}" class="nav-button">Volver a la Página Principal</a>
+    </div>
 
 </body>
 </html>

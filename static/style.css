@@ -83,6 +83,7 @@ h1 {
 
 h2, h3 {
     font-family: 'Cinzel', serif;
+    text-align: center;
     color: var(--aoe-accent-gold);
     text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.6);
 }
@@ -95,7 +96,13 @@ h2, h3 {
     padding: 0 15px; /* Pequeño padding a los lados para móviles */
     box-sizing: border-box;
 }
-
+/* Centrar botones de submit dentro de formularios */
+form button[type="submit"] {
+    display: block; /* Hace que el botón ocupe su propia línea */
+    margin: 20px auto; /* Centra el botón horizontalmente y le da margen vertical */
+    max-width: 300px; /* Opcional: limita el ancho del botón si quieres que no sea demasiado ancho en pantallas grandes */
+    width: 100%; /* Asegura que tome el 100% del ancho disponible de su max-width */
+}
 .first-in-queue-container,
 .login-container,
 form button:not(.delete-btn):not(.toggle-btn):not(.edit-btn), /* Otros botones dentro de form */
@@ -339,7 +346,30 @@ tbody tr:nth-child(even) {
     font-size: 1.2em;
     text-shadow: 0 0 8px rgba(255, 215, 0, 0.8), 0 0 2px rgba(0, 0, 0, 0.5);
 }
+.bonus-form form {
+    display: flex; /* Convierte el formulario en un contenedor flex */
+    flex-direction: column; /* Apila los elementos hijos verticalmente */
+    align-items: center; /* Centra los elementos hijos horizontalmente en el contenedor flex */
+    gap: 15px; /* Añade un espacio entre cada elemento del formulario (labels, inputs, etc.) */
+    padding: 10px; /* Un poco de padding interno si lo deseas */
+}
 
+/* Asegurar que labels e inputs/selects tengan un ancho consistente y se centren */
+.bonus-form form label,
+.bonus-form form input:not([type="submit"]):not([type="checkbox"]), /* Aplica a inputs que no sean submit o checkbox */
+.bonus-form form select {
+    width: 100%; /* Hacen que ocupen todo el ancho disponible del contenedor flex */
+    max-width: 400px; /* Limita su ancho máximo para que no se extiendan demasiado en pantallas grandes */
+    box-sizing: border-box; /* Importante para que el padding y el borde no aumenten el ancho total */
+    text-align: center; /* Centra el texto dentro del input/select si lo deseas */
+}
+
+/* Centrar el texto pequeño de ayuda */
+.bonus-form form small {
+    text-align: center;
+    width: 100%; /* Asegura que ocupe todo el ancho para aplicar text-align */
+    display: block; /* Asegura que sea un bloque para que text-align funcione correctamente */
+}
 /* --- 8. Estilos para Formularios (Comunes) --- */
 label {
     display: block;
@@ -363,6 +393,7 @@ select {
     color: var(--aoe-text-light);
     border-radius: 5px;
     font-family: 'MedievalSharp', cursive, 'Inter', sans-serif;
+    text-align: center;
     box-sizing: border-box;
     box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.5);
 }
@@ -457,9 +488,9 @@ input[type="submit"]:active {
     background: linear-gradient(to bottom, var(--aoe-accent-gold), #8A7340);
     color: var(--aoe-text-dark);
     border: 2px solid #5C4A28;
-    border-radius: 5px;
-    padding: 12px 25px;
-    font-size: 1.2em;
+    /*border-radius: 5px;*/
+    padding: 2px 10px;
+    font-size: 0.9em;
     cursor: pointer;
     text-transform: uppercase;
     box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.6), inset 1px 1px 4px rgba(255, 255, 255, 0.3);
