@@ -20,11 +20,11 @@
                 </ul>
             {% endif %}
         {% endwith %}
-
-        <a href="{{ url_for('index') }}" class="back-link">&larr; Volver a la vista principal</a>
+        
+        <a href="{{ url_for('index') }}" class="back-link nav-button">&larr; Volver a la vista principal</a>
 
         <div class="admin-links">
-            <a href="{{ url_for('manage_bonuses') }}"><i class="fas fa-star"></i> Administrar Bonificaciones</a>
+            <a href="{{ url_for('manage_bonuses') }}" class="nav-button"><i class="fas fa-star"></i> Administrar Bonificaciones</a>
             {# Puedes añadir más enlaces de administración aquí si los necesitas en el futuro #}
         </div>
 

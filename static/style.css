@@ -451,7 +451,58 @@ input[type="submit"]:active {
     transform: translateY(1px);
     box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
 }
+/* NAV BUTTONS*/
+.nav-button {
+    font-family: 'Cinzel', serif;
+    background: linear-gradient(to bottom, var(--aoe-accent-gold), #8A7340);
+    color: var(--aoe-text-dark);
+    border: 2px solid #5C4A28;
+    border-radius: 5px;
+    padding: 12px 25px;
+    font-size: 1.2em;
+    cursor: pointer;
+    text-transform: uppercase;
+    box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.6), inset 1px 1px 4px rgba(255, 255, 255, 0.3);
+    transition: all 0.2s ease;
+    font-weight: bold;
+    text-decoration: none; /* Importante para quitar el subrayado del enlace */
+    display: inline-block; /* Permite aplicar padding, width, etc. */
+    margin: 5px; /* Espacio entre botones */
+    min-width: 150px; /* Asegura un ancho mínimo para que se vean bien */
+    text-align: center; /* Centra el texto */
+}
 
+.nav-button:hover {
+    background: linear-gradient(to bottom, #CCA34C, var(--aoe-accent-gold));
+    box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.8), inset 1px 1px 5px rgba(255, 255, 255, 0.4);
+    transform: translateY(-2px);
+}
+
+.nav-button:active {
+    transform: translateY(1px);
+    box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Estilo específico para el botón de cerrar sesión en la navegación */
+.nav-button.logout-button {
+    background: linear-gradient(to bottom, #6C757D, #4A5258); /* Color más neutro/gris */
+    border: 2px solid #454E53;
+    color: white;
+}
+
+.nav-button.logout-button:hover {
+    background: linear-gradient(to bottom, #8A929A, #6C757D);
+}
+.admin-return-buttons {
+    display: flex; /* Convierte el contenedor en un flex container */
+    flex-wrap: wrap; /* Permite que los botones se envuelvan a la siguiente línea en pantallas pequeñas */
+    justify-content: center; /* Centra los botones horizontalmente */
+    gap: 20px; /* Espacio entre los botones */
+    margin-top: 30px; /* Espacio superior para separarlo del contenido de la tabla */
+    margin-bottom: 20px; /* Espacio inferior */
+    width: 100%; /* Ocupa todo el ancho disponible */
+    max-width: 800px; /* Opcional: limita el ancho máximo del contenedor de botones */
+}
 /* --- 10. Estilos de Tablas (Generales y Específicas) --- */
 /* Estilo para la tabla de bonificaciones */
 .bonus-table {

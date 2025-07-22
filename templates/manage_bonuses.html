@@ -99,7 +99,10 @@
         <p>No hay bonificaciones configuradas.</p>
     {% endif %}
 
-    <p><a href="{{ url_for('admin_panel') }}">Volver al Panel de Administración</a></p>
-    <p><a href="{{ url_for('index') }}">Volver a la Página Principal</a></p>
+<div class="admin-return-buttons">
+    <a href="{{ url_for('admin_panel') }}" class="nav-button">Volver al Panel de Administración</a>
+    <a href="{{ url_for('index') }}" class="nav-button">Volver a la Página Principal</a>
+</div>
+
 </body>
 </html>
