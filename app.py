@@ -2,8 +2,9 @@ import os
 from datetime import datetime, timedelta, date, time, timezone
 import requests
 
-from flask import Flask, render_template, request, redirect, url_for, flash, session # Asegúrate de que 'session' esté aquí
+from flask import Flask, render_template, request, redirect, url_for, flash, session
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import and_, or_ # <-- ¡Añade esta importación!
 
 try:
     from dotenv import load_dotenv
@@ -12,8 +13,8 @@ except ImportError:
     pass
 
 app = Flask(__name__)
-app.secret_key = os.getenv('SECRET_KEY', 'desarrollo')  # Cambia esto en producción
-DISCORD_BOT_TOKEN = os.getenv("TOKEN") # El mismo TOKEN que usa tu bot
+app.secret_key = os.getenv('SECRET_KEY', 'desarrollo')
+DISCORD_BOT_TOKEN = os.getenv("TOKEN")
 DISCORD_ANNOUNCEMENT_CHANNEL_ID = os.getenv("CANAL_AVISOS_ID")
 
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL').replace("postgres://", "postgresql://", 1) if os.getenv('DATABASE_URL') else 'sqlite:///reservas.db'
@@ -87,14 +88,11 @@ def get_bookings_for_display(target_date_obj):
             }
 
     for queue in QUEUES:
-        # Asegurarse de que todas las horas estén presentes y ordenadas
-        # Primero, crea una lista de todas las 24 horas del día
         all_hours_for_day = [f"{h:02d}:00" for h in range(24)]
         temp_bookings = {}
         for h in all_hours_for_day:
             temp_bookings[h] = bookings_data[queue].get(h, {"available": True, "booked_by": None})
 
-        # Luego, ordénalas
         sorted_times = sorted(temp_bookings.items(), key=lambda x: datetime.strptime(x[0], "%H:%M").time())
         bookings_data[queue] = {time_str: details for time_str, details in sorted_times}
 
@@ -123,32 +121,27 @@ def index():
         update_daily_bookings_in_db()
 
     now_utc = datetime.now(timezone.utc)
-    current_hour_utc = now_utc.hour # Puedes mantener esto si solo comparas horas, pero para slots completos, usaremos now_utc.
+    current_hour_utc = now_utc.hour
 
     today_local = date.today()
-    tomorrow_local = today_local + timedelta(days=1) # Definir tomorrow_local aquí
+    tomorrow_local = today_local + timedelta(days=1)
 
     ordered_display_dates = {}
 
-    # Procesar "Hoy"
     today_bookings = get_bookings_for_display(today_local)
     for queue in QUEUES:
         for hour_str, details in today_bookings[queue].items():
             slot_hour = int(hour_str.split(':')[0])
-            # Para la lógica de "Pasado", es mejor comparar el datetime completo
             slot_dt_obj = datetime.combine(today_local, datetime.strptime(hour_str, "%H:%M").time()).replace(tzinfo=timezone.utc)
-            if slot_dt_obj < now_utc: # Compara el slot completo (aware) con la hora actual (aware)
+            if slot_dt_obj < now_utc:
                 details["available"] = False
                 if details["booked_by"] is None:
                     details["booked_by"] = "Pasado"
     ordered_display_dates[today_local.isoformat()] = today_bookings
 
-    # Procesar "Mañana"
     tomorrow_bookings = get_bookings_for_display(tomorrow_local)
-    # No se marcan como "Pasado" aquí porque es un día futuro completo
     ordered_display_dates[tomorrow_local.isoformat()] = tomorrow_bookings
 
-    # --- Lógica para 'first_in_queue' - Muestra el próximo turno tomado ---
     first_in_queue = {}
 
     for queue_name in QUEUES:
@@ -161,11 +154,10 @@ def index():
             for hour_str, details in current_day_bookings[queue_name].items():
                 slot_time_obj = datetime.strptime(hour_str, "%H:%M").time()
 
-                # Convertir el slot a un objeto datetime UTC-aware para una comparación precisa
                 slot_datetime_aware = datetime.combine(d_obj, slot_time_obj).replace(tzinfo=timezone.utc)
 
                 is_future_slot = False
-                if slot_datetime_aware > now_utc: # Ahora ambas son aware y se pueden comparar
+                if slot_datetime_aware > now_utc:
                     is_future_slot = True
 
                 if not details["available"] and details["booked_by"] != "Pasado" and is_future_slot:
@@ -186,52 +178,38 @@ def index():
                 "booked_by": "N/A",
                 "message": "No hay turnos próximos tomados"
             }
-    # --- Fin de la lógica para 'first_in_queue' ---
 
-    # --- Lógica para obtener Bonificaciones Activas y determinar bonused_slots ---
-    # Obtenemos todas las bonificaciones activas
     active_bonuses = Bonus.query.filter(Bonus.active == True).all()
 
-    # bonused_slots almacenará qué slots específicos (fecha, hora, cola) tienen una bonificación
-    # Ejemplo: {'building': {'2025-07-18': {'10:00', '11:00'}, '2025-07-19': set()}, ...}
     bonused_slots = {queue: {today_local.isoformat(): set(), tomorrow_local.isoformat(): set()} for queue in QUEUES}
 
-    # Guardaremos qué colas tienen una bonificación activa AHORA (para el panel "Próximos en cola")
     bonused_queues_now = {queue: False for queue in QUEUES}
 
     for bonus in active_bonuses:
-        # Convertir la fecha y hora de inicio de la bonificación a un objeto datetime UTC-aware
         bonus_start_dt = datetime.combine(bonus.start_date, datetime.strptime(bonus.start_time, "%H:%M").time()).replace(tzinfo=timezone.utc)
         bonus_end_dt = bonus_start_dt + timedelta(hours=bonus.duration_hours)
 
-        # Verificar si la bonificación está activa AHORA
         if bonus_start_dt <= now_utc < bonus_end_dt:
             bonused_queues_now[bonus.queue_type] = True
 
-        # Iterar por cada hora que dura la bonificación para marcar los slots
         current_slot_dt = bonus_start_dt
         while current_slot_dt < bonus_end_dt:
-            # Solo marcamos si el slot cae en hoy o mañana
             if current_slot_dt.date() == today_local or current_slot_dt.date() == tomorrow_local:
-                # Asegúrate de que la fecha de la bonificación sea la misma que la fecha del slot para evitar problemas
                 if current_slot_dt.date().isoformat() in bonused_slots[bonus.queue_type]:
                     bonused_slots[bonus.queue_type][current_slot_dt.date().isoformat()].add(current_slot_dt.strftime("%H:%M"))
             current_slot_dt += timedelta(hours=1)
 
-            # Prevenir bucles infinitos si la duración es muy larga o cruza el día de forma inusual
-            # Si pasamos al día siguiente y ya procesamos un día completo, podemos romper.
             if current_slot_dt.date() > bonus_end_dt.date() and bonus_end_dt.date() >= bonus_start_dt.date():
                 break
-            if current_slot_dt.date() > tomorrow_local: # No vamos más allá de mañana
+            if current_slot_dt.date() > tomorrow_local:
                 break
 
-    # Las bonificaciones se pueden mostrar en el panel principal si es necesario
     bonuses_for_display = []
     for bonus in active_bonuses:
         bonus_start_dt = datetime.combine(bonus.start_date, datetime.strptime(bonus.start_time, "%H:%M").time()).replace(tzinfo=timezone.utc)
         bonus_end_dt = bonus_start_dt + timedelta(hours=bonus.duration_hours)
 
-        if bonus_end_dt > now_utc: # Solo mostrar bonificaciones que están activas o comenzarán pronto
+        if bonus_end_dt > now_utc:
             bonuses_for_display.append({
                 "queue_type": bonus.queue_type.capitalize(),
                 "start_time": bonus_start_dt.strftime("%Y-%m-%d %H:%M"),
@@ -248,16 +226,15 @@ def index():
         today=today_local.isoformat(),
         now_utc=now_utc.strftime("%Y-%m-%d %H:%M:%S UTC"),
         first_in_queue=first_in_queue,
-        bonused_slots=bonused_slots, # PASAR ESTO A LA PLANTILLA
-        bonused_queues_now=bonused_queues_now, # PASAR ESTO TAMBIÉN
-        bonuses_for_display=bonuses_for_display # Esto es opcional si ya no lo usas
+        bonused_slots=bonused_slots,
+        bonused_queues_now=bonused_queues_now,
+        bonuses_for_display=bonuses_for_display
     )
 
 def send_discord_notification(message, channel_id=None):
     """Envía un mensaje al canal de Discord especificado o al canal de anuncios por defecto."""
     if not DISCORD_BOT_TOKEN:
         print("Error: TOKEN de Discord no configurado en variables de entorno.")
-        # No uses flash aquí, ya que esta función no está en el contexto de una solicitud directa del usuario
         return
 
     target_channel_id = channel_id if channel_id else DISCORD_ANNOUNCEMENT_CHANNEL_ID
@@ -272,17 +249,14 @@ def send_discord_notification(message, channel_id=None):
     payload = {
         "content": message
     }
-    # URL de la API de Discord para enviar mensajes a un canal
     url = f"https://discord.com/api/v10/channels/{target_channel_id}/messages"
 
     try:
         response = requests.post(url, headers=headers, json=payload)
-        response.raise_for_status()  # Lanza una excepción para errores HTTP (4xx o 5xx)
+        response.raise_for_status()
         print(f"Notificación de Discord enviada: {message}")
     except requests.exceptions.RequestException as e:
         print(f"Error al enviar notificación de Discord: {e}")
-        # En este caso, podrías querer registrar el error o manejarlo de otra manera.
-        # No se recomienda un flash aquí directamente ya que se llama desde otras funciones.
     except Exception as e:
         print(f"Error inesperado al enviar notificación de Discord: {e}")
 
@@ -295,7 +269,6 @@ def book_slot():
         time_slot = request.form['time']
         booked_by = request.form['booked_by']
 
-        # Validar la entrada (opcional pero recomendado)
         if not all([date_str, queue_type, time_slot, booked_by]):
             flash('Error: Todos los campos son requeridos.', 'error')
             return redirect(url_for('index'))
@@ -303,7 +276,6 @@ def book_slot():
         try:
             booking_date_obj = datetime.strptime(date_str, '%Y-%m-%d').date()
             
-            # Buscar el slot en la base de datos
             slot = Booking.query.filter_by(
                 booking_date=booking_date_obj,
                 time_slot=time_slot,
@@ -334,15 +306,30 @@ def book_slot():
 def admin_panel():
     """
     Muestra un panel de administración con todas las reservas.
-    ¡ADVERTENCIA: Esta ruta no tiene autenticación!
     """
-    # if 'username' not in session or session.get('role') != 'admin': # COMENTADO PARA SALTAR VERIFICACIÓN
+    # if 'username' not in session or session.get('role') != 'admin':
     #     flash('Acceso denegado. Solo los administradores pueden acceder.', 'error')
-    #     return redirect(url_for('login')) # COMENTADO PARA SALTAR VERIFICACIÓN
+    #     return redirect(url_for('login'))
 
     with app.app_context():
-        # Obtener todas las reservas, ordenadas por fecha y hora para facilitar la visualización
-        all_bookings = Booking.query.filter_by(available=False).order_by(Booking.booking_date, Booking.time_slot).all()
+        now_utc = datetime.now(timezone.utc)
+        current_date_utc = now_utc.date()
+        current_time_utc_str = now_utc.strftime('%H:%M')
+
+        # Obtener solo reservas futuras o actuales no pasadas
+        all_bookings = Booking.query.filter(
+            and_(
+                Booking.available == False, # Solo reservas ocupadas
+                or_(
+                    Booking.booking_date > current_date_utc, # Fechas futuras
+                    and_(
+                        Booking.booking_date == current_date_utc, # O fecha de hoy
+                        Booking.time_slot >= current_time_utc_str # Y hora actual o futura
+                    )
+                )
+            )
+        ).order_by(Booking.booking_date, Booking.time_slot).all()
+        
     return render_template('admin.html', all_bookings=all_bookings, queues=QUEUES)
 
 
@@ -350,11 +337,10 @@ def admin_panel():
 def delete_booking(booking_id):
     """
     Borra una reserva específica de la base de datos.
-    ¡ADVERTENCIA: Esta ruta no tiene autenticación!
     """
-    # if 'username' not in session or session.get('role') != 'admin': # COMENTADO PARA SALTAR VERIFICACIÓN
+    # if 'username' not in session or session.get('role') != 'admin':
     #     flash('Acceso denegado. Solo los administradores pueden acceder.', 'error')
-    #     return redirect(url_for('login')) # COMENTADO PARA SALTAR VERIFICACIÓN
+    #     return redirect(url_for('login'))
 
     with app.app_context():
         booking_to_delete = Booking.query.get_or_404(booking_id) 
@@ -372,11 +358,10 @@ def delete_booking(booking_id):
 def edit_booking(booking_id):
     """
     Muestra un formulario para editar una reserva y procesa la actualización.
-    ¡ADVERTENCIA: Esta ruta no tiene autenticación!
     """
-    # if 'username' not in session or session.get('role') != 'admin': # COMENTADO PARA SALTAR VERIFICACIÓN
+    # if 'username' not in session or session.get('role') != 'admin':
     #     flash('Acceso denegado. Solo los administradores pueden acceder.', 'error')
-    #     return redirect(url_for('login')) # COMENTADO PARA SALTAR VERIFICACIÓN
+    #     return redirect(url_for('login'))
 
     with app.app_context():
         booking_to_edit = Booking.query.get_or_404(booking_id)
@@ -397,9 +382,9 @@ def edit_booking(booking_id):
 
 @app.route('/admin/bonuses', methods=['GET', 'POST'])
 def manage_bonuses():
-    # if 'username' not in session or session.get('role') != 'admin': # COMENTADO PARA SALTAR VERIFICACIÓN
+    # if 'username' not in session or session.get('role') != 'admin':
     #     flash('Acceso denegado. Solo los administradores pueden acceder.', 'error')
-    #     return redirect(url_for('login')) # COMENTADO PARA SALTAR VERIFICACIÓN
+    #     return redirect(url_for('login'))
 
     with app.app_context():
         if request.method == 'POST':
@@ -452,9 +437,9 @@ def manage_bonuses():
     
 @app.route('/send_discord_message', methods=['GET', 'POST'])
 def send_discord_message():
-    # if 'username' not in session or session.get('role') != 'admin': # COMENTADO PARA SALTAR VERIFICACIÓN
+    # if 'username' not in session or session.get('role') != 'admin':
     #     flash('Acceso denegado. Solo los administradores pueden acceder.', 'error')
-    #     return redirect(url_for('login')) # COMENTADO PARA SALTAR VERIFICACIÓN
+    #     return redirect(url_for('login'))
 
     if request.method == 'POST':
         channel_id = request.form.get('channel_id')
@@ -464,9 +449,10 @@ def send_discord_message():
             flash('Por favor, completa todos los campos.', 'error')
             return redirect(url_for('send_discord_message'))
 
+        # CAMBIO AQUÍ: Elimina las triples comillas invertidas (```)
         formatted_message = (
             f"**Mensaje desde el Panel de Administración:**\n"
-            f"```\n{message_content}\n```"
+            f"{message_content}" # <-- ¡Aquí está el cambio!
         )
 
         try:
@@ -481,9 +467,9 @@ def send_discord_message():
 
 @app.route('/admin/bonuses/toggle/<int:bonus_id>', methods=['POST'])
 def toggle_bonus_active(bonus_id):
-    # if 'username' not in session or session.get('role') != 'admin': # COMENTADO PARA SALTAR VERIFICACIÓN
+    # if 'username' not in session or session.get('role') != 'admin':
     #     flash('Acceso denegado. Solo los administradores pueden acceder.', 'error')
-    #     return redirect(url_for('login')) # COMENTADO PARA SALTAR VERIFICACIÓN
+    #     return redirect(url_for('login'))
 
     with app.app_context():
         bonus = Bonus.query.get_or_404(bonus_id)
@@ -498,9 +484,9 @@ def toggle_bonus_active(bonus_id):
 
 @app.route('/admin/bonuses/delete/<int:bonus_id>', methods=['POST'])
 def delete_bonus(bonus_id):
-    # if 'username' not in session or session.get('role') != 'admin': # COMENTADO PARA SALTAR VERIFICACIÓN
+    # if 'username' not in session or session.get('role') != 'admin':
     #     flash('Acceso denegado. Solo los administradores pueden acceder.', 'error')
-    #     return redirect(url_for('login')) # COMENTADO PARA SALTAR VERIFICACIÓN
+    #     return redirect(url_for('login'))
 
     with app.app_context():
         bonus_to_delete = Bonus.query.get_or_404(bonus_id)
@@ -515,7 +501,6 @@ def delete_bonus(bonus_id):
 
 
 # --- Rutas de Autenticación (¡Puedes eliminarlas o comentarlas si no las necesitas AHORA MISMO!) ---
-# Usuario de prueba (en un entorno real, esto vendría de una base de datos o sistema de usuarios)
 USERS = {
     "admin": {"password": "adminpassword", "role": "admin"},
     "user1": {"password": "userpassword", "role": "user"}
@@ -523,8 +508,6 @@ USERS = {
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    # Esta ruta de login ya no será redirigida si las verificaciones están comentadas,
-    # pero si la accedes directamente, aún puedes usarla.
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
