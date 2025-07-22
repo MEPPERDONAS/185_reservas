@@ -201,7 +201,7 @@ table {
     /* Estas reglas se aplican a todas las tablas */
     flex: 1; /* Permite que la tabla ocupe espacio dentro de flexbox */
     min-width: 320px; /* Ancho mínimo para cada tabla individual */
-    max-width: 400px; /* Ancho máximo para cada tabla en pantallas anchas */
+    max-width: 600px; /* Ancho máximo para cada tabla en pantallas anchas */
     border-collapse: collapse;
     margin-bottom: 20px; /* Separación entre tablas cuando están apiladas */
     background-color: var(--aoe-panel-bg);
@@ -647,6 +647,7 @@ button.toggle-btn .fa-toggle-off {
     form a:not(.edit-btn) {
         width: 95%; /* Ocupa más ancho en móviles */
         padding: 15px; /* Menos padding en móviles */
+        min-width: 320px;
         margin: 15px auto;
     }
 

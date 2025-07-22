@@ -2,7 +2,7 @@ import os
 from datetime import datetime, timedelta, date, time, timezone
 import requests
 
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, session # Asegúrate de que 'session' esté aquí
 from flask_sqlalchemy import SQLAlchemy
 
 try:
@@ -215,7 +215,7 @@ def index():
             if current_slot_dt.date() == today_local or current_slot_dt.date() == tomorrow_local:
                 # Asegúrate de que la fecha de la bonificación sea la misma que la fecha del slot para evitar problemas
                 if current_slot_dt.date().isoformat() in bonused_slots[bonus.queue_type]:
-                     bonused_slots[bonus.queue_type][current_slot_dt.date().isoformat()].add(current_slot_dt.strftime("%H:%M"))
+                    bonused_slots[bonus.queue_type][current_slot_dt.date().isoformat()].add(current_slot_dt.strftime("%H:%M"))
             current_slot_dt += timedelta(hours=1)
 
             # Prevenir bucles infinitos si la duración es muy larga o cruza el día de forma inusual
@@ -257,6 +257,7 @@ def send_discord_notification(message, channel_id=None):
     """Envía un mensaje al canal de Discord especificado o al canal de anuncios por defecto."""
     if not DISCORD_BOT_TOKEN:
         print("Error: TOKEN de Discord no configurado en variables de entorno.")
+        # No uses flash aquí, ya que esta función no está en el contexto de una solicitud directa del usuario
         return
 
     target_channel_id = channel_id if channel_id else DISCORD_ANNOUNCEMENT_CHANNEL_ID
@@ -280,10 +281,12 @@ def send_discord_notification(message, channel_id=None):
         print(f"Notificación de Discord enviada: {message}")
     except requests.exceptions.RequestException as e:
         print(f"Error al enviar notificación de Discord: {e}")
+        # En este caso, podrías querer registrar el error o manejarlo de otra manera.
+        # No se recomienda un flash aquí directamente ya que se llama desde otras funciones.
     except Exception as e:
         print(f"Error inesperado al enviar notificación de Discord: {e}")
 
-# --- AÑADE ESTA FUNCIÓN AQUÍ ABAJO ---
+
 @app.route('/book', methods=['POST'])
 def book_slot():
     with app.app_context():
@@ -314,8 +317,9 @@ def book_slot():
                 flash(f'Slot de {time_slot} en {queue_type} para el {date_str} reservado por {booked_by}.', 'success')
                 
                 message = (
-                    f"📢 **¡Nueva Reserva!**  {booked_by}  ha reservado un slot de **{queue_type.capitalize()}** "
-                    f"el **{date_str} a las {time_slot} UTC**."
+                    f"📢  **¡Nueva Reserva!\n**"
+                    f"👤 **¨[{booked_by}]** \nha reservado un slot de **{queue_type.capitalize()}** "
+                    f"para el: \n**{date_str} a las {time_slot} UTC**."
                 )
                 send_discord_notification(message)
             else:
@@ -332,6 +336,10 @@ def admin_panel():
     Muestra un panel de administración con todas las reservas.
     ¡ADVERTENCIA: Esta ruta no tiene autenticación!
     """
+    # if 'username' not in session or session.get('role') != 'admin': # COMENTADO PARA SALTAR VERIFICACIÓN
+    #     flash('Acceso denegado. Solo los administradores pueden acceder.', 'error')
+    #     return redirect(url_for('login')) # COMENTADO PARA SALTAR VERIFICACIÓN
+
     with app.app_context():
         # Obtener todas las reservas, ordenadas por fecha y hora para facilitar la visualización
         all_bookings = Booking.query.filter_by(available=False).order_by(Booking.booking_date, Booking.time_slot).all()
@@ -344,8 +352,12 @@ def delete_booking(booking_id):
     Borra una reserva específica de la base de datos.
     ¡ADVERTENCIA: Esta ruta no tiene autenticación!
     """
+    # if 'username' not in session or session.get('role') != 'admin': # COMENTADO PARA SALTAR VERIFICACIÓN
+    #     flash('Acceso denegado. Solo los administradores pueden acceder.', 'error')
+    #     return redirect(url_for('login')) # COMENTADO PARA SALTAR VERIFICACIÓN
+
     with app.app_context():
-        booking_to_delete = Booking.query.get_or_404(booking_id) # Busca la reserva por ID o devuelve 404 si no existe
+        booking_to_delete = Booking.query.get_or_404(booking_id) 
         try:
             db.session.delete(booking_to_delete)
             db.session.commit()
@@ -362,44 +374,46 @@ def edit_booking(booking_id):
     Muestra un formulario para editar una reserva y procesa la actualización.
     ¡ADVERTENCIA: Esta ruta no tiene autenticación!
     """
+    # if 'username' not in session or session.get('role') != 'admin': # COMENTADO PARA SALTAR VERIFICACIÓN
+    #     flash('Acceso denegado. Solo los administradores pueden acceder.', 'error')
+    #     return redirect(url_for('login')) # COMENTADO PARA SALTAR VERIFICACIÓN
+
     with app.app_context():
         booking_to_edit = Booking.query.get_or_404(booking_id)
 
         if request.method == 'POST':
-            # Actualizar los datos de la reserva con la información del formulario
             booking_to_edit.booked_by = request.form['booked_by']
-            # El checkbox 'available' envía 'on' si está marcado, nada si no lo está
             booking_to_edit.available = ('available' in request.form)
 
             try:
                 db.session.commit()
                 flash(f'Reserva ID {booking_id} actualizada exitosamente.', 'success')
-                return redirect(url_for('admin_panel')) # Redirige al panel después de editar
+                return redirect(url_for('admin_panel'))
             except Exception as e:
                 db.session.rollback()
                 flash(f'Error al actualizar la reserva: {e}', 'error')
         
-        # Para solicitudes GET, renderiza el formulario con los datos actuales
         return render_template('edit_booking.html', booking=booking_to_edit, queues=QUEUES)
-# PARA AÑADIR BONUS
+
 @app.route('/admin/bonuses', methods=['GET', 'POST'])
 def manage_bonuses():
+    # if 'username' not in session or session.get('role') != 'admin': # COMENTADO PARA SALTAR VERIFICACIÓN
+    #     flash('Acceso denegado. Solo los administradores pueden acceder.', 'error')
+    #     return redirect(url_for('login')) # COMENTADO PARA SALTAR VERIFICACIÓN
+
     with app.app_context():
         if request.method == 'POST':
             queue_type = request.form['queue_type']
             start_date_str = request.form['start_date']
             
-            # --- CAMBIO AQUÍ: Formatear la hora recibida del select ---
-            start_hour_selected = request.form['start_time'] # Recibimos '00', '01', ..., '23'
-            start_time_formatted = f"{start_hour_selected}:00" # Lo convertimos a '00:00', '01:00', ...
-            # --- FIN DEL CAMBIO ---
+            start_hour_selected = request.form['start_time']
+            start_time_formatted = f"{start_hour_selected}:00"
 
             duration_hours = int(request.form['duration_hours'])
 
             try:
                 start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
                 
-                # Opcional pero recomendado: validación de la duración
                 if duration_hours <= 0:
                     flash('Error: La duración debe ser al menos 1 hora.', 'error')
                     return redirect(url_for('manage_bonuses'))
@@ -407,16 +421,14 @@ def manage_bonuses():
                 new_bonus = Bonus(
                     queue_type=queue_type,
                     start_date=start_date,
-                    # --- USAR LA HORA FORMATEADA AQUÍ ---
                     start_time=start_time_formatted, 
-                    # --- FIN DEL CAMBIO ---
                     duration_hours=duration_hours,
                     active=True
                 )
                 db.session.add(new_bonus)
                 db.session.commit()
                 flash('Bonificación añadida exitosamente.', 'success')
-                # --- Notificación a Discord ---
+                
                 bonus_start_dt_utc = datetime.combine(start_date, datetime.strptime(start_time_formatted, "%H:%M").time()).replace(tzinfo=timezone.utc)
                 bonus_end_dt_utc = bonus_start_dt_utc + timedelta(hours=duration_hours)
 
@@ -426,10 +438,8 @@ def manage_bonuses():
                     f"por **{duration_hours} hora(s)** (hasta las {bonus_end_dt_utc.strftime('%H:%M')} UTC)."
                 )
                 send_discord_notification(message)
-                # --- Fin de la notificación ---
 
             except ValueError:
-                # Esto atrapará errores si start_date_str no es un formato de fecha válido
                 flash('Error: Formato de fecha de inicio inválido.', 'error')
                 db.session.rollback()
             except Exception as e:
@@ -439,9 +449,42 @@ def manage_bonuses():
 
         all_bonuses = Bonus.query.order_by(Bonus.start_date, Bonus.start_time).all()
         return render_template('manage_bonuses.html', bonuses=all_bonuses, queues=QUEUES)
+    
+@app.route('/send_discord_message', methods=['GET', 'POST'])
+def send_discord_message():
+    # if 'username' not in session or session.get('role') != 'admin': # COMENTADO PARA SALTAR VERIFICACIÓN
+    #     flash('Acceso denegado. Solo los administradores pueden acceder.', 'error')
+    #     return redirect(url_for('login')) # COMENTADO PARA SALTAR VERIFICACIÓN
+
+    if request.method == 'POST':
+        channel_id = request.form.get('channel_id')
+        message_content = request.form.get('message_content')
+
+        if not channel_id or not message_content:
+            flash('Por favor, completa todos los campos.', 'error')
+            return redirect(url_for('send_discord_message'))
+
+        formatted_message = (
+            f"**Mensaje desde el Panel de Administración:**\n"
+            f"```\n{message_content}\n```"
+        )
+
+        try:
+            send_discord_notification(formatted_message, channel_id) 
+            flash('Mensaje enviado a Discord exitosamente!', 'success')
+        except Exception as e:
+            flash(f'Ocurrió un error al enviar mensaje a Discord: {e}', 'error')
+
+        return redirect(url_for('send_discord_message'))
+
+    return render_template('send_discord_message.html')
 
 @app.route('/admin/bonuses/toggle/<int:bonus_id>', methods=['POST'])
 def toggle_bonus_active(bonus_id):
+    # if 'username' not in session or session.get('role') != 'admin': # COMENTADO PARA SALTAR VERIFICACIÓN
+    #     flash('Acceso denegado. Solo los administradores pueden acceder.', 'error')
+    #     return redirect(url_for('login')) # COMENTADO PARA SALTAR VERIFICACIÓN
+
     with app.app_context():
         bonus = Bonus.query.get_or_404(bonus_id)
         bonus.active = not bonus.active
@@ -455,6 +498,10 @@ def toggle_bonus_active(bonus_id):
 
 @app.route('/admin/bonuses/delete/<int:bonus_id>', methods=['POST'])
 def delete_bonus(bonus_id):
+    # if 'username' not in session or session.get('role') != 'admin': # COMENTADO PARA SALTAR VERIFICACIÓN
+    #     flash('Acceso denegado. Solo los administradores pueden acceder.', 'error')
+    #     return redirect(url_for('login')) # COMENTADO PARA SALTAR VERIFICACIÓN
+
     with app.app_context():
         bonus_to_delete = Bonus.query.get_or_404(bonus_id)
         try:
@@ -466,7 +513,44 @@ def delete_bonus(bonus_id):
             flash(f'Error al eliminar bonificación: {e}', 'error')
     return redirect(url_for('manage_bonuses'))
 
-# --- FIN DE LA FUNCIÓN A AÑADIR ---
+
+# --- Rutas de Autenticación (¡Puedes eliminarlas o comentarlas si no las necesitas AHORA MISMO!) ---
+# Usuario de prueba (en un entorno real, esto vendría de una base de datos o sistema de usuarios)
+USERS = {
+    "admin": {"password": "adminpassword", "role": "admin"},
+    "user1": {"password": "userpassword", "role": "user"}
+}
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    # Esta ruta de login ya no será redirigida si las verificaciones están comentadas,
+    # pero si la accedes directamente, aún puedes usarla.
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+        user = USERS.get(username)
+
+        if user and user['password'] == password:
+            session['username'] = username
+            session['role'] = user['role']
+            flash('¡Sesión iniciada exitosamente!', 'success')
+            if user['role'] == 'admin':
+                return redirect(url_for('admin_panel'))
+            else:
+                return redirect(url_for('index'))
+        else:
+            flash('Usuario o contraseña incorrectos.', 'error')
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    session.pop('username', None)
+    session.pop('role', None)
+    flash('Has cerrado sesión.', 'info')
+    return redirect(url_for('index'))
+# --- FIN DE LAS RUTAS DE AUTENTICACIÓN ---
+
 
 if __name__ == '__main__':
     with app.app_context():

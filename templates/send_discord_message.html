@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enviar Mensaje a Discord</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+<body>
+    <h1>Enviar Mensaje a Discord</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul class="flashes">
+        {% for category, message in messages %}
+          <li class="{{ category }}">{{ message | safe }}</li> {# Usamos |safe por si hay HTML en el mensaje #}
+        {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    <div class="discord-message-form"> {# Nuevo contenedor para el formulario #}
+        <h2>Enviar Mensaje Personalizado</h2>
+        <form action="{{ url_for('send_discord_message') }}" method="POST">
+            <label for="channel_id">ID del Canal de Discord:</label>
+            <input type="text" id="channel_id" name="channel_id" placeholder="Ej: 123456789012345678" required>
+            <small>Puedes obtener el ID de un canal haciendo clic derecho en él en Discord y seleccionando "Copiar ID".</small>
+
+            <label for="message_content">Contenido del Mensaje:</label>
+            <textarea id="message_content" name="message_content" rows="8" placeholder="Escribe tu mensaje aquí..." required></textarea>
+            <small>Puedes usar Markdown de Discord para formato (ej: **negrita**, *cursiva*, `código`).</small>
+
+            <button type="submit">Enviar Mensaje</button>
+        </form>
+    </div>
+
+    <div class="admin-return-buttons">
+        <a href="{{ url_for('admin_panel') }}" class="nav-button">Volver al Panel de Administración</a>
+        <a href="{{ url_for('index') }}" class="nav-button">Volver a la Página Principal</a>
+    </div>
+
+</body>
+</html>
