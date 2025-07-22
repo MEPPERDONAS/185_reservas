@@ -73,12 +73,20 @@ body {
 
 /* --- 3. Estilos de Títulos --- */
 h1 {
-    font-family: 'Cinzel', serif;
+    font-family: 'Cinzel', serif; /* Una fuente más majestuosa para el título principal */
+    font-size: 2.8em; /* Tamaño de fuente más grande */
+    color: var(--aoe-accent-gold); /* Color dorado para resaltar */
     text-align: center;
-    color: var(--aoe-accent-gold);
-    margin-bottom: 30px;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
-    font-size: 2.5em;
+    padding: 25px 0; /* Espacio superior e inferior */
+    margin: 0 0 30px 0; /* Margen inferior para separar del contenido */
+    text-shadow: 
+        2px 2px 4px rgba(0, 0, 0, 0.7), /* Sombra para darle profundidad */
+        -2px -2px 4px rgba(0, 0, 0, 0.7); /* Sombra para realzar los bordes */
+    background: linear-gradient(to right, #2C201C, #4A3728, #2C201C); /* Un gradiente sutil de fondo */
+    border-bottom: 3px double var(--aoe-border); /* Una doble línea para separar */
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5); /* Sombra para levantar el encabezado */
+    letter-spacing: 2px; /* Espaciado entre letras para un efecto más grandioso */
+    text-transform: uppercase; /* Convertir a mayúsculas */
 }
 
 h2, h3 {
@@ -569,6 +577,35 @@ input[type="submit"]:active {
     min-width: 100px;
     white-space: nowrap;
 }
+/* --- Ajustes para el Textarea --- */
+textarea {
+    width: calc(100% - 20px); /* Ajusta el ancho al 100% del contenedor, restando el padding */
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid var(--aoe-border);
+    border-radius: 5px;
+    background-color: var(--aoe-panel-bg);
+    color: var(--aoe-text-light);
+    font-family: 'MedievalSharp', cursive; /* O la fuente que uses en tu diseño */
+    font-size: 1em;
+    line-height: 1.5;
+    min-height: 150px; /* Altura mínima para que sea visible */
+    resize: vertical; /* Permite redimensionar solo verticalmente */
+    box-sizing: border-box; /* Incluye padding y borde en el ancho/alto total */
+    transition: border-color 0.3s ease, box-shadow 0.3s ease; /* Transición suave al enfocar */
+}
+
+textarea:focus {
+    border-color: var(--aoe-accent-gold); /* Borde dorado al enfocar */
+    box-shadow: 0 0 8px rgba(184, 154, 90, 0.5); /* Sombra suave al enfocar */
+    outline: none; /* Elimina el contorno predeterminado del navegador */
+}
+
+/* Opcional: Estilo para placeholder */
+textarea::placeholder {
+    color: var(--aoe-text-light); /* Color del texto del placeholder */
+    opacity: 0.7; /* Lo hace un poco transparente */
+}
 
 /* --- 11. Estilos para los íconos limpios (Font Awesome) --- */
 /* El elemento <i> de Font Awesome es el que contendrá el ícono visible */
@@ -749,6 +786,10 @@ button.toggle-btn .fa-toggle-off {
         width: 1.6em !important; /* Asegura que el área táctil sea decente */
         height: 1.6em !important;
     }
+    textarea {
+    width: calc(100% - 20px);
+    min-height: 120px;
+    }
 }
 
 @media (max-width: 480px) {
@@ -808,5 +849,10 @@ button.toggle-btn .fa-toggle-off {
         font-size: 1em !important;
         width: 1.4em !important;
         height: 1.4em !important;
+    }
+    textarea {
+    width: calc(100% - 20px);
+    min-height: 100px;
+    font-size: 0.95em;
     }
 }

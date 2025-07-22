@@ -4,7 +4,7 @@ import requests
 
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import and_, or_ # <-- ¡Añade esta importación!
+from sqlalchemy import and_, or_
 
 try:
     from dotenv import load_dotenv
@@ -16,6 +16,14 @@ app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'desarrollo')
 DISCORD_BOT_TOKEN = os.getenv("TOKEN")
 DISCORD_ANNOUNCEMENT_CHANNEL_ID = os.getenv("CANAL_AVISOS_ID")
+
+# --- ¡NUEVAS VARIABLES PARA LOS CANALES DE DISCORD! ---
+DISCORD_CHANNELS = {
+    "Canal de Bienvenida": "1349021786217644103",
+    "Canal de Reglas": "1349021784409772114",
+    "Canal de Avisos": "1349021795046654023"
+}
+# Puedes añadir más canales aquí si los necesitas
 
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL').replace("postgres://", "postgresql://", 1) if os.getenv('DATABASE_URL') else 'sqlite:///reservas.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -290,7 +298,7 @@ def book_slot():
                 
                 message = (
                     f"📢  **¡Nueva Reserva!\n**"
-                    f"👤 **¨[{booked_by}]** \nha reservado un slot de **{queue_type.capitalize()}** "
+                    f"👤 **【 {booked_by} 】** \nha reservado un slot de **{queue_type.capitalize()}** "
                     f"para el: \n**{date_str} a las {time_slot} UTC**."
                 )
                 send_discord_notification(message)
@@ -316,7 +324,6 @@ def admin_panel():
         current_date_utc = now_utc.date()
         current_time_utc_str = now_utc.strftime('%H:%M')
 
-        # Obtener solo reservas futuras o actuales no pasadas
         all_bookings = Booking.query.filter(
             and_(
                 Booking.available == False, # Solo reservas ocupadas
@@ -449,10 +456,9 @@ def send_discord_message():
             flash('Por favor, completa todos los campos.', 'error')
             return redirect(url_for('send_discord_message'))
 
-        # CAMBIO AQUÍ: Elimina las triples comillas invertidas (```)
         formatted_message = (
-            f"**Mensaje desde el Panel de Administración:**\n"
-            f"{message_content}" # <-- ¡Aquí está el cambio!
+            f"👑**Mensaje de Administración:**👑\n"
+            f"{message_content}"
         )
 
         try:
@@ -463,7 +469,8 @@ def send_discord_message():
 
         return redirect(url_for('send_discord_message'))
 
-    return render_template('send_discord_message.html')
+    # --- ¡PASAR DISCORD_CHANNELS A LA PLANTILLA! ---
+    return render_template('send_discord_message.html', channels=DISCORD_CHANNELS)
 
 @app.route('/admin/bonuses/toggle/<int:bonus_id>', methods=['POST'])
 def toggle_bonus_active(bonus_id):
@@ -532,7 +539,7 @@ def logout():
     session.pop('role', None)
     flash('Has cerrado sesión.', 'info')
     return redirect(url_for('index'))
-# --- FIN DE LAS RUTAS DE AUTENTICACIÓN ---
+# --- FIN DE LAS RUTAS de AUTENTICACIÓN ---
 
 
 if __name__ == '__main__':
