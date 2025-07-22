@@ -6,7 +6,6 @@
     <title>Panel de Administración - Reservas</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-
 </head>
 <body>
     <div class="container">
@@ -30,45 +29,47 @@
         </div>
 
         <h2>Reservas Ocupadas</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Fecha</th>
-                    <th>Hora</th>
-                    <th>Tipo de Cola</th>
-                    <th>Reservado Por</th>
-                    <th>Disponible</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for booking in all_bookings %}
-                <tr>
-                    <td>{{ booking.id }}</td>
-                    <td>{{ booking.booking_date }}</td>
-                    <td>{{ booking.time_slot }}</td>
-                    <td>{{ booking.queue_type | capitalize }}</td>
-                    <td>{% if booking.booked_by %}{{ booking.booked_by }}{% else %}N/A{% endif %}</td>
-                    <td>{% if booking.available %}Sí{% else %}No{% endif %}</td>
-                    <td class="action-buttons">
-                        <a href="{{ url_for('edit_booking', booking_id=booking.id) }}" class="edit-btn" title="Editar reserva">
-                            <i class="fas fa-edit"></i> 
-                        </a>
-                        <form action="{{ url_for('delete_booking', booking_id=booking.id) }}" method="POST" style="display:inline-block;">
-                            <button type="submit" class="edit-btn" onclick="return confirm('¿Estás seguro de que quieres eliminar la reserva de {{ booking.booked_by }} el {{ booking.booking_date }} a las {{ booking.time_slot }}?');" title="Borrar reserva">
-                                <i class="fas fa-trash-alt"></i> 
-                            </button>
-                        </form>
-                    </td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="7">No hay reservas ocupadas en la base de datos.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Fecha</th>
+                        <th>Hora</th>
+                        <th>Tipo de Cola</th>
+                        <th>Reservado Por</th>
+                        <th>Disponible</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for booking in all_bookings %}
+                    <tr>
+                        <td>{{ booking.id }}</td>
+                        <td>{{ booking.booking_date }}</td>
+                        <td>{{ booking.time_slot }}</td>
+                        <td>{{ booking.queue_type | capitalize }}</td>
+                        <td>{% if booking.booked_by %}{{ booking.booked_by }}{% else %}N/A{% endif %}</td>
+                        <td>{% if booking.available %}Sí{% else %}No{% endif %}</td>
+                        <td class="action-buttons">
+                            <a href="{{ url_for('edit_booking', booking_id=booking.id) }}" class="edit-btn" title="Editar reserva">
+                                <i class="fas fa-edit"></i> 
+                            </a>
+                            <form action="{{ url_for('delete_booking', booking_id=booking.id) }}" method="POST" style="display:inline-block;">
+                                <button type="submit" class="edit-btn" onclick="return confirm('¿Estás seguro de que quieres eliminar la reserva de {{ booking.booked_by }} el {{ booking.booking_date }} a las {{ booking.time_slot }}?');" title="Borrar reserva">
+                                    <i class="fas fa-trash-alt"></i> 
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7">No hay reservas ocupadas en la base de datos.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        </div>
 </body>
 </html>
