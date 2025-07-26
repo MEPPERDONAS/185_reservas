@@ -1,6 +1,7 @@
 import os
 from datetime import datetime, timedelta, date, time, timezone
 import requests
+import time # ¡IMPORTANTE: Añade esta importación para usar time.sleep()!
 
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from flask_sqlalchemy import SQLAlchemy
@@ -237,8 +238,8 @@ def index():
         bonuses_for_display=bonuses_for_display
     )
 
-def send_discord_notification(message, channel_id=None):
-    """Envía un mensaje al canal de Discord especificado o al canal de anuncios por defecto."""
+def send_discord_notification(message, channel_id=None, max_retries=3): # Añadido max_retries
+    """Envía un mensaje al canal de Discord especificado o al canal de anuncios por defecto, con manejo de Rate Limits."""
     if not DISCORD_BOT_TOKEN:
         print("Error: TOKEN de Discord no configurado en variables de entorno.")
         return
@@ -257,14 +258,31 @@ def send_discord_notification(message, channel_id=None):
     }
     url = f"https://discord.com/api/v10/channels/{target_channel_id}/messages"
 
-    try:
-        response = requests.post(url, headers=headers, json=payload)
-        response.raise_for_status()
-        print(f"Notificación de Discord enviada: {message}")
-    except requests.exceptions.RequestException as e:
-        print(f"Error al enviar notificación de Discord: {e}")
-    except Exception as e:
-        print(f"Error inesperado al enviar notificación de Discord: {e}")
+    for attempt in range(max_retries): # Bucle de reintentos
+        try:
+            response = requests.post(url, headers=headers, json=payload)
+            response.raise_for_status() # Lanza una excepción para errores 4xx/5xx
+            print(f"Notificación de Discord enviada exitosamente en intento {attempt + 1}: {message}")
+            return # Si es exitoso, salimos de la función
+
+        except requests.exceptions.HTTPError as http_err:
+            if http_err.response.status_code == 429:
+                retry_after = http_err.response.headers.get('Retry-After')
+                # Discord envía Retry-After en milisegundos, por eso se divide entre 1000
+                wait_time = float(retry_after) / 1000 if retry_after else 1
+                print(f"Error 429 (Too Many Requests). Esperando {wait_time:.2f} segundos antes de reintentar... (Intento {attempt + 1}/{max_retries})")
+                time.sleep(wait_time)
+            else:
+                print(f"Error HTTP al enviar notificación de Discord: {http_err}")
+                break # Otro error HTTP, no reintentamos
+        except requests.exceptions.ConnectionError as conn_err:
+            print(f"Error de conexión al enviar notificación de Discord: {conn_err}")
+            break # No tiene sentido reintentar un error de conexión así nomás
+        except Exception as e:
+            print(f"Error inesperado al enviar notificación de Discord: {e}")
+            break # Cualquier otro error, no reintentamos
+    else: # Este else se ejecuta si el bucle termina sin un 'break' (es decir, se agotaron los reintentos)
+        print(f"Falló el envío de la notificación de Discord después de {max_retries} intentos: {message}")
 
 
 @app.route('/book', methods=['POST'])
@@ -329,7 +347,9 @@ def admin_panel():
                     Booking.booking_date > current_date_utc, # Fechas futuras
                     and_(
                         Booking.booking_date == current_date_utc, # O fecha de hoy
-                        Booking.time_slot >= current_time_utc_str # Y hora actual o futura
+                        # Comparar la hora del slot con la hora actual UTC
+                        # Asegurarse de que el time_slot es igual o posterior a la hora actual
+                        Booking.time_slot >= current_time_utc_str
                     )
                 )
             )
@@ -430,11 +450,11 @@ def manage_bonuses():
                 send_discord_notification(message)
 
             except ValueError:
-                flash('Error: Formato de fecha de inicio inválido.', 'error')
+                flash('Error: Invalid start date format.', 'error')
                 db.session.rollback()
             except Exception as e:
                 db.session.rollback()
-                flash(f'Ocurrió un error al añadir bonificación: {e}', 'error')
+                flash(f'An error occurred while adding the bonus: {e}', 'error')
             return redirect(url_for('manage_bonuses'))
 
         all_bonuses = Bonus.query.order_by(Bonus.start_date, Bonus.start_time).all()
@@ -455,7 +475,7 @@ def send_discord_message():
             return redirect(url_for('send_discord_message'))
 
         formatted_message = (
-            f"👑**Mensaje de Administración:**👑\n"
+            f"👑** Mensaje de Administración **👑\n"
             f"{message_content}"
         )
 
@@ -467,7 +487,6 @@ def send_discord_message():
 
         return redirect(url_for('send_discord_message'))
 
-    # --- ¡PASAR DISCORD_CHANNELS A LA PLANTILLA! ---
     return render_template('send_discord_message.html', channels=DISCORD_CHANNELS)
 
 @app.route('/admin/bonuses/toggle/<int:bonus_id>', methods=['POST'])
@@ -505,7 +524,6 @@ def delete_bonus(bonus_id):
     return redirect(url_for('manage_bonuses'))
 
 
-# --- Rutas de Autenticación (¡Puedes eliminarlas o comentarlas si no las necesitas AHORA MISMO!) ---
 USERS = {
     "admin": {"password": "adminpassword", "role": "admin"},
     "user1": {"password": "userpassword", "role": "user"}
@@ -522,22 +540,21 @@ def login():
         if user and user['password'] == password:
             session['username'] = username
             session['role'] = user['role']
-            flash('¡Sesión iniciada exitosamente!', 'success')
+            flash('Login successful!', 'success')
             if user['role'] == 'admin':
                 return redirect(url_for('admin_panel'))
             else:
                 return redirect(url_for('index'))
         else:
-            flash('Usuario o contraseña incorrectos.', 'error')
+            flash('Incorrect username or password.', 'error')
     return render_template('login.html')
 
 @app.route('/logout')
 def logout():
     session.pop('username', None)
     session.pop('role', None)
-    flash('Has cerrado sesión.', 'info')
+    flash('You have been logged out.', 'info')
     return redirect(url_for('index'))
-# --- FIN DE LAS RUTAS de AUTENTICACIÓN ---
 
 
 if __name__ == '__main__':
