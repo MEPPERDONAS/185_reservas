@@ -1,7 +1,8 @@
 import os
 from datetime import datetime, timedelta, date, time, timezone
 import requests
-import time # ¡IMPORTANTE: Añade esta importación para usar time.sleep()!
+import time
+import threading # ¡IMPORTANTE: Esta importación es correcta!
 
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from flask_sqlalchemy import SQLAlchemy
@@ -238,7 +239,7 @@ def index():
         bonuses_for_display=bonuses_for_display
     )
 
-def send_discord_notification(message, channel_id=None, max_retries=3): # Añadido max_retries
+def send_discord_notification(message, channel_id=None, max_retries=3):
     """Envía un mensaje al canal de Discord especificado o al canal de anuncios por defecto, con manejo de Rate Limits."""
     if not DISCORD_BOT_TOKEN:
         print("Error: TOKEN de Discord no configurado en variables de entorno.")
@@ -258,30 +259,29 @@ def send_discord_notification(message, channel_id=None, max_retries=3): # Añadi
     }
     url = f"https://discord.com/api/v10/channels/{target_channel_id}/messages"
 
-    for attempt in range(max_retries): # Bucle de reintentos
+    for attempt in range(max_retries):
         try:
             response = requests.post(url, headers=headers, json=payload)
-            response.raise_for_status() # Lanza una excepción para errores 4xx/5xx
+            response.raise_for_status()
             print(f"Notificación de Discord enviada exitosamente en intento {attempt + 1}: {message}")
-            return # Si es exitoso, salimos de la función
+            return
 
         except requests.exceptions.HTTPError as http_err:
             if http_err.response.status_code == 429:
                 retry_after = http_err.response.headers.get('Retry-After')
-                # Discord envía Retry-After en milisegundos, por eso se divide entre 1000
                 wait_time = float(retry_after) / 1000 if retry_after else 1
                 print(f"Error 429 (Too Many Requests). Esperando {wait_time:.2f} segundos antes de reintentar... (Intento {attempt + 1}/{max_retries})")
                 time.sleep(wait_time)
             else:
                 print(f"Error HTTP al enviar notificación de Discord: {http_err}")
-                break # Otro error HTTP, no reintentamos
+                break
         except requests.exceptions.ConnectionError as conn_err:
             print(f"Error de conexión al enviar notificación de Discord: {conn_err}")
-            break # No tiene sentido reintentar un error de conexión así nomás
+            break
         except Exception as e:
             print(f"Error inesperado al enviar notificación de Discord: {e}")
-            break # Cualquier otro error, no reintentamos
-    else: # Este else se ejecuta si el bucle termina sin un 'break' (es decir, se agotaron los reintentos)
+            break
+    else:
         print(f"Falló el envío de la notificación de Discord después de {max_retries} intentos: {message}")
 
 
@@ -317,7 +317,9 @@ def book_slot():
                     f"👤 **[ {booked_by} ]** \nhas booked a slot for **{queue_type.capitalize()}** "
                     f"on: \n**{date_str} at {time_slot} UTC**."
                 )
-                send_discord_notification(message)
+                # ¡CORRECCIÓN AQUÍ! Ejecutar en un hilo separado
+                thread = threading.Thread(target=send_discord_notification, args=(message,))
+                thread.start()
             else:
                 flash(f'Error: El slot de {time_slot} en {queue_type} para el {date_str} no está disponible.', 'error')
         except Exception as e:
@@ -347,9 +349,7 @@ def admin_panel():
                     Booking.booking_date > current_date_utc, # Fechas futuras
                     and_(
                         Booking.booking_date == current_date_utc, # O fecha de hoy
-                        # Comparar la hora del slot con la hora actual UTC
-                        # Asegurarse de que el time_slot es igual o posterior a la hora actual
-                        Booking.time_slot >= current_time_utc_str
+                        Booking.time_slot >= current_time_utc_str # Y hora actual o futura
                     )
                 )
             )
@@ -447,7 +447,9 @@ def manage_bonuses():
                     f"will have a bonus from **{start_date_str} at {start_time_formatted} UTC** "
                     f"for **{duration_hours} hour(s)** (until {bonus_end_dt_utc.strftime('%H:%M')} UTC)."
                 )
-                send_discord_notification(message)
+                # ¡CORRECCIÓN AQUÍ! Ejecutar en un hilo separado
+                thread = threading.Thread(target=send_discord_notification, args=(message,))
+                thread.start()
 
             except ValueError:
                 flash('Error: Invalid start date format.', 'error')
@@ -480,7 +482,9 @@ def send_discord_message():
         )
 
         try:
-            send_discord_notification(formatted_message, channel_id) 
+            # ¡CORRECCIÓN AQUÍ! Ejecutar en un hilo separado
+            thread = threading.Thread(target=send_discord_notification, args=(formatted_message, channel_id))
+            thread.start()
             flash('Mensaje enviado a Discord exitosamente!', 'success')
         except Exception as e:
             flash(f'Ocurrió un error al enviar mensaje a Discord: {e}', 'error')
