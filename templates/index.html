@@ -1,26 +1,22 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en"></html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EMPIRE 185</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
-        /* CSS para el icono de bonificación */
+        /* CSS for the bonus icon */
         .bonus-icon {
             margin-left: 5px;
-            color: gold; /* O el color que prefieras para el icono */
+            color: gold;
             font-weight: bold;
-            /* Si usas Font Awesome: */
-            /* font-family: 'Font Awesome 5 Free'; */
-            /* font-weight: 900; */
-            /* content: '\f005'; (código para un icono de estrella, por ejemplo) */
         }
-        /* Clase para slots bonificados en la tabla */
+        /* Class for bonused slots in the table */
         .bonused-slot {
-            background-color: #fffacd; /* Color de fondo suave para bonificación, un amarillo pálido */
+            background-color: #fffacd;
         }
-        /* Estilo para el icono en "Próximos en la Cola" */
+        /* Style for the icon in "Next in Queue" */
         .queue-item .bonus-active-indicator {
             color: gold;
             font-size: 1.2em;
@@ -29,7 +25,7 @@
     </style>
 </head>
 <body>
-    <h1>⚔️ EMPIRE #185 ⚔️</h1>
+    <h1>   ⚔️ EMPIRE #185 ⚔️   </h1>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
@@ -42,20 +38,18 @@
     {% endwith %}
 
     <div class="first-in-queue-container">
-        <h2>Próximos en la Cola</h2>
+        <h2>Queue</h2>
         <div class="queue-list">
             {% for queue_name, slot_info in first_in_queue.items() %}
                 <div class="queue-item">
                     <h3>{{ queue_name | capitalize }}
-                        {# Mostrar icono si hay una bonificación activa AHORA para esta cola #}
                         {% if bonused_queues_now[queue_name] %}
-                            <span class="bonus-active-indicator" title="¡Bonificación Activa Ahora!">⭐</span> 
-                            {# Puedes cambiar ⭐ por un <i> de Font Awesome si lo tienes configurado, ej: <i class="fas fa-star"></i> #}
+                            <span class="bonus-active-indicator" title="Bonus Active Now!">⭐</span>
                         {% endif %}
                     </h3>
                     {% if slot_info.date != 'N/A' %}
-                        <p><strong>Quién:</strong> {{ slot_info.booked_by }}</p>
-                        <p><strong>Cuándo:</strong> {{ slot_info.date }} a las {{ slot_info.time }}</p>
+                        <p><strong>Who:</strong> {{ slot_info.booked_by }}</p>
+                        <p><strong>When:</strong> {{ slot_info.date }} at {{ slot_info.time }}</p>
                     {% else %}
                         <p>{{ slot_info.message }}</p>
                     {% endif %}
@@ -70,7 +64,7 @@
                 <caption>{{ date_str }}</caption>
                 <thead>
                     <tr>
-                        <th>Hora</th>
+                        <th>Time</th>
                         {% for queue in queues %}
                             <th>{{ queue | capitalize }}</th>
                         {% endfor %}
@@ -86,27 +80,25 @@
                                 {% set is_bonused = date_str in bonused_slots[queue] and time_str in bonused_slots[queue][date_str] %}
                                 <td class="slot 
                                     {% if not slot_data.available %}
-                                        booked {% if slot_data.booked_by == 'Pasado' %} past-slot {% endif %}
-                                    {% else %} 
-                                        available 
+                                        booked {% if slot_data.booked_by == 'Past' %} past-slot {% endif %}
+                                    {% else %}
+                                        available
                                     {% endif %}
-                                    {% if is_bonused %} bonused-slot {% endif %} {# Añadir clase para slots bonificados #}"
-                                    data-date="{{ date_str }}" 
-                                    data-queue="{{ queue }}" 
+                                    {% if is_bonused %} bonused-slot {% endif %}"
+                                    data-date="{{ date_str }}"
+                                    data-queue="{{ queue }}"
                                     data-time="{{ time_str }}">
-                                    {% if slot_data.booked_by and slot_data.booked_by != 'Pasado' %}
+                                    {% if slot_data.booked_by and slot_data.booked_by != 'Past' %}
                                         {{ slot_data.booked_by }}
                                     {% else %}
-                                        {% if slot_data.booked_by == 'Pasado' %}
-                                            Pasado
+                                        {% if slot_data.booked_by == 'Past' %}
+                                            Past
                                         {% else %}
-                                            Disponible
+                                            Available
                                         {% endif %}
                                     {% endif %}
-                                    {# Mostrar icono si este slot está bonificado #}
                                     {% if is_bonused %}
-                                        <span class="bonus-icon" title="¡Bonificación Activa!">⭐</span>
-                                        {# Puedes cambiar ⭐ por un <i> de Font Awesome si lo tienes configurado, ej: <i class="fas fa-star"></i> #}
+                                        <span class="bonus-icon" title="Bonus Active!">⭐</span>
                                     {% endif %}
                                 </td>
                             {% endfor %}
@@ -121,7 +113,7 @@
         <input type="hidden" name="date" id="form-date">
         <input type="hidden" name="queue" id="form-queue">
         <input type="hidden" name="time" id="form-time">
-        <input type="text" name="booked_by" id="form-booked-by" placeholder="Tu nombre" required>
+        <input type="text" name="booked_by" id="form-booked-by" placeholder="Your name" required>
     </form>
 
     <script src="{{ url_for('static', filename='script.js') }}"></script>

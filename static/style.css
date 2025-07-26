@@ -83,8 +83,8 @@ h1 {
         2px 2px 4px rgba(0, 0, 0, 0.7), /* Sombra para darle profundidad */
         -2px -2px 4px rgba(0, 0, 0, 0.7); /* Sombra para realzar los bordes */
     background: linear-gradient(to right, #2C201C, #4A3728, #2C201C); /* Un gradiente sutil de fondo */
-    border-bottom: 3px double var(--aoe-border); /* Una doble línea para separar */
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5); /* Sombra para levantar el encabezado */
+    /*border-bottom: 3px double var(--aoe-border); /* Una doble línea para separar */
+    /*box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5); /* Sombra para levantar el encabezado */
     letter-spacing: 2px; /* Espaciado entre letras para un efecto más grandioso */
     text-transform: uppercase; /* Convertir a mayúsculas */
 }

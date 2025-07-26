@@ -13,17 +13,15 @@ except ImportError:
     pass
 
 app = Flask(__name__)
-app.secret_key = os.getenv('SECRET_KEY', 'desarrollo')
+app.secret_key = os.getenv('SECRET_KEY', 'development')
 DISCORD_BOT_TOKEN = os.getenv("TOKEN")
 DISCORD_ANNOUNCEMENT_CHANNEL_ID = os.getenv("CANAL_AVISOS_ID")
 
-# --- ¡NUEVAS VARIABLES PARA LOS CANALES DE DISCORD! ---
 DISCORD_CHANNELS = {
-    "Canal de Bienvenida": "1349021786217644103",
-    "Canal de Reglas": "1349021784409772114",
-    "Canal de Avisos": "1349021795046654023"
+    "Welcome Channel": "1349021786217644103",
+    "Rules Channel": "1349021784409772114",
+    "Announcements Channel": "1349021795046654023"
 }
-# Puedes añadir más canales aquí si los necesitas
 
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL').replace("postgres://", "postgresql://", 1) if os.getenv('DATABASE_URL') else 'sqlite:///reservas.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -184,7 +182,7 @@ def index():
                 "time": "N/A",
                 "queue": queue_name,
                 "booked_by": "N/A",
-                "message": "No hay turnos próximos tomados"
+                "message": "There are no upcoming shifts booked.."
             }
 
     active_bonuses = Bonus.query.filter(Bonus.active == True).all()
@@ -278,7 +276,7 @@ def book_slot():
         booked_by = request.form['booked_by']
 
         if not all([date_str, queue_type, time_slot, booked_by]):
-            flash('Error: Todos los campos son requeridos.', 'error')
+            flash('Error: All fields are required.', 'error')
             return redirect(url_for('index'))
 
         try:
@@ -294,12 +292,12 @@ def book_slot():
                 slot.booked_by = booked_by
                 slot.available = False
                 db.session.commit()
-                flash(f'Slot de {time_slot} en {queue_type} para el {date_str} reservado por {booked_by}.', 'success')
+                flash(f'Slot {time_slot} on {queue_type} para el {date_str} reservado por {booked_by}.', 'success')
                 
                 message = (
-                    f"📢  **¡Nueva Reserva!\n**"
-                    f"👤 **【 {booked_by} 】** \nha reservado un slot de **{queue_type.capitalize()}** "
-                    f"para el: \n**{date_str} a las {time_slot} UTC**."
+                    f"📢  **New Booking!**\n"
+                    f"👤 **[ {booked_by} ]** \nhas booked a slot for **{queue_type.capitalize()}** "
+                    f"on: \n**{date_str} at {time_slot} UTC**."
                 )
                 send_discord_notification(message)
             else:
@@ -407,7 +405,7 @@ def manage_bonuses():
                 start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
                 
                 if duration_hours <= 0:
-                    flash('Error: La duración debe ser al menos 1 hora.', 'error')
+                    flash('Error: Duration must be at least 1 hour.', 'error')
                     return redirect(url_for('manage_bonuses'))
 
                 new_bonus = Bonus(
@@ -419,15 +417,15 @@ def manage_bonuses():
                 )
                 db.session.add(new_bonus)
                 db.session.commit()
-                flash('Bonificación añadida exitosamente.', 'success')
+                flash('Bonus added successfully.', 'success')
                 
                 bonus_start_dt_utc = datetime.combine(start_date, datetime.strptime(start_time_formatted, "%H:%M").time()).replace(tzinfo=timezone.utc)
                 bonus_end_dt_utc = bonus_start_dt_utc + timedelta(hours=duration_hours)
 
                 message = (
-                    f"✨ **¡Bonificación Activada!** La cola de **{queue_type.capitalize()}** "
-                    f"tendrá una bonificación desde el **{start_date_str} a las {start_time_formatted} UTC** "
-                    f"por **{duration_hours} hora(s)** (hasta las {bonus_end_dt_utc.strftime('%H:%M')} UTC)."
+                    f"✨ **Bonus Activated!** The **{queue_type.capitalize()}** queue "
+                    f"will have a bonus from **{start_date_str} at {start_time_formatted} UTC** "
+                    f"for **{duration_hours} hour(s)** (until {bonus_end_dt_utc.strftime('%H:%M')} UTC)."
                 )
                 send_discord_notification(message)
 
@@ -483,7 +481,7 @@ def toggle_bonus_active(bonus_id):
         bonus.active = not bonus.active
         try:
             db.session.commit()
-            flash(f'Estado de bonificación ID {bonus_id} cambiado a {"activo" if bonus.active else "inactivo"}.', 'success')
+            flash(f'Bonus status for ID {bonus_id} changed to {"active" if bonus.active else "inactive"}.', 'success')
         except Exception as e:
             db.session.rollback()
             flash(f'Error al cambiar estado de bonificación: {e}', 'error')

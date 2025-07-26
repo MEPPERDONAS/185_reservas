@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enviar Mensaje a Discord</title>
+    <title>Send Message to Discord</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <h1>Enviar Mensaje a Discord</h1>
+    <h1>Send Message to Discord</h1>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -20,23 +20,23 @@
     {% endwith %}
 
     <form action="{{ url_for('send_discord_message') }}" method="POST">
-        <label for="channel_id">Selecciona un Canal:</label>
+        <label for="channel_id">Select a Channel:</label>
         <select id="channel_id" name="channel_id" required>
-            <option value="">-- Selecciona un canal --</option>
+            <option value="">-- Select a channel --</option>
             {% for name, id in channels.items() %}
                 <option value="{{ id }}">{{ name }}</option>
             {% endfor %}
         </select>
         
-        <label for="message_content">Contenido del Mensaje:</label>
-        <textarea id="message_content" name="message_content" rows="10" required placeholder="Escribe tu mensaje aquí. Puedes usar Markdown como **negritas**, *cursivas*, etc."></textarea>
+        <label for="message_content">Message Content:</label>
+        <textarea id="message_content" name="message_content" rows="10" required placeholder="Write your message here. You can use Markdown like **bold**, *italic*, etc."></textarea>
         
-        <button type="submit">Enviar Mensaje a Discord</button>
+        <button type="submit">Send Message to Discord</button>
     </form>
 
     <div class="admin-return-buttons">
-        <a href="{{ url_for('admin_panel') }}" class="nav-button">Volver al Panel de Administración</a>
-        <a href="{{ url_for('index') }}" class="nav-button">Volver a la Página Principal</a>
+        <a href="{{ url_for('admin_panel') }}" class="nav-button">Return to Admin Panel</a>
+        <a href="{{ url_for('index') }}" class="nav-button">Return to Main Page</a>
     </div>
 </body>
 </html>

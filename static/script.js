@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const time = cell.dataset.time;
 
                 // Pedir el nombre al usuario
-                const bookedByName = prompt(`Reservar slot para ${date} a las ${time} en ${queue}. Por favor, introduce tu nombre:`);
+                const bookedByName = prompt(`Book slot for ${date} at ${time} in ${queue}. Please enter your name:`);
 
                 if (bookedByName && bookedByName.trim() !== '') {
                     // Rellenar el formulario oculto con los datos
@@ -30,14 +30,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Enviar el formulario
                     bookingForm.submit();
                 } else if (bookedByName !== null) { // Si el usuario no canceló, pero dejó el campo vacío
-                    alert('El nombre es obligatorio para realizar la reserva.');
+                    alert('Name is required to make a reservation.');
                 }
             } else {
                 // Si el slot no está disponible, mostrar un mensaje
                 if (cell.classList.contains('past-slot')) {
-                    alert('Este slot ya ha pasado y no se puede reservar.');
+                    alert('This slot has already passed and cannot be booked.');
                 } else {
-                    alert('Este slot ya está reservado.');
+                    alert('This slot is already booked.');
                 }
             }
         });

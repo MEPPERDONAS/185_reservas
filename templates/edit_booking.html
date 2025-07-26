@@ -1,14 +1,13 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en"></html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editar Reserva - ID: {{ booking.id }}</title>
+    <title>Edit Booking - ID: {{ booking.id }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-
 </head>
 <body>
-    <h1>Editar Reserva ID: {{ booking.id }}</h1>
+    <h1>Edit Booking ID: {{ booking.id }}</h1>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -22,30 +21,30 @@
 
     <form action="{{ url_for('edit_booking', booking_id=booking.id) }}" method="POST">
         <p class="info">
-            **Nota:** Actualmente, solo se pueden editar el nombre y la disponibilidad. <br>
-            Para cambiar la fecha, hora o tipo de cola, sería necesario borrar y crear una nueva reserva.
+            **Note:** Currently, only the name and availability can be edited. <br>
+            To change the date, time, or queue type, you need to delete and create a new booking.
         </p>
         
-        <label for="booking_date">Fecha:</label>
+        <label for="booking_date">Date:</label>
         <input type="date" id="booking_date" name="booking_date" value="{{ booking.booking_date }}" disabled>
         
-        <label for="time_slot">Hora:</label>
+        <label for="time_slot">Time:</label>
         <input type="time" id="time_slot" name="time_slot" value="{{ booking.time_slot }}" disabled>
         
-        <label for="queue_type">Tipo de Cola:</label>
+        <label for="queue_type">Queue Type:</label>
         <input type="text" id="queue_type" name="queue_type" value="{{ booking.queue_type | capitalize }}" disabled>
         
-        <label for="booked_by">Reservado Por:</label>
+        <label for="booked_by">Booked By:</label>
         <input type="text" id="booked_by" name="booked_by" value="{{ booking.booked_by if booking.booked_by else '' }}">
         
         <label for="available">
             <input type="checkbox" id="available" name="available" {% if booking.available %}checked{% endif %}>
-            Disponible
+            Available
         </label>
         
-        <button type="submit">Actualizar Reserva</button>
+        <button type="submit">Update Booking</button>
     </form>
 
-    <p><a href="{{ url_for('admin_panel') }}">Volver al Panel de Administración</a></p>
+    <p><a href="{{ url_for('admin_panel') }}">Back to Admin Panel</a></p>
 </body>
 </html>

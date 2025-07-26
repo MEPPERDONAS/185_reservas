@@ -1,15 +1,15 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en"></html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Administración - Reservas</title>
+    <title>Admin Panel - Bookings</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <div class="container">
-        <h1>Panel de Administración</h1>
+        <h1>Admin Panel</h1>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
@@ -21,25 +21,25 @@
             {% endif %}
         {% endwith %}
         
-        <a href="{{ url_for('index') }}" class="back-link nav-button">&larr; Volver a la vista principal</a>
+        <a href="{{ url_for('index') }}" class="back-link nav-button">&larr; Back to main view</a>
 
         <div class="admin-links">
-            <a href="{{ url_for('manage_bonuses') }}" class="nav-button"><i class="fas fa-star"></i> Administrar Bonificaciones</a>
-            <a href="{{ url_for('send_discord_message') }}" class="nav-button">Enviar Mensaje a Discord</a>
+            <a href="{{ url_for('manage_bonuses') }}" class="nav-button"><i class="fas fa-star"></i> Manage Bonuses</a>
+            <a href="{{ url_for('send_discord_message') }}" class="nav-button">Send Message to Discord</a>
         </div>
 
-        <h2>Reservas Ocupadas</h2>
+        <h2>Occupied Bookings</h2>
         <div class="table-responsive">
             <table>
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>Fecha</th>
-                        <th>Hora</th>
-                        <th>Tipo de Cola</th>
-                        <th>Reservado Por</th>
-                        <th>Disponible</th>
-                        <th>Acciones</th>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Queue Type</th>
+                        <th>Booked By</th>
+                        <th>Available</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -50,13 +50,13 @@
                         <td>{{ booking.time_slot }}</td>
                         <td>{{ booking.queue_type | capitalize }}</td>
                         <td>{% if booking.booked_by %}{{ booking.booked_by }}{% else %}N/A{% endif %}</td>
-                        <td>{% if booking.available %}Sí{% else %}No{% endif %}</td>
+                        <td>{% if booking.available %}Yes{% else %}No{% endif %}</td>
                         <td class="action-buttons">
-                            <a href="{{ url_for('edit_booking', booking_id=booking.id) }}" class="edit-btn" title="Editar reserva">
+                            <a href="{{ url_for('edit_booking', booking_id=booking.id) }}" class="edit-btn" title="Edit booking">
                                 <i class="fas fa-edit"></i> 
                             </a>
                             <form action="{{ url_for('delete_booking', booking_id=booking.id) }}" method="POST" style="display:inline-block;">
-                                <button type="submit" class="edit-btn" onclick="return confirm('¿Estás seguro de que quieres eliminar la reserva de {{ booking.booked_by }} el {{ booking.booking_date }} a las {{ booking.time_slot }}?');" title="Borrar reserva">
+                                <button type="submit" class="edit-btn" onclick="return confirm('Are you sure you want to delete the booking for {{ booking.booked_by }} on {{ booking.booking_date }} at {{ booking.time_slot }}?');" title="Delete booking">
                                     <i class="fas fa-trash-alt"></i> 
                                 </button>
                             </form>
@@ -64,7 +64,7 @@
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="7">No hay reservas ocupadas en la base de datos.</td>
+                        <td colspan="7">There are no occupied bookings in the database.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
