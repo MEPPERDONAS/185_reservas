@@ -337,9 +337,9 @@ def admin_panel():
     """
     Muestra un panel de administración con todas las reservas.
     """
-    # if 'username' not in session or session.get('role') != 'admin':
-    #     flash('Acceso denegado. Solo los administradores pueden acceder.', 'error')
-    #     return redirect(url_for('login'))
+    if 'username' not in session or session.get('role') != 'admin':
+        flash('Acceso denegado. Solo los administradores pueden acceder.', 'error')
+        return redirect(url_for('login'))
 
     with app.app_context():
         now_utc = datetime.now(timezone.utc)
@@ -367,9 +367,9 @@ def delete_booking(booking_id):
     """
     Borra una reserva específica de la base de datos.
     """
-    # if 'username' not in session or session.get('role') != 'admin':
-    #     flash('Acceso denegado. Solo los administradores pueden acceder.', 'error')
-    #     return redirect(url_for('login'))
+    if 'username' not in session or session.get('role') != 'admin':
+        flash('Acceso denegado. Solo los administradores pueden acceder.', 'error')
+        return redirect(url_for('login'))
 
     with app.app_context():
         booking_to_delete = Booking.query.get_or_404(booking_id) 
@@ -388,9 +388,9 @@ def edit_booking(booking_id):
     """
     Muestra un formulario para editar una reserva y procesa la actualización.
     """
-    # if 'username' not in session or session.get('role') != 'admin':
-    #     flash('Acceso denegado. Solo los administradores pueden acceder.', 'error')
-    #     return redirect(url_for('login'))
+    if 'username' not in session or session.get('role') != 'admin':
+        flash('Acceso denegado. Solo los administradores pueden acceder.', 'error')
+        return redirect(url_for('login'))
 
     with app.app_context():
         booking_to_edit = Booking.query.get_or_404(booking_id)
@@ -411,9 +411,9 @@ def edit_booking(booking_id):
 
 @app.route('/admin/bonuses', methods=['GET', 'POST'])
 def manage_bonuses():
-    # if 'username' not in session or session.get('role') != 'admin':
-    #     flash('Acceso denegado. Solo los administradores pueden acceder.', 'error')
-    #     return redirect(url_for('login'))
+    if 'username' not in session or session.get('role') != 'admin':
+        flash('Acceso denegado. Solo los administradores pueden acceder.', 'error')
+        return redirect(url_for('login'))
 
     with app.app_context():
         if request.method == 'POST':
@@ -468,9 +468,9 @@ def manage_bonuses():
     
 @app.route('/send_discord_message', methods=['GET', 'POST'])
 def send_discord_message():
-    # if 'username' not in session or session.get('role') != 'admin':
-    #     flash('Acceso denegado. Solo los administradores pueden acceder.', 'error')
-    #     return redirect(url_for('login'))
+    if 'username' not in session or session.get('role') != 'admin':
+        flash('Acceso denegado. Solo los administradores pueden acceder.', 'error')
+        return redirect(url_for('login'))
 
     if request.method == 'POST':
         channel_id = request.form.get('channel_id')
@@ -499,9 +499,9 @@ def send_discord_message():
 
 @app.route('/admin/bonuses/toggle/<int:bonus_id>', methods=['POST'])
 def toggle_bonus_active(bonus_id):
-    # if 'username' not in session or session.get('role') != 'admin':
-    #     flash('Acceso denegado. Solo los administradores pueden acceder.', 'error')
-    #     return redirect(url_for('login'))
+    if 'username' not in session or session.get('role') != 'admin':
+        flash('Acceso denegado. Solo los administradores pueden acceder.', 'error')
+        return redirect(url_for('login'))
 
     with app.app_context():
         bonus = Bonus.query.get_or_404(bonus_id)
@@ -516,9 +516,9 @@ def toggle_bonus_active(bonus_id):
 
 @app.route('/admin/bonuses/delete/<int:bonus_id>', methods=['POST'])
 def delete_bonus(bonus_id):
-    # if 'username' not in session or session.get('role') != 'admin':
-    #     flash('Acceso denegado. Solo los administradores pueden acceder.', 'error')
-    #     return redirect(url_for('login'))
+    if 'username' not in session or session.get('role') != 'admin':
+        flash('Acceso denegado. Solo los administradores pueden acceder.', 'error')
+        return redirect(url_for('login'))
 
     with app.app_context():
         bonus_to_delete = Bonus.query.get_or_404(bonus_id)
