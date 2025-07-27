@@ -249,7 +249,11 @@ def send_discord_notification(message, channel_id=None, max_retries=3):
     if not target_channel_id:
         print("Error: ID del canal de anuncios de Discord no configurado.")
         return
-
+    # --- DEBUGGING TEMPORAL (¡ELIMINAR ESTO DESPUÉS!) ---
+    print(f"DEBUG: Longitud del TOKEN: {len(DISCORD_BOT_TOKEN) if DISCORD_BOT_TOKEN else 0}")
+    print(f"DEBUG: Canal de Discord a usar: {target_channel_id}")
+    # --- FIN DEBUGGING TEMPORAL ---
+    
     headers = {
         "Authorization": f"Bot {DISCORD_BOT_TOKEN}",
         "Content-Type": "application/json"
