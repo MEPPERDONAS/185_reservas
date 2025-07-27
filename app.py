@@ -2,7 +2,7 @@ import os
 from datetime import datetime, timedelta, date, time, timezone
 import requests
 import time
-import threading # ¡IMPORTANTE: Esta importación es correcta!
+import threading
 
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from flask_sqlalchemy import SQLAlchemy
@@ -295,15 +295,37 @@ def book_slot():
         date_str = request.form['date']
         queue_type = request.form['queue']
         time_slot = request.form['time']
-        booked_by = request.form['booked_by']
+        # Es crucial que 'booked_by' sea el identificador único del usuario.
+        # Si 'booked_by' viene de un formulario y es un nombre que puede repetirse,
+        # esto podría no funcionar perfectamente. Lo ideal es usar un ID de usuario único.
+        # Para este ejemplo, asumo que 'booked_by' es el 'username' de la sesión, que es único.
+        booked_by = request.form['booked_by'] # O session.get('username') si el usuario está logueado
 
         if not all([date_str, queue_type, time_slot, booked_by]):
-            flash('Error: All fields are required.', 'error')
+            flash('Error: Todos los campos son requeridos.', 'error')
             return redirect(url_for('index'))
 
         try:
             booking_date_obj = datetime.strptime(date_str, '%Y-%m-%d').date()
             
+            # --- NUEVA LÓGICA DE VALIDACIÓN ---
+            # 1. Verificar si el usuario ya tiene una reserva activa en OTRA cola para la misma fecha y hora.
+            existing_conflict_booking = Booking.query.filter(
+                Booking.booked_by == booked_by,                 # Mismo usuario
+                Booking.booking_date == booking_date_obj,       # Misma fecha
+                Booking.time_slot == time_slot,                 # Misma hora
+                Booking.queue_type != queue_type,               # PERO en una cola DIFERENTE
+                Booking.available == False                      # Y que la reserva existente esté ocupada/activa
+            ).first()
+
+            if existing_conflict_booking:
+                # Si se encuentra una reserva conflictiva, NO se permite la nueva reserva.
+                flash(f'Ya tienes una reserva activa para el **{date_str} a las {time_slot}** en la cola de **{existing_conflict_booking.queue_type.capitalize()}**. '
+                      'No puedes reservar en múltiples colas a la misma hora.', 'error')
+                return redirect(url_for('index'))
+            # --- FIN NUEVA LÓGICA DE VALIDACIÓN ---
+
+            # 2. Verificar la disponibilidad del slot actual
             slot = Booking.query.filter_by(
                 booking_date=booking_date_obj,
                 time_slot=time_slot,
@@ -314,18 +336,17 @@ def book_slot():
                 slot.booked_by = booked_by
                 slot.available = False
                 db.session.commit()
-                flash(f'Slot {time_slot} on {queue_type} para el {date_str} reservado por {booked_by}.', 'success')
+                flash(f'Slot {time_slot} en {queue_type.capitalize()} para el {date_str} reservado por {booked_by}.', 'success')
                 
                 message = (
-                    f"📢  **New Booking!**\n"
-                    f"👤 **[ {booked_by} ]** \nhas booked a slot for **{queue_type.capitalize()}** "
-                    f"on: \n**{date_str} at {time_slot} UTC**."
+                    f"📢  **¡Nueva Reserva!**\n"
+                    f"👤 **[ {booked_by} ]** \nha reservado un slot para **{queue_type.capitalize()}** "
+                    f"en: \n**{date_str} a las {time_slot} UTC**."
                 )
-                # ¡CORRECCIÓN AQUÍ! Ejecutar en un hilo separado
                 thread = threading.Thread(target=send_discord_notification, args=(message,))
                 thread.start()
             else:
-                flash(f'Error: El slot de {time_slot} en {queue_type} para el {date_str} no está disponible.', 'error')
+                flash(f'Error: El slot de {time_slot} en {queue_type.capitalize()} para el {date_str} no está disponible o ya fue reservado.', 'error')
         except Exception as e:
             db.session.rollback()
             flash(f'Ocurrió un error al reservar: {e}', 'error')
@@ -396,6 +417,15 @@ def edit_booking(booking_id):
         booking_to_edit = Booking.query.get_or_404(booking_id)
 
         if request.method == 'POST':
+            # --- Lógica de validación al editar (si el slot cambia de usuario o disponibilidad) ---
+            # Si se cambia booked_by o se marca como no disponible, y esto genera un conflicto,
+            # también podrías necesitar validarlo aquí. Por simplicidad, esta edición solo permite
+            # cambiar el booked_by y el estado available, no mover la hora o la cola.
+            
+            # Si el usuario es 'admin', pueden tener permisos especiales.
+            # Aquí la validación es más laxa, ya que un admin debería poder forzar esto si es necesario.
+            # Si necesitas que los admins también cumplan esta regla, duplica la lógica de verificación.
+            
             booking_to_edit.booked_by = request.form['booked_by']
             booking_to_edit.available = ('available' in request.form)
 
@@ -447,20 +477,19 @@ def manage_bonuses():
                 bonus_end_dt_utc = bonus_start_dt_utc + timedelta(hours=duration_hours)
 
                 message = (
-                    f"✨ **Bonus Activated!** The **{queue_type.capitalize()}** queue "
-                    f"will have a bonus from **{start_date_str} at {start_time_formatted} UTC** "
-                    f"for **{duration_hours} hour(s)** (until {bonus_end_dt_utc.strftime('%H:%M')} UTC)."
+                    f"✨ **¡Bonus Activado!** La cola de **{queue_type.capitalize()}** "
+                    f"tendrá un bonus desde **{start_date_str} a las {start_time_formatted} UTC** "
+                    f"por **{duration_hours} hora(s)** (hasta {bonus_end_dt_utc.strftime('%H:%M')} UTC)."
                 )
-                # ¡CORRECCIÓN AQUÍ! Ejecutar en un hilo separado
                 thread = threading.Thread(target=send_discord_notification, args=(message,))
                 thread.start()
 
             except ValueError:
-                flash('Error: Invalid start date format.', 'error')
+                flash('Error: Formato de fecha de inicio inválido.', 'error')
                 db.session.rollback()
             except Exception as e:
                 db.session.rollback()
-                flash(f'An error occurred while adding the bonus: {e}', 'error')
+                flash(f'Ocurrió un error al añadir el bonus: {e}', 'error')
             return redirect(url_for('manage_bonuses'))
 
         all_bonuses = Bonus.query.order_by(Bonus.start_date, Bonus.start_time).all()
@@ -486,7 +515,6 @@ def send_discord_message():
         )
 
         try:
-            # ¡CORRECCIÓN AQUÍ! Ejecutar en un hilo separado
             thread = threading.Thread(target=send_discord_notification, args=(formatted_message, channel_id))
             thread.start()
             flash('Mensaje enviado a Discord exitosamente!', 'success')
