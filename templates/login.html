@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Empire 185</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<style>
+    /* Colores base para la temática AoE */
+    :root {
+        --aoe-dark-brown: #2C201C; /* Marrón muy oscuro, casi negro */
+        --aoe-medium-brown: #4A3728; /* Marrón medio para fondos */
+        --aoe-light-brown: #6B5B4C; /* Marrón más claro para bordes */
+        --aoe-gold: #B89A5A; /* Oro para detalles o texto importante */
+        --aoe-grey-text: #D4C29D; /* Gris-marrón claro para texto secundario */
+        --aoe-light-text: #EFEBE9; /* Blanco cremoso para texto principal */
+        --aoe-button-green: #4CAF50; /* Verde de botón, similar al original pero puede ajustarse */
+        --aoe-button-hover: #45a049;
+    }
+
+    body {
+        background-color: var(--aoe-dark-brown); /* Fondo oscuro general */
+        /* Si tienes una imagen de fondo de piedra/madera, puedes añadirla aquí */
+        /* background-image: url('{{ url_for('static', filename='images/stone_texture.jpg') }}'); */
+        /* background-size: cover; */
+        /* background-attachment: fixed; */
+        font-family: 'Times New Roman', Times, serif; /* Típica fuente de fantasía/histórica */
+        color: var(--aoe-light-text); /* Color de texto por defecto */
+    }
+
+    .login-container {
+        max-width: 450px; /* Un poco más ancho */
+        margin: 80px auto; /* Más margen arriba para centrar verticalmente */
+        padding: 40px;
+        background-color: var(--aoe-medium-brown); /* Fondo del contenedor principal */
+        border: 2px solid var(--aoe-light-brown); /* Borde que simula madera/piedra */
+        border-radius: 12px; /* Esquinas ligeramente más redondeadas */
+        box-shadow: 
+            0 8px 16px rgba(0, 0, 0, 0.4), /* Sombra principal */
+            0 0 0 6px rgba(var(--aoe-gold), 0.2); /* Sombra exterior sutil para un "brillo" */
+        text-align: center;
+        position: relative; /* Para posibles elementos decorativos */
+        overflow: hidden; /* Asegura que el contenido no se salga de los bordes redondeados */
+    }
+
+    /* Opcional: Patrón sutil de fondo para el contenedor */
+    .login-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        /* Si tienes un patrón de fondo de piedra/madera para el contenedor */
+        /* background-image: url('{{ url_for('static', filename='images/wood_pattern.png') }}'); */
+        /* background-size: 100px; */
+        /* opacity: 0.1; */
+        /* z-index: 0; */
+    }
+
+    .login-container > * {
+        position: relative; /* Asegura que el contenido esté por encima del pseudo-elemento */
+        z-index: 1;
+    }
+
+    .login-container h1 {
+        color: var(--aoe-gold); /* Título en color oro */
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7); /* Sombra para profundidad */
+        margin-bottom: 30px;
+        font-size: 2.8em; /* Un poco más grande */
+        font-family: 'Georgia', serif; /* Otra fuente que da sensación histórica */
+        letter-spacing: 2px; /* Un poco de espaciado para el título */
+        text-transform: uppercase; /* Mayúsculas para un toque épico */
+    }
+
+    .login-form label {
+        display: block;
+        text-align: left;
+        margin-bottom: 10px;
+        color: var(--aoe-grey-text); /* Etiquetas en gris-marrón claro */
+        font-weight: bold;
+        font-size: 1.1em;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    }
+
+    .login-form input[type="text"],
+    .login-form input[type="password"] {
+        width: calc(100% - 24px); /* Ajusta padding */
+        padding: 14px 12px;
+        margin-bottom: 25px;
+        border: 1px solid var(--aoe-light-brown); /* Borde que simula piedra/madera */
+        border-radius: 6px;
+        background-color: #443632; /* Fondo de campo ligeramente más oscuro */
+        color: var(--aoe-light-text); /* Texto claro en los campos */
+        font-size: 1.1em;
+        box-sizing: border-box;
+        transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3); /* Sombra interior para profundidad */
+    }
+
+    .login-form input[type="text"]:focus,
+    .login-form input[type="password"]:focus {
+        border-color: var(--aoe-gold); /* Borde dorado al enfocar */
+        box-shadow: 0 0 0 3px rgba(var(--aoe-gold), 0.3); /* Resplandor dorado */
+        outline: none;
+    }
+
+    .login-form input[type="submit"] {
+        background-color: var(--aoe-button-green); /* Verde de botón */
+        color: white;
+        padding: 14px 30px; /* Más padding para un botón más grande */
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 1.2em; /* Texto más grande en el botón */
+        font-weight: bold;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Sombra para el botón */
+        text-transform: uppercase; /* Mayúsculas en el botón */
+    }
+
+    .login-form input[type="submit"]:hover {
+        background-color: var(--aoe-button-hover);
+        transform: translateY(-2px); /* Efecto de "levantar" el botón */
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+    }
+
+    /* Estilos de mensajes flash - mantener colores contrastantes */
+    .flashes {
+        list-style: none;
+        padding: 0;
+        margin: 20px 0;
+    }
+
+    .flashes li {
+        padding: 12px; /* Más padding */
+        margin-bottom: 15px; /* Más espacio entre mensajes */
+        border-radius: 8px; /* Más redondeado */
+        font-weight: bold;
+        font-size: 1.1em;
+        text-align: center;
+    }
+
+    .flashes li.error {
+        background-color: #ffdddd;
+        color: #d8000c;
+        border: 1px solid #d8000c;
+    }
+
+    .flashes li.success {
+        background-color: #ddffdd;
+        color: #008000;
+        border: 1px solid #008000;
+    }
+
+    .flashes li.info {
+        background-color: #e0f2f7;
+        color: #2196F3;
+        border: 1px solid #2196F3;
+    }
+</style>
+</head>
+<body>
+    <div class="login-container">
+        <h1>Login</h1>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <ul class="flashes">
+                    {% for category, message in messages %}
+                        <li class="{{ category }}">{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('login') }}" class="login-form">
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" required>
+
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+
+            <input type="submit" value="Login">
+        </form>
+    </div>
+</body>
+</html>
