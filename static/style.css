@@ -115,6 +115,7 @@ form button[type="submit"] {
 .login-container,
 form button:not(.delete-btn):not(.toggle-btn):not(.edit-btn), /* Otros botones dentro de form */
 form a:not(.edit-btn) { /* Otros enlaces dentro de form */
+    flex-direction: column;
     background-color: var(--aoe-panel-bg);
     border: 3px solid var(--aoe-border);
     border-radius: 8px;
