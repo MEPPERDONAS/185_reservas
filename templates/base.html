@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Empire 185{% endblock %}</title> {# Bloque para el título de la página #}
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* CSS for the bonus icon */
+        .bonus-icon {
+            margin-left: 5px;
+            color: gold;
+            font-weight: bold;
+        }
+        /* Class for bonused slots in the table */
+        .bonused-slot {
+            background-color: #fffacd;
+        }
+        /* Style for the icon in "Next in Queue" */
+        .queue-item .bonus-active-indicator {
+            color: gold;
+            font-size: 1.2em;
+            margin-left: 5px;
+        }
+
+        /* Opcional: Estilo para centrar los botones en el footer si es necesario */
+        .footer-buttons {
+            display: flex;
+            justify-content: center; /* Centra horizontalmente los botones */
+            gap: 15px; /* Espacio entre los botones */
+            margin-bottom: 10px; /* Espacio entre los botones y el texto de copyright */
+            flex-wrap: wrap; /* Permite que los botones se envuelvan si no hay espacio */
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="main-nav">
+            {# Botón para Admin Panel - se mantiene en el header #}
+            {% if session.get('logged_in') and session.get('role') == 'admin' %}
+                <a href="{{ url_for('admin_panel') }}" class="nav-button">
+                    <i class="fas fa-user-shield"></i> Admin Panel
+                </a>
+            {% endif %}
+            {# Aquí puedes poner otros elementos de navegación si son exclusivos del header #}
+        </nav>
+        {# Título principal <h1> #}
+        <h1>{% block page_heading %} ⚔️ EMPIRE #185 ⚔️ {% endblock %}</h1>
+    </header>
+
+    <main>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <ul class="flashes">
+                    {% for category, message in messages %}
+                        <li class="{{ category }}">{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+
+        {# Este es el bloque principal donde irá el contenido específico de cada página #}
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="main-footer">
+        <div class="footer-content">
+            <div class="footer-buttons">
+
+                {# Botones de login/logout - MOVIDOS AL FOOTER #}
+                {% if session.get('logged_in') %}
+                    <a href="{{ url_for('logout') }}" class="nav-button logout-button">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('admin_panel') }}" class="nav-button">
+                        <i class="fas fa-sign-in-alt"></i> Login
+                    </a>
+                {% endif %}
+
+                {# Botón de Discord - se mantiene en el footer #}
+                <a href="https://discord.gg/KjB5rFnm" target="_blank" class="nav-button discord-button">
+                    <i class="fab fa-discord"></i> Únete a Discord
+                </a>
+            </div>
+            
+            <p>&copy; 2025 Empire 185. All rights reserved.</p>
+        </div>
+    </footer>
+    {# Si tienes un script.js global, puedes ponerlo aquí. Si es específico de index.html, déjalo allí o crea un bloque para scripts #}
+    {# <script src="{{ url_for('static', filename='script.js') }}"></script> #}
+</body>
+</html>

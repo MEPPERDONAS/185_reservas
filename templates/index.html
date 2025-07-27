@@ -1,42 +1,12 @@
-<!DOCTYPE html>
-<html lang="en"></html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EMPIRE 185</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <style>
-        /* CSS for the bonus icon */
-        .bonus-icon {
-            margin-left: 5px;
-            color: gold;
-            font-weight: bold;
-        }
-        /* Class for bonused slots in the table */
-        .bonused-slot {
-            background-color: #fffacd;
-        }
-        /* Style for the icon in "Next in Queue" */
-        .queue-item .bonus-active-indicator {
-            color: gold;
-            font-size: 1.2em;
-            margin-left: 5px;
-        }
-    </style>
-</head>
-<body>
-    <h1>   ⚔️ EMPIRE #185 ⚔️   </h1>
+{% extends "base.html" %}
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        <ul class="flashes">
-        {% for category, message in messages %}
-          <li class="{{ category }}">{{ message }}</li>
-        {% endfor %}
-        </ul>
-      {% endif %}
-    {% endwith %}
+{# Opcional: Si quieres un título de pestaña diferente para Home #}
+{% block title %}Home - Empire #185{% endblock %} 
 
+{# Opcional: Si quieres un título <h1> diferente para la página de inicio, sobrescríbelo aquí #}
+{# {% block page_heading %}Welcome to Empire #185!{% endblock %} #}
+
+{% block content %}
     <div class="first-in-queue-container">
         <h2>Queue</h2>
         <div class="queue-list">
@@ -80,7 +50,7 @@
                                 {% set is_bonused = date_str in bonused_slots[queue] and time_str in bonused_slots[queue][date_str] %}
                                 <td class="slot 
                                     {% if not slot_data.available %}
-                                        booked {% if slot_data.booked_by == 'Past' %} past-slot {% endif %}
+                                        booked {% if slot_data.booked_by == 'Pasado' %} past-slot {% endif %}
                                     {% else %}
                                         available
                                     {% endif %}
@@ -88,10 +58,10 @@
                                     data-date="{{ date_str }}"
                                     data-queue="{{ queue }}"
                                     data-time="{{ time_str }}">
-                                    {% if slot_data.booked_by and slot_data.booked_by != 'Past' %}
+                                    {% if slot_data.booked_by and slot_data.booked_by != 'Pasado' %}
                                         {{ slot_data.booked_by }}
                                     {% else %}
-                                        {% if slot_data.booked_by == 'Past' %}
+                                        {% if slot_data.booked_by == 'Pasado' %}
                                             Past
                                         {% else %}
                                             Available
@@ -117,5 +87,4 @@
     </form>
 
     <script src="{{ url_for('static', filename='script.js') }}"></script>
-</body>
-</html>
+{% endblock %}

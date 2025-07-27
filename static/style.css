@@ -858,3 +858,70 @@ button.toggle-btn .fa-toggle-off {
     font-size: 0.95em;
     }
 }
+/* --- 14. Estilos para el Footer --- */
+.main-footer {
+    width: 100%;
+    background-color: var(--aoe-dark-bg); /* Fondo oscuro del footer */
+    border-top: 3px double var(--aoe-border); /* Borde superior como el título */
+    padding: 20px 0;
+    margin-top: auto; /* Empuja el footer hacia abajo en la página flex */
+    text-align: center;
+    box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.5); /* Sombra superior */
+    flex-shrink: 0; /* Evita que el footer se encoja */
+}
+
+.footer-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 15px;
+    display: flex;
+    flex-wrap: wrap; /* Permite que los elementos se envuelvan */
+    justify-content: center; /* Centra los elementos horizontalmente */
+    align-items: center;
+    gap: 20px; /* Espacio entre los elementos del footer */
+}
+
+.main-footer p {
+    color: var(--aoe-text-light);
+    font-size: 0.9em;
+    margin: 0;
+    flex-basis: 100%; /* Ocupa todo el ancho si hay varios elementos, centra el texto */
+    padding-top: 15px; /* Espacio encima del copyright si está en una nueva línea */
+    border-top: 1px dashed rgba(107, 91, 76, 0.3); /* Línea punteada sutil */
+    margin-top: 15px;
+}
+
+/* Reutilizando la clase nav-button para el botón de admin */
+/* El estilo base ya está en tu CSS principal */
+
+/* Estilo específico para el botón de Discord */
+.discord-button {
+    background: linear-gradient(to bottom, #7289DA, #5865F2); /* Colores de Discord */
+    border-color: #434B80;
+    color: white; /* Texto blanco para el botón de Discord */
+}
+
+.discord-button:hover {
+    background: linear-gradient(to bottom, #8A9AEB, #7289DA);
+    border-color: #535B90;
+}
+
+/* Iconos dentro de los botones (Font Awesome) */
+.nav-button .fas,
+.nav-button .fab { /* fab para iconos de marcas como Discord */
+    margin-right: 8px; /* Espacio entre el icono y el texto */
+}
+
+/* Media Queries para responsividad del footer */
+@media (max-width: 768px) {
+    .footer-content {
+        flex-direction: column; /* Apilar elementos en pantallas pequeñas */
+        gap: 15px;
+    }
+
+    .main-footer p {
+        padding-top: 10px;
+        margin-top: 10px;
+        font-size: 0.8em;
+    }
+}
