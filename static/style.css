@@ -682,6 +682,7 @@ button.toggle-btn .fa-toggle-off {
     .login-container,
     form button:not(.delete-btn):not(.toggle-btn):not(.edit-btn),
     form a:not(.edit-btn) {
+        flex-direction: column;
         width: 95%; /* Ocupa más ancho en móviles */
         padding: 15px; /* Menos padding en móviles */
         min-width: 320px;
