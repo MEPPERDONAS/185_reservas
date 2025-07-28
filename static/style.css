@@ -384,6 +384,14 @@ tbody tr:nth-child(even) {
     width: 100%; /* Asegura que ocupe todo el ancho para aplicar text-align */
     display: block; /* Asegura que sea un bloque para que text-align funcione correctamente */
 }
+.show-more-button-container {
+    text-align: center;
+    margin-top: 25px;
+    margin-bottom: 25px; /* Agrega un poco de espacio si es necesario */
+}
+.hidden-day-container {
+    display: none; /* ESTO ES CLAVE: DEBE ESTAR ACTIVO AL CARGAR LA PÁGINA */
+}
 /* --- 8. Estilos para Formularios (Comunes) --- */
 label {
     display: block;
@@ -731,7 +739,7 @@ button.toggle-btn .fa-toggle-off {
     }
 
     th, td {
-        padding: 10px 8px; /* Reducir padding en celdas para pantallas pequeñas */
+        padding: 5px 20px; /* Reducir padding en celdas para pantallas pequeñas */
         font-size: 0.85em; /* Reducir más el tamaño de fuente de celdas */
     }
 
@@ -816,7 +824,7 @@ button.toggle-btn .fa-toggle-off {
     }
 
     th, td {
-        padding: 6px 4px;
+        padding: 5px 15px;
         font-size: 0.75em;
     }
 

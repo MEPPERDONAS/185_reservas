@@ -110,16 +110,21 @@ def get_bookings_for_display(target_date_obj):
 def update_daily_bookings_in_db():
     today_local = date.today()
     
-    expected_dates_objs = [
-        today_local,
-        today_local + timedelta(days=1)
-    ]
+    # Queremos mantener datos para los próximos 7 días para la visualización.
+    # Así que eliminamos cualquier cosa más allá de eso.
+    max_date_to_keep = today_local + timedelta(days=6) # Hoy + 6 días = 7 días en total
+    
+    # Obtener todas las fechas que deberíamos tener inicializadas (hoy hasta 6 días en el futuro)
+    expected_dates_objs = [today_local + timedelta(days=i) for i in range(7)]
 
-    Booking.query.filter(Booking.booking_date.notin_(expected_dates_objs)).delete(synchronize_session=False)
+    # Eliminar reservas que estén fuera del rango de los próximos 7 días
+    Booking.query.filter(Booking.booking_date > max_date_to_keep).delete(synchronize_session=False)
     db.session.commit()
 
+    # Asegurarse de que todos los slots para los próximos 7 días estén inicializados
     for d_obj in expected_dates_objs:
         initialize_all_slots_for_day(d_obj)
+
 
 # --- Rutas de la Aplicación Web (Flask) ---
 
@@ -129,39 +134,40 @@ def index():
         update_daily_bookings_in_db()
 
     now_utc = datetime.now(timezone.utc)
-    current_hour_utc = now_utc.hour
-
+    
     today_local = date.today()
-    tomorrow_local = today_local + timedelta(days=1)
+    
+    # Generar las fechas para los próximos 7 días
+    display_dates = []
+    for i in range(7):
+        display_dates.append(today_local + timedelta(days=i))
 
     ordered_display_dates = {}
 
-    today_bookings = get_bookings_for_display(today_local)
-    for queue in QUEUES:
-        for hour_str, details in today_bookings[queue].items():
-            slot_hour = int(hour_str.split(':')[0])
-            slot_dt_obj = datetime.combine(today_local, datetime.strptime(hour_str, "%H:%M").time()).replace(tzinfo=timezone.utc)
-            if slot_dt_obj < now_utc:
-                details["available"] = False
-                if details["booked_by"] is None:
-                    details["booked_by"] = "Pasado"
-    ordered_display_dates[today_local.isoformat()] = today_bookings
-
-    tomorrow_bookings = get_bookings_for_display(tomorrow_local)
-    ordered_display_dates[tomorrow_local.isoformat()] = tomorrow_bookings
+    for d_obj in display_dates:
+        day_bookings = get_bookings_for_display(d_obj)
+        # Marcar slots pasados como no disponibles para el día actual
+        if d_obj == today_local:
+            for queue in QUEUES:
+                for hour_str, details in day_bookings[queue].items():
+                    slot_dt_obj = datetime.combine(d_obj, datetime.strptime(hour_str, "%H:%M").time()).replace(tzinfo=timezone.utc)
+                    if slot_dt_obj < now_utc:
+                        details["available"] = False
+                        if details["booked_by"] is None:
+                            details["booked_by"] = "Pasado"
+        ordered_display_dates[d_obj.isoformat()] = day_bookings
 
     first_in_queue = {}
 
     for queue_name in QUEUES:
         found_next_booked_slot = False
-        for d_obj in [today_local, tomorrow_local]:
+        for d_obj in display_dates: # Iterar por todos los días a mostrar
             if found_next_booked_slot:
                 break
 
             current_day_bookings = ordered_display_dates[d_obj.isoformat()]
             for hour_str, details in current_day_bookings[queue_name].items():
                 slot_time_obj = datetime.strptime(hour_str, "%H:%M").time()
-
                 slot_datetime_aware = datetime.combine(d_obj, slot_time_obj).replace(tzinfo=timezone.utc)
 
                 is_future_slot = False
@@ -189,7 +195,8 @@ def index():
 
     active_bonuses = Bonus.query.filter(Bonus.active == True).all()
 
-    bonused_slots = {queue: {today_local.isoformat(): set(), tomorrow_local.isoformat(): set()} for queue in QUEUES}
+    # Ajustar bonused_slots para todos los días a mostrar
+    bonused_slots = {queue: {d.isoformat(): set() for d in display_dates} for queue in QUEUES}
 
     bonused_queues_now = {queue: False for queue in QUEUES}
 
@@ -202,15 +209,13 @@ def index():
 
         current_slot_dt = bonus_start_dt
         while current_slot_dt < bonus_end_dt:
-            if current_slot_dt.date() == today_local or current_slot_dt.date() == tomorrow_local:
-                if current_slot_dt.date().isoformat() in bonused_slots[bonus.queue_type]:
-                    bonused_slots[bonus.queue_type][current_slot_dt.date().isoformat()].add(current_slot_dt.strftime("%H:%M"))
+            if current_slot_dt.date() in display_dates: # Verificar si la fecha del bonus está en las fechas a mostrar
+                bonused_slots[bonus.queue_type][current_slot_dt.date().isoformat()].add(current_slot_dt.strftime("%H:%M"))
             current_slot_dt += timedelta(hours=1)
+            # Limitar el loop para que no genere slots para días muy lejanos
+            if current_slot_dt.date() > display_dates[-1]: # Si la fecha actual excede el último día a mostrar
+                break
 
-            if current_slot_dt.date() > bonus_end_dt.date() and bonus_end_dt.date() >= bonus_start_dt.date():
-                break
-            if current_slot_dt.date() > tomorrow_local:
-                break
 
     bonuses_for_display = []
     for bonus in active_bonuses:
@@ -231,6 +236,7 @@ def index():
         'index.html',
         bookings=ordered_display_dates,
         queues=QUEUES,
+        display_dates=display_dates, # Pasar la lista de objetos de fecha
         today=today_local.isoformat(),
         now_utc=now_utc.strftime("%Y-%m-%d %H:%M:%S UTC"),
         first_in_queue=first_in_queue,
@@ -295,11 +301,10 @@ def book_slot():
         date_str = request.form['date']
         queue_type = request.form['queue']
         time_slot = request.form['time']
-        # Es crucial que 'booked_by' sea el identificador único del usuario.
-        # Si 'booked_by' viene de un formulario y es un nombre que puede repetirse,
-        # esto podría no funcionar perfectamente. Lo ideal es usar un ID de usuario único.
-        # Para este ejemplo, asumo que 'booked_by' es el 'username' de la sesión, que es único.
-        booked_by = request.form['booked_by'] # O session.get('username') si el usuario está logueado
+        
+        # Consideración: Idealmente, booked_by debería venir de la sesión del usuario si está logueado.
+        # Por ahora, usamos el valor del formulario, asumiendo que es un identificador único.
+        booked_by = request.form['booked_by'] 
 
         if not all([date_str, queue_type, time_slot, booked_by]):
             flash('Error: Todos los campos son requeridos.', 'error')
@@ -308,7 +313,6 @@ def book_slot():
         try:
             booking_date_obj = datetime.strptime(date_str, '%Y-%m-%d').date()
             
-            # --- NUEVA LÓGICA DE VALIDACIÓN ---
             # 1. Verificar si el usuario ya tiene una reserva activa en OTRA cola para la misma fecha y hora.
             existing_conflict_booking = Booking.query.filter(
                 Booking.booked_by == booked_by,                 # Mismo usuario
@@ -319,12 +323,10 @@ def book_slot():
             ).first()
 
             if existing_conflict_booking:
-                # Si se encuentra una reserva conflictiva, NO se permite la nueva reserva.
                 flash(f'You already have an active booking for **{date_str} at {time_slot}** in the **{existing_conflict_booking.queue_type.capitalize()}** queue. '
                       'You cannot book multiple queues at the same time.', 'error')
                 return redirect(url_for('index'))
-            # --- FIN NUEVA LÓGICA DE VALIDACIÓN ---
-
+            
             # 2. Verificar la disponibilidad del slot actual
             slot = Booking.query.filter_by(
                 booking_date=booking_date_obj,
@@ -339,9 +341,9 @@ def book_slot():
                 flash(f'Slot {time_slot} in {queue_type.capitalize()} for {date_str} successfully booked by {booked_by}.', 'success')
                 
                 message = (
-                    f"📢  **¡Nueva Reserva!**\n"
-                    f"👤 **[ {booked_by} ]** \nha reservado un slot para **{queue_type.capitalize()}** "
-                    f"en: \n**{date_str} a las {time_slot} UTC**."
+                    f"📢  **New Booking!**\n"
+                    f"👤 **[ {booked_by} ]** \nhas booked a slot for **{queue_type.capitalize()}** "
+                    f"on: \n**{date_str} at {time_slot} UTC**."
                 )
                 thread = threading.Thread(target=send_discord_notification, args=(message,))
                 thread.start()
@@ -359,7 +361,7 @@ def admin_panel():
     Muestra un panel de administración con todas las reservas.
     """
     if 'username' not in session or session.get('role') != 'admin':
-        flash('Acceso denegado. Solo los administradores pueden acceder.', 'error')
+        flash('Access denied. Only administrators can access.', 'error')
         return redirect(url_for('login'))
 
     with app.app_context():
@@ -367,6 +369,7 @@ def admin_panel():
         current_date_utc = now_utc.date()
         current_time_utc_str = now_utc.strftime('%H:%M')
 
+        # Mostrar todas las reservas futuras y las de hoy que no han pasado
         all_bookings = Booking.query.filter(
             and_(
                 Booking.available == False, # Solo reservas ocupadas
@@ -397,10 +400,10 @@ def delete_booking(booking_id):
         try:
             db.session.delete(booking_to_delete)
             db.session.commit()
-            flash(f'Booking ID {booking_id} successfully deleted.', 'success')
+            flash(f'Booking ID {booking_id} deleted successfully.', 'success')
         except Exception as e:
             db.session.rollback()
-            flash(f'Error al eliminar la reserva: {e}', 'error')
+            flash(f'Error deleting the booking: {e}', 'error')
     return redirect(url_for('admin_panel'))
 
 
@@ -417,15 +420,6 @@ def edit_booking(booking_id):
         booking_to_edit = Booking.query.get_or_404(booking_id)
 
         if request.method == 'POST':
-            # --- Lógica de validación al editar (si el slot cambia de usuario o disponibilidad) ---
-            # Si se cambia booked_by o se marca como no disponible, y esto genera un conflicto,
-            # también podrías necesitar validarlo aquí. Por simplicidad, esta edición solo permite
-            # cambiar el booked_by y el estado available, no mover la hora o la cola.
-            
-            # Si el usuario es 'admin', pueden tener permisos especiales.
-            # Aquí la validación es más laxa, ya que un admin debería poder forzar esto si es necesario.
-            # Si necesitas que los admins también cumplan esta regla, duplica la lógica de verificación.
-            
             booking_to_edit.booked_by = request.form['booked_by']
             booking_to_edit.available = ('available' in request.form)
 
@@ -435,14 +429,14 @@ def edit_booking(booking_id):
                 return redirect(url_for('admin_panel'))
             except Exception as e:
                 db.session.rollback()
-                flash(f'Error al actualizar la reserva: {e}', 'error')
+                flash(f'Error updating the booking: {e}', 'error')
         
         return render_template('edit_booking.html', booking=booking_to_edit, queues=QUEUES)
 
 @app.route('/admin/bonuses', methods=['GET', 'POST'])
 def manage_bonuses():
     if 'username' not in session or session.get('role') != 'admin':
-        flash('Acceso denegado. Solo los administradores pueden acceder.', 'error')
+        flash('Access denied. Only administrators can access.', 'error')
         return redirect(url_for('login'))
 
     with app.app_context():
@@ -485,11 +479,11 @@ def manage_bonuses():
                 thread.start()
 
             except ValueError:
-                flash('Error: Formato de fecha de inicio inválido.', 'error')
+                flash('Error: Invalid start date format.', 'error')
                 db.session.rollback()
             except Exception as e:
                 db.session.rollback()
-                flash(f'Ocurrió un error al añadir el bonus: {e}', 'error')
+                flash(f'An error occurred while adding the bonus: {e}', 'error')
             return redirect(url_for('manage_bonuses'))
 
         all_bonuses = Bonus.query.order_by(Bonus.start_date, Bonus.start_time).all()
@@ -498,7 +492,7 @@ def manage_bonuses():
 @app.route('/send_discord_message', methods=['GET', 'POST'])
 def send_discord_message():
     if 'username' not in session or session.get('role') != 'admin':
-        flash('Acceso denegado. Solo los administradores pueden acceder.', 'error')
+        flash('Access denied. Only administrators can access.', 'error')
         return redirect(url_for('login'))
 
     if request.method == 'POST':
@@ -506,7 +500,7 @@ def send_discord_message():
         message_content = request.form.get('message_content')
 
         if not channel_id or not message_content:
-            flash('Por favor, completa todos los campos.', 'error')
+            flash('Please fill in all fields.', 'error')
             return redirect(url_for('send_discord_message'))
 
         formatted_message = (
@@ -519,7 +513,7 @@ def send_discord_message():
             thread.start()
             flash('Message sent to Discord successfully!', 'success')
         except Exception as e:
-            flash(f'Ocurrió un error al enviar mensaje a Discord: {e}', 'error')
+            flash(f'An error occurred while sending the message to Discord: {e}', 'error')
 
         return redirect(url_for('send_discord_message'))
 
@@ -528,7 +522,7 @@ def send_discord_message():
 @app.route('/admin/bonuses/toggle/<int:bonus_id>', methods=['POST'])
 def toggle_bonus_active(bonus_id):
     if 'username' not in session or session.get('role') != 'admin':
-        flash('Acceso denegado. Solo los administradores pueden acceder.', 'error')
+        flash('Access denied. Only administrators can access.', 'error')
         return redirect(url_for('login'))
 
     with app.app_context():
@@ -539,13 +533,13 @@ def toggle_bonus_active(bonus_id):
             flash(f'Bonus status for ID {bonus_id} changed to {"active" if bonus.active else "inactive"}.', 'success')
         except Exception as e:
             db.session.rollback()
-            flash(f'Error al cambiar estado de bonificación: {e}', 'error')
+            flash(f'Error changing bonus status: {e}', 'error')
     return redirect(url_for('manage_bonuses'))
 
 @app.route('/admin/bonuses/delete/<int:bonus_id>', methods=['POST'])
 def delete_bonus(bonus_id):
     if 'username' not in session or session.get('role') != 'admin':
-        flash('Acceso denegado. Solo los administradores pueden acceder.', 'error')
+        flash('Access denied. Only administrators can access.', 'error')
         return redirect(url_for('login'))
 
     with app.app_context():
@@ -553,7 +547,7 @@ def delete_bonus(bonus_id):
         try:
             db.session.delete(bonus_to_delete)
             db.session.commit()
-            flash(f'Bonificación ID {bonus_id} eliminada exitosamente.', 'success')
+            flash(f'Bonus ID {bonus_id} deleted successfully.', 'success')
         except Exception as e:
             db.session.rollback()
             flash(f'Error al eliminar bonificación: {e}', 'error')

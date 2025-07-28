@@ -29,54 +29,67 @@
     </div>
 
     <div id="calendar-container">
-        {% for date_str, day_bookings in bookings.items() %}
-            <table data-date="{{ date_str }}">
-                <caption>{{ date_str }}</caption>
-                <thead>
-                    <tr>
-                        <th>Time</th>
-                        {% for queue in queues %}
-                            <th>{{ queue | capitalize }}</th>
-                        {% endfor %}
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for hour in range(24) %}
-                        {% set time_str = '%02d:00' | format(hour) %}
+        {# Iterar sobre todos los días, pero ocultar los que van más allá del segundo día #}
+        {% for date_obj in display_dates %}
+            {# Wrap each table in a div to easily hide/show #}
+            <div class="day-table-wrapper {% if loop.index > 2 %}hidden-day-container{% endif %}">
+                <table data-date="{{ date_obj.isoformat() }}">
+                    <caption>
+                        {{ date_obj.strftime('%A, %B %d, %Y') }}
+                        {% if date_obj.isoformat() == today %} (Today){% endif %}
+                    </caption>
+                    <thead>
                         <tr>
-                            <td>{{ time_str }}</td>
+                            <th>Time</th>
                             {% for queue in queues %}
-                                {% set slot_data = day_bookings[queue][time_str] %}
-                                {% set is_bonused = date_str in bonused_slots[queue] and time_str in bonused_slots[queue][date_str] %}
-                                <td class="slot 
-                                    {% if not slot_data.available %}
-                                        booked {% if slot_data.booked_by == 'Pasado' %} past-slot {% endif %}
-                                    {% else %}
-                                        available
-                                    {% endif %}
-                                    {% if is_bonused %} bonused-slot {% endif %}"
-                                    data-date="{{ date_str }}"
-                                    data-queue="{{ queue }}"
-                                    data-time="{{ time_str }}">
-                                    {% if slot_data.booked_by and slot_data.booked_by != 'Pasado' %}
-                                        {{ slot_data.booked_by }}
-                                    {% else %}
-                                        {% if slot_data.booked_by == 'Pasado' %}
-                                            Past
-                                        {% else %}
-                                            Available
-                                        {% endif %}
-                                    {% endif %}
-                                    {% if is_bonused %}
-                                        <span class="bonus-icon" title="Bonus Active!">⭐</span>
-                                    {% endif %}
-                                </td>
+                                <th>{{ queue | capitalize }}</th>
                             {% endfor %}
                         </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {% for hour in range(24) %}
+                            {% set time_str = '%02d:00' | format(hour) %}
+                            <tr>
+                                <td>{{ time_str }}</td>
+                                {% for queue in queues %}
+                                    {% set slot_data = bookings[date_obj.isoformat()][queue][time_str] %}
+                                    {% set is_bonused = date_obj.isoformat() in bonused_slots[queue] and time_str in bonused_slots[queue][date_obj.isoformat()] %}
+                                    <td class="slot 
+                                        {% if not slot_data.available %}
+                                            booked {% if slot_data.booked_by == 'Pasado' %} past-slot {% endif %}
+                                        {% else %}
+                                            available
+                                        {% endif %}
+                                        {% if is_bonused %} bonused-slot {% endif %}"
+                                        data-date="{{ date_obj.isoformat() }}"
+                                        data-queue="{{ queue }}"
+                                        data-time="{{ time_str }}">
+                                        {% if slot_data.booked_by and slot_data.booked_by != 'Pasado' %}
+                                            {{ slot_data.booked_by }}
+                                        {% else %}
+                                            {% if slot_data.booked_by == 'Pasado' %}
+                                                Past
+                                            {% else %}
+                                                Available
+                                            {% endif %}
+                                        {% endif %}
+                                        {% if is_bonused %}
+                                            <span class="bonus-icon" title="Bonus Active!">⭐</span>
+                                        {% endif %}
+                                    </td>
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         {% endfor %}
+    </div>
+
+    {# Botón para mostrar/ocultar días adicionales #}
+    <div class="show-more-button-container">
+        {# MODIFICACIÓN AQUÍ: AÑADIDA LA CLASE 'nav-button' #}
+        <button id="toggleDaysButton" class="nav-button show-more-button">Show More Days</button>
     </div>
 
     <form id="booking-form" action="{{ url_for('book_slot') }}" method="POST" style="display: none;">
