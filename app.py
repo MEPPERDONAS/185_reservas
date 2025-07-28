@@ -320,8 +320,8 @@ def book_slot():
 
             if existing_conflict_booking:
                 # Si se encuentra una reserva conflictiva, NO se permite la nueva reserva.
-                flash(f'Ya tienes una reserva activa para el **{date_str} a las {time_slot}** en la cola de **{existing_conflict_booking.queue_type.capitalize()}**. '
-                      'No puedes reservar en múltiples colas a la misma hora.', 'error')
+                flash(f'You already have an active booking for **{date_str} at {time_slot}** in the **{existing_conflict_booking.queue_type.capitalize()}** queue. '
+                      'You cannot book multiple queues at the same time.', 'error')
                 return redirect(url_for('index'))
             # --- FIN NUEVA LÓGICA DE VALIDACIÓN ---
 
@@ -336,7 +336,7 @@ def book_slot():
                 slot.booked_by = booked_by
                 slot.available = False
                 db.session.commit()
-                flash(f'Slot {time_slot} en {queue_type.capitalize()} para el {date_str} reservado por {booked_by}.', 'success')
+                flash(f'Slot {time_slot} in {queue_type.capitalize()} for {date_str} successfully booked by {booked_by}.', 'success')
                 
                 message = (
                     f"📢  **¡Nueva Reserva!**\n"
@@ -389,7 +389,7 @@ def delete_booking(booking_id):
     Borra una reserva específica de la base de datos.
     """
     if 'username' not in session or session.get('role') != 'admin':
-        flash('Acceso denegado. Solo los administradores pueden acceder.', 'error')
+        flash('Access denied. Only administrators can access.', 'error')
         return redirect(url_for('login'))
 
     with app.app_context():
@@ -397,7 +397,7 @@ def delete_booking(booking_id):
         try:
             db.session.delete(booking_to_delete)
             db.session.commit()
-            flash(f'Reserva ID {booking_id} eliminada exitosamente.', 'success')
+            flash(f'Booking ID {booking_id} successfully deleted.', 'success')
         except Exception as e:
             db.session.rollback()
             flash(f'Error al eliminar la reserva: {e}', 'error')
@@ -410,7 +410,7 @@ def edit_booking(booking_id):
     Muestra un formulario para editar una reserva y procesa la actualización.
     """
     if 'username' not in session or session.get('role') != 'admin':
-        flash('Acceso denegado. Solo los administradores pueden acceder.', 'error')
+        flash('Access denied. Only administrators can access.', 'error')
         return redirect(url_for('login'))
 
     with app.app_context():
@@ -477,9 +477,9 @@ def manage_bonuses():
                 bonus_end_dt_utc = bonus_start_dt_utc + timedelta(hours=duration_hours)
 
                 message = (
-                    f"✨ **¡Bonus Activado!** La cola de **{queue_type.capitalize()}** "
-                    f"tendrá un bonus desde **{start_date_str} a las {start_time_formatted} UTC** "
-                    f"por **{duration_hours} hora(s)** (hasta {bonus_end_dt_utc.strftime('%H:%M')} UTC)."
+                    f"✨ **Bonus Activated!** The **{queue_type.capitalize()}** queue "
+                    f"will have a bonus from **{start_date_str} at {start_time_formatted} UTC** "
+                    f"for **{duration_hours} hour(s)** (until {bonus_end_dt_utc.strftime('%H:%M')} UTC)."
                 )
                 thread = threading.Thread(target=send_discord_notification, args=(message,))
                 thread.start()
@@ -510,14 +510,14 @@ def send_discord_message():
             return redirect(url_for('send_discord_message'))
 
         formatted_message = (
-            f"👑** Mensaje de Administración **👑\n"
+            f"👑** Administration Message **👑\n"
             f"{message_content}"
         )
 
         try:
             thread = threading.Thread(target=send_discord_notification, args=(formatted_message, channel_id))
             thread.start()
-            flash('Mensaje enviado a Discord exitosamente!', 'success')
+            flash('Message sent to Discord successfully!', 'success')
         except Exception as e:
             flash(f'Ocurrió un error al enviar mensaje a Discord: {e}', 'error')
 

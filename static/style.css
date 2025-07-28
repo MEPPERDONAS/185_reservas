@@ -338,9 +338,7 @@ tbody tr:nth-child(even) {
 }
 
 .flashes .error {
-    background-color: var(--aoe-error);
-    color: var(--aoe-text-light);
-    border: 1px solid #7A3F3F; /* Usar un color directo o una variable */
+    align-items: center;
 }
 
 .flashes .warning {
