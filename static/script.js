@@ -1,33 +1,39 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // ... (Tu lógica existente para bookingForm y slotCells, no necesita cambios aquí) ...
+    // Obtener el formulario oculto y sus campos para la reserva normal
     const bookingForm = document.getElementById('booking-form');
     const formDate = document.getElementById('form-date');
     const formQueue = document.getElementById('form-queue');
     const formTime = document.getElementById('form-time');
     const formBookedBy = document.getElementById('form-booked-by');
 
+    // Seleccionar todas las celdas de slot (Research, Building, Training)
     const slotCells = document.querySelectorAll('.slot');
 
     slotCells.forEach(cell => {
         cell.addEventListener('click', () => {
+            // Solo permitir hacer clic en slots disponibles
             if (cell.classList.contains('available')) {
                 const date = cell.dataset.date;
                 const queue = cell.dataset.queue;
                 const time = cell.dataset.time;
 
+                // Pedir el nombre al usuario
                 const bookedByName = prompt(`Book slot for ${date} at ${time} in ${queue}. Please enter your name:`);
 
                 if (bookedByName && bookedByName.trim() !== '') {
+                    // Rellenar el formulario oculto con los datos
                     formDate.value = date;
                     formQueue.value = queue;
                     formTime.value = time;
                     formBookedBy.value = bookedByName.trim();
 
+                    // Enviar el formulario
                     bookingForm.submit();
-                } else if (bookedByName !== null) {
+                } else if (bookedByName !== null) { // Si el usuario no canceló, pero dejó el campo vacío
                     alert('Name is required to make a reservation.');
                 }
             } else {
+                // Si el slot no está disponible, mostrar un mensaje
                 if (cell.classList.contains('past-slot')) {
                     alert('This slot has already passed and cannot be booked.');
                 } else {
@@ -37,30 +43,26 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // --- LÓGICA PARA EL BOTÓN SHOW MORE / SHOW LESS ---
+    // --- Lógica para el botón SHOW MORE / SHOW LESS ---
     const toggleDaysButton = document.getElementById('toggleDaysButton');
     const hiddenDayContainers = document.querySelectorAll('.hidden-day-container');
     
     let showingAllDays = false; // Estado inicial: solo se muestran los primeros dos días
 
     // *** MODIFICACIÓN CLAVE AQUÍ: FORZAR OCULTAMIENTO AL CARGAR ***
-    // Si hay contenedores que deberían estar ocultos, asegúrate de que lo estén.
-    // Esto maneja el caso donde el CSS podría no haberlos ocultado por alguna razón
-    // o si el JS se ejecuta antes de que el CSS se aplique completamente.
     if (hiddenDayContainers.length > 0) {
         hiddenDayContainers.forEach(container => {
             container.style.display = 'none';
         });
-        toggleDaysButton.textContent = 'Show More Days'; // Asegurar el texto inicial
+        if (toggleDaysButton) { // Asegurarse de que el botón existe antes de manipularlo
+            toggleDaysButton.textContent = 'Show More Days'; // Asegurar el texto inicial
+        }
         showingAllDays = false; // Confirmar el estado inicial
     } else {
-        // Si no hay días para ocultar (por ejemplo, si solo muestras 2 días o menos en total)
-        // entonces el botón no es necesario o debería tener otro estado/texto
         if (toggleDaysButton) {
             toggleDaysButton.style.display = 'none'; // Oculta el botón si no hay nada que mostrar/ocultar
         }
     }
-
 
     if (toggleDaysButton) {
         toggleDaysButton.addEventListener('click', function() {
@@ -68,15 +70,116 @@ document.addEventListener('DOMContentLoaded', () => {
                 hiddenDayContainers.forEach(container => {
                     container.style.display = 'none';
                 });
-                this.textContent = 'Show More Days'; // Usar 'this' para referirse al botón
+                this.textContent = 'Show More Days';
                 showingAllDays = false;
             } else {
                 hiddenDayContainers.forEach(container => {
                     container.style.display = 'block'; 
                 });
-                this.textContent = 'Show Less Days'; // Usar 'this' para referirse al botón
+                this.textContent = 'Show Less Days';
                 showingAllDays = true;
             }
         });
+    }
+    // --- LÓGICA PARA CALCULAR EL TIEMPO FUTURO ---
+    const findSlotForm = document.getElementById('find-slot-form');
+    const findSlotResults = document.getElementById('find-slot-results');
+    const resultMessage = document.getElementById('result-message');
+    const resultDetails = document.getElementById('result-details');
+    const resultCountdown = document.getElementById('result-countdown');
+
+    let countdownInterval; // Variable para almacenar el ID del intervalo de la cuenta regresiva
+
+    if (findSlotForm) {
+        findSlotForm.addEventListener('submit', async (event) => {
+            event.preventDefault(); // Prevenir la recarga de la página
+
+            const formData = new FormData(findSlotForm);
+            const data = Object.fromEntries(formData.entries());
+
+            // Mostrar "Calculando..." y limpiar resultados anteriores
+            findSlotResults.style.display = 'block'; 
+            resultMessage.textContent = 'Calculando...';
+            resultDetails.textContent = '';
+            resultCountdown.textContent = '';
+            clearInterval(countdownInterval); 
+
+            try {
+                const response = await fetch('/find_closest_slot', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: new URLSearchParams(data).toString()
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    resultMessage.textContent = result.message;
+                    resultDetails.innerHTML = `
+                        <strong>Calculated Date:</strong> ${result.date}<br>
+                        <strong>Calculated Hour (UTC):</strong> ${result.time}
+                    `;
+                    
+                    // Iniciar cuenta regresiva usando el timestamp UTC
+                    if (result.timestamp_utc) {
+                        startCountdown(result.timestamp_utc * 1000, resultCountdown); // Convertir a milisegundos
+                    } else {
+                        // Fallback si por alguna razón no se recibe timestamp_utc (no debería pasar con el nuevo app.py)
+                        const targetDateTime = new Date(`${result.date}T${result.time}:00Z`);
+                        startCountdown(targetDateTime.getTime(), resultCountdown);
+                    }
+
+                } else {
+                    resultMessage.textContent = `Error: ${result.message}`;
+                    resultDetails.textContent = '';
+                    resultCountdown.textContent = '';
+                }
+
+            } catch (error) {
+                console.error('Error al calcular el tiempo:', error);
+                findSlotResults.style.display = 'block';
+                resultMessage.textContent = 'Ocurrió un error al calcular el tiempo.';
+                resultDetails.textContent = '';
+                resultCountdown.textContent = '';
+            }
+        });
+    }
+
+    // Esta función permanece igual, ya que ahora el backend siempre devuelve un timestamp_utc
+    function startCountdown(targetTimestampMs, displayElement) {
+        clearInterval(countdownInterval); // Limpiar cualquier intervalo anterior
+
+        function update() {
+            const now = new Date().getTime(); // Tiempo actual en milisegundos desde la época
+            let diffMs = targetTimestampMs - now; // Diferencia en milisegundos
+
+            if (diffMs <= 0) {
+                displayElement.textContent = '¡El tiempo calculado es ahora o ya pasó!';
+                clearInterval(countdownInterval);
+                return;
+            }
+
+            const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+            diffMs -= days * (1000 * 60 * 60 * 24);
+            const hours = Math.floor(diffMs / (1000 * 60 * 60));
+            diffMs -= hours * (1000 * 60 * 60);
+            const minutes = Math.floor(diffMs / (1000 * 60));
+            diffMs -= minutes * (1000 * 60);
+            const seconds = Math.floor(diffMs / 1000);
+
+            displayElement.textContent = `TIME:: ${days} Days, ${hours} Hours, ${minutes} mins, ${seconds} seconds`;
+        }
+
+        update(); // Llamada inicial para mostrar el tiempo inmediatamente
+        countdownInterval = setInterval(update, 1000); // Actualizar cada segundo
+    }
+    
+    // Función de ayuda para capitalizar la primera letra (si no la tienes ya)
+    if (!String.prototype.capitalize) {
+        String.prototype.capitalize = function() {
+            return this.charAt(0).toUpperCase() + this.slice(1);
+        }
     }
 });

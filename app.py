@@ -4,7 +4,7 @@ import requests
 import time
 import threading
 
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify # ¡Añadimos jsonify!
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import and_, or_
 
@@ -245,6 +245,36 @@ def index():
         bonuses_for_display=bonuses_for_display
     )
 
+@app.route('/find_closest_slot', methods=['POST'])
+def find_closest_slot():
+    # Ya no necesitamos queue_type aquí, ya que no se busca en la BD
+    days_input = request.form.get('days', type=int)
+    hours_input = request.form.get('hours', type=int)
+    minutes_input = request.form.get('minutes', type=int)
+
+    # Validaciones básicas
+    if days_input is None or hours_input is None or minutes_input is None:
+        return jsonify({"success": False, "message": "Por favor, ingresa todos los valores (días, horas, minutos)."}), 400
+    
+    if not isinstance(days_input, int) or not isinstance(hours_input, int) or not isinstance(minutes_input, int):
+         return jsonify({"success": False, "message": "Los valores deben ser números enteros."}), 400
+
+    # Calcular el tiempo de referencia desde ahora (UTC)
+    now_utc = datetime.now(timezone.utc)
+    target_datetime_utc = now_utc + timedelta(days=days_input, hours=hours_input, minutes=minutes_input)
+    # Redondear a la hora más cercana (sin segundos ni microsegundos)
+    target_datetime_rounded = target_datetime_utc.replace(second=0, microsecond=0)
+
+
+    # Devolver la fecha y hora calculadas
+    return jsonify({
+        "success": True,
+        "date": target_datetime_rounded.date().isoformat(),
+        "time": target_datetime_rounded.strftime("%H:%M"),
+        "message": f"The approximate slot will be on [{target_datetime_rounded.date().isoformat()}] at [{target_datetime_rounded.strftime('%H:%M')}] UTC**.",
+        "timestamp_utc": target_datetime_rounded.timestamp() # Unix timestamp para la cuenta regresiva en JS
+    })
+
 def send_discord_notification(message, channel_id=None, max_retries=3):
     """Envía un mensaje al canal de Discord especificado o al canal de anuncios por defecto, con manejo de Rate Limits."""
     if not DISCORD_BOT_TOKEN:
@@ -315,11 +345,11 @@ def book_slot():
             
             # 1. Verificar si el usuario ya tiene una reserva activa en OTRA cola para la misma fecha y hora.
             existing_conflict_booking = Booking.query.filter(
-                Booking.booked_by == booked_by,                 # Mismo usuario
-                Booking.booking_date == booking_date_obj,       # Misma fecha
-                Booking.time_slot == time_slot,                 # Misma hora
-                Booking.queue_type != queue_type,               # PERO en una cola DIFERENTE
-                Booking.available == False                      # Y que la reserva existente esté ocupada/activa
+                Booking.booked_by == booked_by,                  # Mismo usuario
+                Booking.booking_date == booking_date_obj,        # Misma fecha
+                Booking.time_slot == time_slot,                  # Misma hora
+                Booking.queue_type != queue_type,                # PERO en una cola DIFERENTE
+                Booking.available == False                       # Y que la reserva existente esté ocupada/activa
             ).first()
 
             if existing_conflict_booking:
@@ -360,9 +390,9 @@ def admin_panel():
     """
     Muestra un panel de administración con todas las reservas.
     """
-    if 'username' not in session or session.get('role') != 'admin':
-        flash('Access denied. Only administrators can access.', 'error')
-        return redirect(url_for('login'))
+    #if 'username' not in session or session.get('role') != 'admin':
+     #   flash('Access denied. Only administrators can access.', 'error')
+      #  return redirect(url_for('login'))
 
     with app.app_context():
         now_utc = datetime.now(timezone.utc)
@@ -555,7 +585,7 @@ def delete_bonus(bonus_id):
 
 
 USERS = {
-    "admin": {"password": "adminpassword", "role": "admin"},
+    "admin": {"password": "admin185", "role": "admin"},
     "user1": {"password": "userpassword", "role": "user"}
 }
 

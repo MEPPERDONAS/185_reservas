@@ -28,6 +28,30 @@
         </div>
     </div>
 
+<section class="find-slot-section">
+        <p>Enter the days, hours, and minutes from now to calculate a future date and time.</p>
+        <form id="find-slot-form" class="find-slot-form">
+            <div class="form-group time-inputs">
+                {# Eliminado el selector de cola, ya no es necesario para el cálculo puro #}
+                <input type="number" id="find-slot-days" name="days" min="0" value="0" required>
+                <span class="time-unit">D</span>
+
+                <input type="number" id="find-slot-hours" name="hours" min="0" max="23" value="0" required>
+                <span class="time-unit">H</span>
+
+                <input type="number" id="find-slot-minutes" name="minutes" min="0" max="59" value="0" required>
+                <span class="time-unit">M</span>
+            </div>
+            <button type="submit" class="nav-button">Calculate Time Ahead</button> {# Cambiado el texto del botón #}
+        </form>
+        <div id="find-slot-results" class="results-box" style="display: none;">
+            <h3>Calculated Time:</h3> {# Cambiado el título #}
+            <p id="result-message"></p>
+            <p id="result-details"></p>
+            <p id="result-countdown"></p>
+        </div>
+    </section>
+
     <div id="calendar-container">
         {# Iterar sobre todos los días, pero ocultar los que van más allá del segundo día #}
         {% for date_obj in display_dates %}
@@ -99,5 +123,6 @@
         <input type="text" name="booked_by" id="form-booked-by" placeholder="Your name" required>
     </form>
 
+    {# El script.js debe seguir incluyéndose aquí o en base.html si es un bloque #}
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 {% endblock %}

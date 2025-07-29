@@ -198,6 +198,185 @@ form a:not(.edit-btn) { /* Otros enlaces dentro de form */
     margin-top: 20px;
 }
 
+/* --- 5. Sección de Búsqueda de Slots por Tiempo (New Feature) --- */
+.find-slot-section {
+    background-color: var(--aoe-dark-bg); /* Fondo oscuro como la tierra */
+    border: 1px solid var(--aoe-border); /* Borde de piedra/metal */
+    border-radius: 8px;
+    padding: 15px; /* Un poco más de padding */
+    margin-bottom: 30px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2); /* Sombra consistente */
+    text-align: center;
+}
+
+.find-slot-section h2 {
+    color: var(--aoe-accent-gold); /* Título en dorado */
+    margin-bottom: 15px;
+    text-align: center;
+    border-bottom: 2px solid var(--aoe-border); /* Separador debajo del título */
+    padding-bottom: 10px;
+}
+
+.find-slot-section p {
+    text-align: center;
+    margin-bottom: 20px;
+    color: var(--aoe-text-light); /* Texto en color pergamino */
+    font-size: 0.95em; /* Ligeramente más pequeño para el texto descriptivo */
+}
+
+.find-slot-form {
+    display: flex;
+    flex-wrap: wrap; /* Permite que los elementos se envuelvan en pantallas pequeñas */
+    gap: 15px; /* Espacio entre los grupos de input (ej. "Días: [input] D") */
+    justify-content: center;
+    align-items: center; /* Alinea los elementos al centro verticalmente */
+    margin-bottom: 20px; /* Espacio antes de los resultados */
+}
+
+/* Modificación: Cada grupo de input (Días, Horas, Minutos) */
+.find-slot-form .form-group {
+    display: flex; /* Ahora es un flex container para label, input y el span de la unidad */
+    flex-direction: row; /* Coloca los elementos en línea */
+    align-items: center; /* Alinea verticalmente los items */
+    gap: 5px; /* Espacio entre label, input y el span de la unidad */
+    margin-bottom: 0; /* No se necesita margen inferior para este form-group si está en una línea */
+}
+
+.find-slot-form label {
+    margin-bottom: 0; /* Eliminar margen inferior si es parte de una línea */
+    font-weight: bold;
+    color: var(--aoe-text-light); /* Labels en color pergamino */
+    white-space: nowrap; /* Evita que el texto del label se rompa en varias líneas */
+}
+
+/* Modificación: Estilo para los inputs de número */
+.find-slot-form input[type="number"] {
+    background-color: var(--aoe-panel-bg); /* Fondo de input como panel */
+    color: var(--aoe-text-light); /* Texto de input en color pergamino */
+    padding: 8px 5px; /* Ajustado padding para una caja más compacta */
+    border: 1px solid var(--aoe-border); /* Borde de input en color de borde */
+    border-radius: 4px;
+    font-size: 1em;
+    width: 60px; /* Ancho fijo y uniforme para los inputs numéricos */
+    text-align: center;
+}
+
+/* Quita las flechas de los input type="number" en Chrome/Safari/Edge */
+.find-slot-form input[type="number"]::-webkit-outer-spin-button,
+.find-slot-form input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Nuevo estilo para la unidad de tiempo (D, H, M) */
+.find-slot-form .time-unit {
+    color: var(--aoe-text-light);
+    font-weight: bold;
+    /* No se necesita margin-right aquí porque el 'gap' del .find-slot-form maneja el espaciado */
+    min-width: 15px; /* Asegura que la 'D', 'H', 'M' tengan un ancho mínimo para consistencia */
+    text-align: left; /* Alinea la unidad de tiempo a la izquierda */
+}
+
+/* Simplificación: .time-inputs ya no necesita ser un contenedor especial
+   porque cada .form-group ya maneja su propio label/input/unit.
+   El .find-slot-form ya maneja el flex y el gap entre cada form-group.
+*/
+.find-slot-form .time-inputs {
+    /* Si decides que cada "Días: [input] D" es un .form-group,
+       entonces el .time-inputs como contenedor alrededor de esos
+       form-groups no tendría un propósito adicional.
+       Si lo usas para agrupar D, H, M y tenerlos juntos con un gap,
+       entonces sí.
+       Basado en el HTML que te di, .time-inputs es un solo form-group
+       que contiene todos los labels, inputs y units.
+       Mantengo los estilos para él por si quieres agruparlos visualmente.
+    */
+    display: flex;
+    flex-wrap: wrap; /* Permite que se envuelvan */
+    justify-content: center;
+    gap: 15px; /* Espacio entre los grupos (ej. entre "Días D" y "Horas H") */
+    align-items: baseline;
+    /* margin-bottom: 10px; Si necesitas un margen inferior para este grupo antes del botón */
+}
+
+
+.find-slot-form button[type="submit"] {
+    background-color: var(--aoe-accent-gold); /* Botón en dorado/bronce */
+    color: var(--aoe-text-dark); /* Texto oscuro para el botón dorado */
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1.1em;
+    font-weight: bold;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    flex-shrink: 0; /* Evita que el botón se encoja */
+    margin-top: 10px; /* Añadido un pequeño margen superior si el botón se envuelve a una nueva línea */
+}
+
+.find-slot-form button[type="submit"]:hover {
+    background-color: darken(var(--aoe-accent-gold), 10%); /* Oscurece el dorado al pasar el ratón */
+    transform: translateY(-2px); /* Pequeño efecto de elevación */
+}
+
+.find-slot-form button[type="submit"]:active {
+    transform: translateY(0); /* Vuelve a la posición original al hacer click */
+}
+
+.results-box {
+    background-color: var(--aoe-panel-bg); /* Fondo de la caja de resultados como panel */
+    border: 1px solid var(--aoe-border); /* Borde de la caja de resultados */
+    border-radius: 6px; /* Borde ligeramente más pequeño */
+    padding: 15px;
+    margin-top: 25px; /* Más espacio superior */
+    text-align: left; /* Alinea el texto a la izquierda dentro de la caja */
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2); /* Sombra interna sutil */
+}
+
+.results-box h3 {
+    color: var(--aoe-accent-gold); /* Título de resultados en dorado */
+    margin-bottom: 10px;
+    text-align: center; /* Alinea el título de resultados a la izquierda */
+    font-size: 1.2em; /* Título un poco más grande */
+}
+
+.results-box p {
+    color: var(--aoe-text-light); /* Texto de resultados en color pergamino */
+    margin-bottom: 8px; /* Espacio entre párrafos de resultados */
+}
+
+/* Estilos específicos para los mensajes de resultado */
+#result-message {
+    font-weight: bold;
+    color: var(--aoe-accent-gold); /* Mensaje principal en dorado */
+}
+
+#result-countdown {
+    font-weight: bold;
+    color: var(--aoe-info); /* Contador en azul grisáceo para información */
+    font-size: 1.1em; /* Un poco más grande para el contador */
+}
+
+/* Media Query específica para este bloque si es necesario, 
+   o deja que las media queries generales del final del CSS manejen la responsividad.
+*/
+@media (max-width: 768px) {
+    .find-slot-form {
+        flex-direction: column; /* Apila los grupos de inputs en pantallas pequeñas */
+        align-items: center; /* Centra los grupos de inputs */
+        gap: 10px; /* Reduce el espacio entre grupos en móviles */
+    }
+
+    .find-slot-form .form-group {
+        width: 100%; /* Ocupa todo el ancho disponible */
+        justify-content: center; /* Centra los elementos internos (label, input, unit) */
+    }
+
+    .find-slot-form input[type="number"] {
+        width: 50px; /* Un poco más estrecho para móviles */
+    }
+}
+
 /* Contenedor específico para tablas responsivas (donde va el overflow-x) */
 .table-responsive {
     width: 100%;
@@ -816,7 +995,7 @@ button.toggle-btn .fa-toggle-off {
     form button:not(.delete-btn):not(.toggle-btn):not(.edit-btn),
     form a:not(.edit-btn) {
         padding: 15px;
-        margin: 10px auto;
+        margin: 2px auto;
     }
 
     .queue-item {
