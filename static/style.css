@@ -201,7 +201,6 @@ form a:not(.edit-btn) { /* Otros enlaces dentro de form */
 /* --- 5. Sección de Búsqueda de Slots por Tiempo (New Feature) --- */
 .find-slot-section {
     background-color: var(--aoe-dark-bg); /* Fondo oscuro como la tierra */
-    border: 1px solid var(--aoe-border); /* Borde de piedra/metal */
     padding: 15px; /* Un poco más de padding */
     margin-bottom: 30px;
     text-align: center;
@@ -457,6 +456,10 @@ tbody tr:nth-child(even) {
     transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
     border-radius: 5px;
     box-shadow: inset 0 0 0px rgba(0,0,0,0);
+    text-align: center;
+    position: relative; /* Necesario para el efecto hover */
+    padding: 10px 30px 10px 10px; /* Ejemplo: 30px a la derecha para la X */
+
 }
 
 .slot.available {
@@ -1213,9 +1216,7 @@ button.toggle-btn .fa-toggle-off {
     right: 5px;
     font-size: 1.2em;
     font-weight: bold;
-    color: var(--aoe-error); /* Color rojo oxidado para la 'X' */
     cursor: pointer;
-    background-color: var(--aoe-panel-bg); /* Fondo sutil para que sea visible, con tu color de panel */
     border-radius: 50%;
     padding: 0px 5px;
     line-height: 1;
