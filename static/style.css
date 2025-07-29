@@ -1110,3 +1110,129 @@ button.toggle-btn .fa-toggle-off {
         font-size: 0.8em;
     }
 }
+/* Modal Styles */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 10; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgba(0,0,0,0.7); /* Black w/ opacity - este color suele ser fijo para el overlay */
+    padding-top: 60px; /* Espacio desde arriba */
+}
+
+.modal-content {
+    background-color: var(--aoe-panel-bg); /* Usar el color de fondo de panel */
+    margin: 5% auto; /* 5% from the top and centered */
+    padding: 20px;
+    border: 1px solid var(--aoe-border); /* Usar el color de borde */
+    width: 80%; /* Could be more or less, depending on screen size */
+    max-width: 500px; /* Max width for larger screens */
+    border-radius: 8px;
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19); /* Sombra, mantener en negro/gris */
+    position: relative;
+    text-align: center;
+    color: var(--aoe-text-light); /* Color de texto ligero para el contenido general */
+}
+
+.close-button {
+    color: var(--aoe-text-light); /* Color de texto ligero */
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close-button:hover,
+.close-button:focus {
+    color: var(--aoe-accent-gold); /* Dorado al pasar el ratón */
+    text-decoration: none;
+    cursor: pointer;
+}
+
+/* Estilos adicionales para los botones y el input dentro del modal */
+.modal-content h2 {
+    color: var(--aoe-accent-gold); /* Dorado para el título */
+    margin-bottom: 15px;
+}
+
+.modal-content p {
+    color: var(--aoe-text-light); /* Texto general del párrafo */
+}
+
+.modal-content label {
+    color: var(--aoe-text-light); /* Color para la etiqueta */
+}
+
+.modal-content button {
+    padding: 10px 20px;
+    margin: 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    color: var(--aoe-text-dark); /* Texto oscuro para los botones */
+}
+
+#confirmCancelButton {
+    background-color: var(--aoe-error); /* Rojo oxidado para el botón de cancelar */
+    color: var(--aoe-text-light); /* Texto claro en botón de error */
+}
+
+#confirmCancelButton:hover {
+    background-color: #c82333; /* Podrías usar un `darken()` si tuvieras preprocesador, por ahora un rojo un poco más oscuro */
+}
+
+.modal-content button:last-child { /* El botón "No, Keep It" */
+    background-color: var(--aoe-info); /* Azul grisáceo para el botón de no cancelar */
+    color: var(--aoe-text-light); /* Texto claro en botón de información */
+}
+
+.modal-content button:last-child:hover {
+    background-color: #0056b3; /* Un azul un poco más oscuro al pasar el ratón */
+}
+
+#confirmCancelName {
+    padding: 8px;
+    margin: 10px 0;
+    width: calc(100% - 20px);
+    border: 1px solid var(--aoe-border); /* Borde con color de la temática */
+    border-radius: 4px;
+    background-color: var(--aoe-dark-bg); /* Fondo del input con el color de fondo oscuro */
+    color: var(--aoe-text-light); /* Color del texto dentro del input */
+}
+
+/* Asegúrate de que el mensaje de error también use tu color de error */
+#cancelMessage {
+    color: var(--aoe-error) !important; /* !important para asegurar que sobrescriba cualquier inline style */
+}
+
+/* Estilo para la "X" de cancelar - RECUERDA QUE ESTE TAMBIÉN NECESITA SER ACTUALIZADO */
+.cancel-x {
+    position: absolute;
+    top: 2px;
+    right: 5px;
+    font-size: 1.2em;
+    font-weight: bold;
+    color: var(--aoe-error); /* Color rojo oxidado para la 'X' */
+    cursor: pointer;
+    background-color: var(--aoe-panel-bg); /* Fondo sutil para que sea visible, con tu color de panel */
+    border-radius: 50%;
+    padding: 0px 5px;
+    line-height: 1;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    z-index: 5;
+}
+
+.cancel-x:hover {
+    background-color: var(--aoe-error); /* Fondo rojo al pasar el ratón */
+    color: var(--aoe-text-light); /* 'X' blanca/clara */
+}
+
+/* Asegúrate de que .slot-item o .slot tenga 'position: relative;' para que .cancel-x se posicione correctamente */
+.slot {
+    position: relative; /* Esto es CRUCIAL para que .cancel-x funcione */
+    /* ... otros estilos de tu slot-item ... */
+}

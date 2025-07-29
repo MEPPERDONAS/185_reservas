@@ -182,4 +182,113 @@ document.addEventListener('DOMContentLoaded', () => {
             return this.charAt(0).toUpperCase() + this.slice(1);
         }
     }
+    // --- LÓGICA PARA CANCELAR RESERVAS ---
+    const cancelModal = document.getElementById('cancelModal');
+    const closeButton = document.querySelector('.close-button');
+    const modalBookingId = document.getElementById('modalBookingId');
+    const modalBookedBy = document.getElementById('modalBookedBy');
+    const confirmCancelName = document.getElementById('confirmCancelName');
+    const confirmCancelButton = document.getElementById('confirmCancelButton');
+    const cancelMessage = document.getElementById('cancelMessage');
+
+    let currentBookingIdToCancel = null;
+    let currentBookedByName = null;
+
+    // Función para mostrar el modal (igual que antes)
+    window.showCancelModal = (bookingId, bookedByName) => { // Ahora recibe los parámetros directamente
+        currentBookingIdToCancel = bookingId;
+        currentBookedByName = bookedByName;
+        
+        modalBookingId.textContent = currentBookingIdToCancel;
+        modalBookedBy.textContent = currentBookedByName;
+        confirmCancelName.value = ''; // Limpiar el input de confirmación
+        cancelMessage.textContent = ''; // Limpiar mensajes anteriores
+        cancelModal.style.display = 'block';
+    };
+
+    // Función para cerrar el modal (igual que antes)
+    window.closeCancelModal = () => {
+        cancelModal.style.display = 'none';
+        currentBookingIdToCancel = null;
+        currentBookedByName = null;
+    };
+
+    // Cerrar el modal al hacer clic fuera de él (igual que antes)
+    window.onclick = (event) => {
+        if (event.target === cancelModal) {
+            closeCancelModal();
+        }
+    };
+
+    // Manejar el clic del botón de confirmar cancelación (igual que antes)
+    if (confirmCancelButton) {
+        confirmCancelButton.addEventListener('click', async () => {
+            const userNameConfirm = confirmCancelName.value.trim();
+
+            if (!userNameConfirm) {
+                cancelMessage.textContent = 'Please enter your name to confirm.';
+                return;
+            }
+
+            if (userNameConfirm !== currentBookedByName) {
+                cancelMessage.textContent = 'The name entered does not match the booking name.';
+                return;
+            }
+
+            cancelMessage.textContent = 'Cancelling...';
+
+            try {
+                const response = await fetch('/cancel_booking', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: new URLSearchParams({
+                        booking_id: currentBookingIdToCancel,
+                        booked_by_user: userNameConfirm
+                    }).toString()
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    cancelMessage.style.color = 'green';
+                    cancelMessage.textContent = result.message;
+                    setTimeout(() => {
+                        closeCancelModal();
+                        location.reload(); // Recargar la página
+                    }, 1500);
+                } else {
+                    cancelMessage.style.color = 'red';
+                    cancelMessage.textContent = `Error: ${result.message}`;
+                }
+
+            } catch (error) {
+                console.error('Error cancelling booking:', error);
+                cancelMessage.style.color = 'red';
+                cancelMessage.textContent = 'An unexpected error occurred during cancellation.';
+            }
+        });
+    }
+
+    // Cerrar modal con el botón 'x'
+    if (closeButton) {
+        closeButton.addEventListener('click', closeCancelModal);
+    }
+
+    // --- NUEVO: Manejar clics en las 'X' de cancelación ---
+    // Seleccionar todos los elementos con la clase 'cancel-x'
+    const cancelXButtons = document.querySelectorAll('.cancel-x');
+
+    cancelXButtons.forEach(xButton => {
+        xButton.addEventListener('click', (event) => {
+            // Detener la propagación del evento para que no se active el clic del slot-item si lo tiene
+            event.stopPropagation(); 
+            const bookingId = xButton.dataset.bookingId;
+            const bookedByName = xButton.dataset.bookedByName;
+            showCancelModal(bookingId, bookedByName);
+        });
+    });
+
+    // ... (El resto de tu código JS existente) ...
 });

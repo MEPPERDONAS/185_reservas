@@ -385,6 +385,74 @@ def book_slot():
             
     return redirect(url_for('index'))
 
+
+# Asegúrate de que tu `get_bookings_for_display` devuelve el ID de la reserva:
+def get_bookings_for_display(target_date_obj):
+    bookings_data = {queue: {} for queue in QUEUES}
+    all_day_bookings = Booking.query.filter_by(booking_date=target_date_obj).all()
+
+    for booking in all_day_bookings:
+        if booking.queue_type in bookings_data:
+            bookings_data[booking.queue_type][booking.time_slot] = {
+                "available": booking.available,
+                "booked_by": booking.booked_by,
+                "id": booking.id # <--- ASEGÚRATE DE QUE ESTO ESTÁ AQUÍ
+            }
+
+    # ... el resto de la función (sin cambios) ...
+    return bookings_data
+
+# Nueva ruta para cancelar una reserva
+@app.route('/cancel_booking', methods=['POST'])
+def cancel_booking():
+    # Asumo que recibes 'booking_id' y 'booked_by_user' para validación
+    booking_id = request.form.get('booking_id', type=int)
+    # booked_by_user debería ser el nombre que el usuario introdujo al reservar
+    booked_by_user = request.form.get('booked_by_user') 
+
+    if not booking_id or not booked_by_user:
+        return jsonify({"success": False, "message": "Missing booking ID or user name."}), 400
+
+    with app.app_context():
+        booking_to_cancel = Booking.query.get(booking_id)
+
+        if not booking_to_cancel:
+            return jsonify({"success": False, "message": "Booking not found."}), 404
+
+        # Validación de seguridad: Asegúrate de que el usuario que intenta cancelar sea el que reservó
+        # O si hay un sistema de login de administrador, permitirle cancelar.
+        # Por ahora, nos basamos en el nombre 'booked_by'.
+        if booking_to_cancel.booked_by != booked_by_user:
+            # Puedes añadir una validación adicional si 'session.get('role') == 'admin'' aquí
+            return jsonify({"success": False, "message": "You are not authorized to cancel this booking."}), 403
+
+        # Opcional: Impedir cancelar slots pasados
+        booking_dt_obj = datetime.combine(booking_to_cancel.booking_date, datetime.strptime(booking_to_cancel.time_slot, "%H:%M").time()).replace(tzinfo=timezone.utc)
+        now_utc = datetime.now(timezone.utc)
+        if booking_dt_obj <= now_utc:
+            return jsonify({"success": False, "message": "Cannot cancel a slot that has already passed."}), 400
+
+
+        try:
+            booking_to_cancel.available = True
+            booking_to_cancel.booked_by = None # Limpiar el campo del usuario
+            db.session.commit()
+            
+            message = (
+                f"🚫 **Booking Cancelled!**\n"
+                f"👤 **[ {booked_by_user} ]** \nhas cancelled their booking for **{booking_to_cancel.queue_type.capitalize()}** "
+                f"on: \n**{booking_to_cancel.booking_date.isoformat()} at {booking_to_cancel.time_slot} UTC**."
+            )
+            thread = threading.Thread(target=send_discord_notification, args=(message,))
+            thread.start()
+
+            return jsonify({"success": True, "message": "Booking successfully cancelled."}), 200
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error cancelling booking: {e}")
+            return jsonify({"success": False, "message": f"Server error: {str(e)}"}), 500
+
+
 @app.route('/admin')
 def admin_panel():
     """

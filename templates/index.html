@@ -29,10 +29,10 @@
     </div>
 
 <section class="find-slot-section">
+        <h2>Find Slot by Time Ahead</h2> {# Añadido el h2 para completar la sección #}
         <p>Enter the days, hours, and minutes from now to calculate a future date and time.</p>
         <form id="find-slot-form" class="find-slot-form">
             <div class="form-group time-inputs">
-                {# Eliminado el selector de cola, ya no es necesario para el cálculo puro #}
                 <input type="number" id="find-slot-days" name="days" min="0" value="0" required>
                 <span class="time-unit">D</span>
 
@@ -42,10 +42,10 @@
                 <input type="number" id="find-slot-minutes" name="minutes" min="0" max="59" value="0" required>
                 <span class="time-unit">M</span>
             </div>
-            <button type="submit" class="nav-button">Calculate Time Ahead</button> {# Cambiado el texto del botón #}
+            <button type="submit" class="nav-button">Calculate Time Ahead</button>
         </form>
         <div id="find-slot-results" class="results-box" style="display: none;">
-            <h3>Calculated Time:</h3> {# Cambiado el título #}
+            <h3>Calculated Time:</h3>
             <p id="result-message"></p>
             <p id="result-details"></p>
             <p id="result-countdown"></p>
@@ -90,6 +90,11 @@
                                         data-time="{{ time_str }}">
                                         {% if slot_data.booked_by and slot_data.booked_by != 'Pasado' %}
                                             {{ slot_data.booked_by }}
+                                            {# AQUI AÑADIMOS LA 'X' #}
+                                            <span class="cancel-x" 
+                                                  data-booking-id="{{ slot_data.id }}"
+                                                  data-booked-by-name="{{ slot_data.booked_by }}"
+                                                  title="Cancel this booking">✖</span>
                                         {% else %}
                                             {% if slot_data.booked_by == 'Pasado' %}
                                                 Past
@@ -112,7 +117,6 @@
 
     {# Botón para mostrar/ocultar días adicionales #}
     <div class="show-more-button-container">
-        {# MODIFICACIÓN AQUÍ: AÑADIDA LA CLASE 'nav-button' #}
         <button id="toggleDaysButton" class="nav-button show-more-button">Show More Days</button>
     </div>
 
@@ -122,6 +126,21 @@
         <input type="hidden" name="time" id="form-time">
         <input type="text" name="booked_by" id="form-booked-by" placeholder="Your name" required>
     </form>
+
+    <div id="cancelModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeCancelModal()">&times;</span>
+            <h2>Confirm Cancellation</h2>
+            <p>Are you sure you want to cancel this booking?</p>
+            <p>Booking ID: <span id="modalBookingId"></span></p>
+            <p>Booked by: <span id="modalBookedBy"></span></p>
+            <label for="confirmCancelName">Confirm your name:</label>
+            <input type="text" id="confirmCancelName" required>
+            <button id="confirmCancelButton">Yes, Cancel It</button>
+            <button onclick="closeCancelModal()">No, Keep It</button>
+            <p id="cancelMessage" style="color: red;"></p>
+        </div>
+    </div>
 
     {# El script.js debe seguir incluyéndose aquí o en base.html si es un bloque #}
     <script src="{{ url_for('static', filename='script.js') }}"></script>
