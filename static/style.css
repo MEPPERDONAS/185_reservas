@@ -202,10 +202,8 @@ form a:not(.edit-btn) { /* Otros enlaces dentro de form */
 .find-slot-section {
     background-color: var(--aoe-dark-bg); /* Fondo oscuro como la tierra */
     border: 1px solid var(--aoe-border); /* Borde de piedra/metal */
-    border-radius: 8px;
     padding: 15px; /* Un poco más de padding */
     margin-bottom: 30px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2); /* Sombra consistente */
     text-align: center;
 }
 
@@ -1212,7 +1210,6 @@ button.toggle-btn .fa-toggle-off {
 /* Estilo para la "X" de cancelar - RECUERDA QUE ESTE TAMBIÉN NECESITA SER ACTUALIZADO */
 .cancel-x {
     position: absolute;
-    top: 2px;
     right: 5px;
     font-size: 1.2em;
     font-weight: bold;
