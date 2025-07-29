@@ -118,12 +118,11 @@ form a:not(.edit-btn) { /* Otros enlaces dentro de form */
     flex-direction: column;
     background-color: var(--aoe-panel-bg);
     border: 3px solid var(--aoe-border);
-    border-radius: 8px;
     padding: 25px;
     margin: 20px auto;
     width: 90%;
     max-width: 1200px;
-    box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.5), inset 2px 2px 5px rgba(255, 255, 255, 0.2);
+    box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.5);
     text-align: center;
     box-sizing: border-box;
     
@@ -924,7 +923,7 @@ button.toggle-btn .fa-toggle-off {
     }
 
     td:first-child { /* Columna de horas */
-        width: 60px; /* Reducir ancho de columna de horas */
+        width: 1px; /* Reducir ancho de columna de horas */
     }
     .table-responsive table {
         min-width: 600px; /* Mantén este min-width para forzar el scroll horizontal si es necesario */
