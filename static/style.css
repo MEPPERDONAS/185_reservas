@@ -134,8 +134,8 @@ form a:not(.edit-btn) { /* Otros enlaces dentro de form */
 
 .first-in-queue-container h2 {
     color: var(--aoe-accent-gold);
-    margin-top: 0;
-    margin-bottom: 20px;
+    margin-top: 1px;
+    margin-bottom: 2px;
     font-size: 2em;
 }
 
@@ -177,10 +177,10 @@ form a:not(.edit-btn) { /* Otros enlaces dentro de form */
 }
 
 .queue-item p {
-    margin: 5px 0;
+    margin: 2px 0;
     font-size: 1em; /* Tu tamaño de fuente está bien */
     color: var(--aoe-text-light); /* Color de texto claro que te sugerí */
-    line-height: 1.4; /* Puedes añadir para mejor legibilidad */
+    line-height: 1; /* Puedes añadir para mejor legibilidad */
 }
 
 .queue-item p strong {
@@ -215,7 +215,7 @@ table {
     margin-bottom: 20px; /* Separación entre tablas cuando están apiladas */
     background-color: var(--aoe-panel-bg);
     box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4), inset 2px 2px 5px rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
+    border-radius: 0px;
     overflow: hidden;
     border: 2px solid var(--aoe-border);
 }
