@@ -454,9 +454,9 @@ def admin_panel():
     """
     Muestra un panel de administración con todas las reservas.
     """
-    #if 'username' not in session or session.get('role') != 'admin':
-     #   flash('Access denied. Only administrators can access.', 'error')
-      #  return redirect(url_for('login'))
+    if 'username' not in session or session.get('role') != 'admin':
+        flash('Access denied. Only administrators can access.', 'error')
+        return redirect(url_for('login'))
 
     with app.app_context():
         now_utc = datetime.now(timezone.utc)
