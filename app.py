@@ -20,9 +20,9 @@ DISCORD_BOT_TOKEN = os.getenv("TOKEN")
 DISCORD_ANNOUNCEMENT_CHANNEL_ID = os.getenv("CANAL_AVISOS_ID")
 
 DISCORD_CHANNELS = {
-    "Welcome Channel": "1349021786217644103",
-    "Rules Channel": "1349021784409772114",
-    "Announcements Channel": "1349021795046654023"
+    "[SOL] General Channel": "1339362327593488506",
+    "[SOL] Rules Channel": "1339366090244886611",
+    "[SOL] Announcements Channel": "1339366194330865685",
 }
 
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL').replace("postgres://", "postgresql://", 1) if os.getenv('DATABASE_URL') else 'sqlite:///reservas.db'
@@ -285,11 +285,7 @@ def send_discord_notification(message, channel_id=None, max_retries=3):
     if not target_channel_id:
         print("Error: ID del canal de anuncios de Discord no configurado.")
         return
-    # --- DEBUGGING TEMPORAL (¡ELIMINAR ESTO DESPUÉS!) ---
-    print(f"DEBUG: Longitud del TOKEN: {len(DISCORD_BOT_TOKEN) if DISCORD_BOT_TOKEN else 0}")
-    print(f"DEBUG: Canal de Discord a usar: {target_channel_id}")
-    # --- FIN DEBUGGING TEMPORAL ---
-    
+
     headers = {
         "Authorization": f"Bot {DISCORD_BOT_TOKEN}",
         "Content-Type": "application/json"

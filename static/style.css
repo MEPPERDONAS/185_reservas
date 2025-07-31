@@ -126,9 +126,9 @@ form a:not(.edit-btn) { /* Otros enlaces dentro de form */
     text-align: center;
     box-sizing: border-box;
     
-    display: flex;
+    /*display: flex;
     justify-content: center;
-    flex-wrap: wrap;
+    flex-wrap: wrap;*/
 }
 
 .first-in-queue-container h2 {
@@ -201,6 +201,7 @@ form a:not(.edit-btn) { /* Otros enlaces dentro de form */
 .find-slot-section {
     background-color: var(--aoe-dark-bg); /* Fondo oscuro como la tierra */
     padding: 15px; /* Un poco más de padding */
+    margin-top: 30px; /* <--- Añade o ajusta esta línea */
     margin-bottom: 30px;
     text-align: center;
 }
@@ -615,7 +616,7 @@ input[type="checkbox"] {
 }
 
 /* --- 9. Botones Generales (No de ícono) --- */
-button:not(.delete-btn):not(.toggle-btn):not(.edit-btn), /* Excluye botones de ícono */
+button:not(.delete-btn):not(.toggle-btn):not(.edit-btn):not(.find-slot-form button),
 .button,
 input[type="submit"] {
     font-family: 'Cinzel', serif;
@@ -993,7 +994,7 @@ button.toggle-btn .fa-toggle-off {
     .first-in-queue-container,
     .login-container,
     form button:not(.delete-btn):not(.toggle-btn):not(.edit-btn),
-    form a:not(.edit-btn) {
+    form a:not(.edit-btn):not(.nav-button) {
         padding: 15px;
         margin: 2px auto;
     }
