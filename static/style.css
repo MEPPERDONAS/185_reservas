@@ -177,7 +177,7 @@ form a:not(.edit-btn) { /* Otros enlaces dentro de form */
 
 .queue-item p {
     margin: 2px 0;
-    font-size: 1em; /* Tu tamaño de fuente está bien */
+    font-size: 1.25em; /* Tu tamaño de fuente está bien */
     color: var(--aoe-text-light); /* Color de texto claro que te sugerí */
     line-height: 1; /* Puedes añadir para mejor legibilidad */
 }
@@ -481,6 +481,50 @@ tbody tr:nth-child(even) {
     cursor: not-allowed;
     font-style: italic;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+.slot.booked-past {
+    background-color: var(--aoe-error);
+    color: var(--aoe-text-light);
+    cursor: not-allowed;
+    font-style: italic;
+    text-decoration: line-through;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Nuevo estilo para el slot de la hora actual */
+.slot.current-slot {
+    position: relative;
+    background-color: var(--aoe-info); /* Un color azul/gris para destacar */
+    border: 2px solid var(--aoe-accent-gold);
+    box-shadow: 0 0 10px rgba(184, 154, 90, 0.7); /* Sombra dorada */
+    animation: pulse-border 1.5s infinite ease-in-out;
+}
+
+/* Animación para el efecto de "pulso" en el borde */
+@keyframes pulse-border {
+    0% {
+        box-shadow: 0 0 5px rgba(184, 154, 90, 0.7);
+    }
+    50% {
+        box-shadow: 0 0 15px rgba(184, 154, 90, 1);
+    }
+    100% {
+        box-shadow: 0 0 5px rgba(184, 154, 90, 0.7);
+    }
+}
+
+/* Estilo para la etiqueta 'NOW' */
+.slot.current-slot .current-label {
+    position: absolute;
+    top: 1px;
+    right: auto;
+    font-size: 0.3em;
+    font-weight: bold;
+    color: var(--aoe-text-dark);
+    background-color: var(--aoe-accent-gold);
+    padding: 2px 4px;
+    border-radius: 4px;
+    box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
 }
 
 .slot.past-slot {
@@ -897,7 +941,7 @@ button.toggle-btn .fa-toggle-off {
         font-size: 1.3em;
     }
     .queue-item p {
-        font-size: 0.95em;
+        font-size: 1.15em;
     }
 
     #calendar-container {

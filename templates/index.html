@@ -18,8 +18,7 @@
                         {% endif %}
                     </h3>
                     {% if slot_info.date != 'N/A' %}
-                        <p><strong>Who:</strong> {{ slot_info.booked_by }}</p>
-                        <p><strong>When:</strong> {{ slot_info.date }} at {{ slot_info.time }}</p>
+                        <p> {{ slot_info.booked_by }}</p>
                     {% else %}
                         <p>{{ slot_info.message }}</p>
                     {% endif %}
@@ -52,68 +51,81 @@
         </div>
     </section>
 
-    <div id="calendar-container">
-        {# Iterar sobre todos los días, pero ocultar los que van más allá del segundo día #}
-        {% for date_obj in display_dates %}
-            {# Wrap each table in a div to easily hide/show #}
-            <div class="day-table-wrapper {% if loop.index > 2 %}hidden-day-container{% endif %}">
-                <table data-date="{{ date_obj.isoformat() }}">
-                    <caption>
-                        {{ date_obj.strftime('%A, %B %d, %Y') }}
-                        {% if date_obj.isoformat() == today %} (Today){% endif %}
-                    </caption>
-                    <thead>
+<div id="calendar-container">
+    {# Iterar sobre todos los días, pero ocultar los que van más allá del segundo día #}
+    {% for date_obj in display_dates %}
+        {# Wrap each table in a div to easily hide/show #}
+        <div class="day-table-wrapper {% if loop.index > 2 %}hidden-day-container{% endif %}">
+            <table data-date="{{ date_obj.isoformat() }}">
+                <caption>
+                    {{ date_obj.strftime('%A, %B %d, %Y') }}
+                    {% if date_obj.isoformat() == today %} (Today){% endif %}
+                </caption>
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        {% for queue in queues %}
+                            <th>{{ queue | capitalize }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for hour in range(24) %}
+                        {% set time_str = '%02d:00' | format(hour) %}
                         <tr>
-                            <th>Time</th>
+                            <td>{{ time_str }}</td>
                             {% for queue in queues %}
-                                <th>{{ queue | capitalize }}</th>
+                                {% set slot_data = bookings[date_obj.isoformat()][queue][time_str] %}
+                                {% set is_bonused = date_obj.isoformat() in bonused_slots[queue] and time_str in bonused_slots[queue][date_obj.isoformat()] %}
+                                <td class="slot 
+                                    {# La lógica de 'current-slot' tiene la máxima prioridad #}
+                                    {% if slot_data.is_current %}
+                                        current-slot
+                                    {% elif slot_data.is_past %}
+                                        {# Corregido: Ahora se distingue entre slots pasados reservados y no reservados #}
+                                        {% if slot_data.booked_by == 'Pasado' %}
+                                            past-slot
+                                        {% else %}
+                                            booked-past
+                                        {% endif %}
+                                    {% elif not slot_data.available %}
+                                        booked
+                                    {% else %}
+                                        available
+                                    {% endif %}
+                                    {% if is_bonused %} bonused-slot {% endif %}"
+                                    data-date="{{ date_obj.isoformat() }}"
+                                    data-queue="{{ queue }}"
+                                    data-time="{{ time_str }}">
+                                    {% if slot_data.is_current %}
+                                        <span class="current-label">NOW</span>
+                                    {% endif %}
+                                    {% if slot_data.booked_by and slot_data.booked_by != 'Pasado' %}
+                                        {{ slot_data.booked_by }}
+                                        {# AQUI AÑADIMOS LA 'X' #}
+                                        <span class="cancel-x" 
+                                              data-booking-id="{{ slot_data.id }}"
+                                              data-booked-by-name="{{ slot_data.booked_by }}"
+                                              title="Cancel this booking">✖</span>
+                                    {% else %}
+                                        {% if slot_data.booked_by == 'Pasado' %}
+                                            Past
+                                        {% else %}
+                                            Available
+                                        {% endif %}
+                                    {% endif %}
+                                    {% if is_bonused %}
+                                        <span class="bonus-icon" title="Bonus Active!">⭐</span>
+                                    {% endif %}
+                                </td>
                             {% endfor %}
                         </tr>
-                    </thead>
-                    <tbody>
-                        {% for hour in range(24) %}
-                            {% set time_str = '%02d:00' | format(hour) %}
-                            <tr>
-                                <td>{{ time_str }}</td>
-                                {% for queue in queues %}
-                                    {% set slot_data = bookings[date_obj.isoformat()][queue][time_str] %}
-                                    {% set is_bonused = date_obj.isoformat() in bonused_slots[queue] and time_str in bonused_slots[queue][date_obj.isoformat()] %}
-                                    <td class="slot 
-                                        {% if not slot_data.available %}
-                                            booked {% if slot_data.booked_by == 'Pasado' %} past-slot {% endif %}
-                                        {% else %}
-                                            available
-                                        {% endif %}
-                                        {% if is_bonused %} bonused-slot {% endif %}"
-                                        data-date="{{ date_obj.isoformat() }}"
-                                        data-queue="{{ queue }}"
-                                        data-time="{{ time_str }}">
-                                        {% if slot_data.booked_by and slot_data.booked_by != 'Pasado' %}
-                                            {{ slot_data.booked_by }}
-                                            {# AQUI AÑADIMOS LA 'X' #}
-                                            <span class="cancel-x" 
-                                                  data-booking-id="{{ slot_data.id }}"
-                                                  data-booked-by-name="{{ slot_data.booked_by }}"
-                                                  title="Cancel this booking">✖</span>
-                                        {% else %}
-                                            {% if slot_data.booked_by == 'Pasado' %}
-                                                Past
-                                            {% else %}
-                                                Available
-                                            {% endif %}
-                                        {% endif %}
-                                        {% if is_bonused %}
-                                            <span class="bonus-icon" title="Bonus Active!">⭐</span>
-                                        {% endif %}
-                                    </td>
-                                {% endfor %}
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        {% endfor %}
-    </div>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endfor %}
+</div>
 
     {# Botón para mostrar/ocultar días adicionales #}
     <div class="show-more-button-container">

@@ -247,117 +247,129 @@ def check_and_send_weekly_event_reminders():
 @app.route('/')
 def index():
     with app.app_context():
-        update_daily_bookings_in_db()
+        # Lógica para obtener las reservas y bonificaciones
+        now_utc = datetime.now(timezone.utc)
+        today_local = date.today()
+        
+        display_dates = []
+        for i in range(7):
+            display_dates.append(today_local + timedelta(days=i))
 
-    now_utc = datetime.now(timezone.utc)
-    
-    today_local = date.today()
-    
-    display_dates = []
-    for i in range(7):
-        display_dates.append(today_local + timedelta(days=i))
+        ordered_display_dates = {}
 
-    ordered_display_dates = {}
-
-    for d_obj in display_dates:
-        day_bookings = get_bookings_for_display(d_obj)
-        if d_obj == today_local:
+        for d_obj in display_dates:
+            day_bookings = get_bookings_for_display(d_obj)
+            # AÑADIR LA LÓGICA DE is_past AQUÍ
             for queue in QUEUES:
                 for hour_str, details in day_bookings[queue].items():
                     slot_dt_obj = datetime.combine(d_obj, datetime.strptime(hour_str, "%H:%M").time()).replace(tzinfo=timezone.utc)
-                    if slot_dt_obj < now_utc:
+                    
+                    # Identificar el slot actual
+                    if slot_dt_obj <= now_utc < (slot_dt_obj + timedelta(hours=1)):
+                        details["is_current"] = True
+                    else:
+                        details["is_current"] = False
+
+                    # Identificar si el slot ya ha pasado
+                    if (slot_dt_obj + timedelta(hours=1)) < now_utc:
+                        details["is_past"] = True
+                    else:
+                        details["is_past"] = False
+                    
+                    if details["is_past"] and details["booked_by"] is None:
+                        details["booked_by"] = "Pasado"
                         details["available"] = False
-                        if details["booked_by"] is None:
-                            details["booked_by"] = "Pasado"
-        ordered_display_dates[d_obj.isoformat()] = day_bookings
+                        
+            ordered_display_dates[d_obj.isoformat()] = day_bookings
 
-    current_in_queue = {}
-    
-    for queue_name in QUEUES:
-        found_current_booked_slot = False
-        for d_obj in display_dates:
-            if found_current_booked_slot:
-                break
 
-            current_day_bookings = ordered_display_dates.get(d_obj.isoformat(), {})
-            
-            for hour_str, details in current_day_bookings.get(queue_name, {}).items():
-                slot_time_obj = datetime.strptime(hour_str, "%H:%M").time()
-                
-                slot_datetime_aware_start = datetime.combine(d_obj, slot_time_obj).replace(tzinfo=timezone.utc)
-                slot_datetime_aware_end = slot_datetime_aware_start + timedelta(hours=1)
-                
-                # La reserva está activa si la hora actual está DENTRO del slot
-                is_currently_active = slot_datetime_aware_start <= now_utc < slot_datetime_aware_end
-
-                if not details["available"] and details["booked_by"] != "Pasado" and is_currently_active:
-                    current_in_queue[queue_name] = {
-                        "date": d_obj.isoformat(),
-                        "time": hour_str,
-                        "queue": queue_name,
-                        "booked_by": details["booked_by"]
-                    }
-                    found_current_booked_slot = True
+        current_in_queue = {}
+        for queue_name in QUEUES:
+            found_current_booked_slot = False
+            for d_obj in display_dates:
+                if found_current_booked_slot:
                     break
-        
-        if not found_current_booked_slot:
-            current_in_queue[queue_name] = {
-                "date": "N/A",
-                "time": "N/A",
-                "queue": queue_name,
-                "booked_by": "N/A",
-                "message": "There are no active shifts booked."
-            }
 
-    active_bonuses = Bonus.query.filter(Bonus.active == True).all()
+                current_day_bookings = ordered_display_dates.get(d_obj.isoformat(), {})
+                
+                for hour_str, details in current_day_bookings.get(queue_name, {}).items():
+                    slot_time_obj = datetime.strptime(hour_str, "%H:%M").time()
+                    
+                    slot_datetime_aware_start = datetime.combine(d_obj, slot_time_obj).replace(tzinfo=timezone.utc)
+                    slot_datetime_aware_end = slot_datetime_aware_start + timedelta(hours=1)
+                    
+                    is_currently_active = slot_datetime_aware_start <= now_utc < slot_datetime_aware_end
 
-    bonused_slots = {queue: {d.isoformat(): set() for d in display_dates} for queue in QUEUES}
+                    if not details["available"] and details["booked_by"] != "Pasado" and is_currently_active:
+                        current_in_queue[queue_name] = {
+                            "date": d_obj.isoformat(),
+                            "time": hour_str,
+                            "queue": queue_name,
+                            "booked_by": details["booked_by"]
+                        }
+                        found_current_booked_slot = True
+                        break
+            
+            if not found_current_booked_slot:
+                current_in_queue[queue_name] = {
+                    "date": "N/A",
+                    "time": "N/A",
+                    "queue": queue_name,
+                    "booked_by": "N/A",
+                    "message": "There are no active shifts booked."
+                }
 
-    bonused_queues_now = {queue: False for queue in QUEUES}
+        active_bonuses = Bonus.query.filter(Bonus.active == True).all()
 
-    for bonus in active_bonuses:
-        bonus_start_dt = datetime.combine(bonus.start_date, datetime.strptime(bonus.start_time, "%H:%M").time()).replace(tzinfo=timezone.utc)
-        bonus_end_dt = bonus_start_dt + timedelta(hours=bonus.duration_hours)
+        bonused_slots = {queue: {d.isoformat(): set() for d in display_dates} for queue in QUEUES}
 
-        if bonus_start_dt <= now_utc < bonus_end_dt:
-            bonused_queues_now[bonus.queue_type] = True
+        bonused_queues_now = {queue: False for queue in QUEUES}
 
-        current_slot_dt = bonus_start_dt
-        while current_slot_dt < bonus_end_dt:
-            if current_slot_dt.date() in display_dates:
-                bonused_slots[bonus.queue_type][current_slot_dt.date().isoformat()].add(current_slot_dt.strftime("%H:%M"))
-            current_slot_dt += timedelta(hours=1)
-            if current_slot_dt.date() > display_dates[-1]:
-                break
+        for bonus in active_bonuses:
+            bonus_start_dt = datetime.combine(bonus.start_date, datetime.strptime(bonus.start_time, "%H:%M").time()).replace(tzinfo=timezone.utc)
+            bonus_end_dt = bonus_start_dt + timedelta(hours=bonus.duration_hours)
 
+            if bonus_start_dt <= now_utc < bonus_end_dt:
+                bonused_queues_now[bonus.queue_type] = True
 
-    bonuses_for_display = []
-    for bonus in active_bonuses:
-        bonus_start_dt = datetime.combine(bonus.start_date, datetime.strptime(bonus.start_time, "%H:%M").time()).replace(tzinfo=timezone.utc)
-        bonus_end_dt = bonus_start_dt + timedelta(hours=bonus.duration_hours)
-
-        if bonus_end_dt > now_utc:
-            bonuses_for_display.append({
-                "queue_type": bonus.queue_type.capitalize(),
-                "start_time": bonus_start_dt.strftime("%Y-%m-%d %H:%M"),
-                "end_time": bonus_end_dt.strftime("%H:%M"),
-                "duration": bonus.duration_hours
-            })
-    bonuses_for_display.sort(key=lambda x: datetime.strptime(x['start_time'], "%Y-%m-%d %H:%M"))
+            current_slot_dt = bonus_start_dt
+            while current_slot_dt < bonus_end_dt:
+                if current_slot_dt.date() in display_dates:
+                    bonused_slots[bonus.queue_type][current_slot_dt.date().isoformat()].add(current_slot_dt.strftime("%H:%M"))
+                current_slot_dt += timedelta(hours=1)
+                if current_slot_dt.date() > display_dates[-1]:
+                    break
 
 
-    return render_template(
-        'index.html',
-        bookings=ordered_display_dates,
-        queues=QUEUES,
-        display_dates=display_dates,
-        today=today_local.isoformat(),
-        now_utc=now_utc.strftime("%Y-%m-%d %H:%M:%S UTC"),
-        current_in_queue=current_in_queue,
-        bonused_slots=bonused_slots,
-        bonused_queues_now=bonused_queues_now,
-        bonuses_for_display=bonuses_for_display
-    )
+        bonuses_for_display = []
+        for bonus in active_bonuses:
+            bonus_start_dt = datetime.combine(bonus.start_date, datetime.strptime(bonus.start_time, "%H:%M").time()).replace(tzinfo=timezone.utc)
+            bonus_end_dt = bonus_start_dt + timedelta(hours=bonus.duration_hours)
+
+            if bonus_end_dt > now_utc:
+                bonuses_for_display.append({
+                    "queue_type": bonus.queue_type.capitalize(),
+                    "start_time": bonus_start_dt.strftime("%Y-%m-%d %H:%M"),
+                    "end_time": bonus_end_dt.strftime("%H:%M"),
+                    "duration": bonus.duration_hours
+                })
+        bonuses_for_display.sort(key=lambda x: datetime.strptime(x['start_time'], "%Y-%m-%d %H:%M"))
+
+
+        return render_template(
+            'index.html',
+            bookings=ordered_display_dates,
+            queues=QUEUES,
+            display_dates=display_dates,
+            today=today_local.isoformat(),
+            now_utc=now_utc.strftime("%Y-%m-%d %H:%M:%S UTC"),
+            current_in_queue=current_in_queue,
+            bonused_slots=bonused_slots,
+            bonused_queues_now=bonused_queues_now,
+            bonuses_for_display=bonuses_for_display,
+            session=session
+        )
+
 
 @app.route('/find_closest_slot', methods=['POST'])
 def find_closest_slot():
