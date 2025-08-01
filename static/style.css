@@ -503,7 +503,7 @@ tbody tr:nth-child(even) {
     text-align: center;
     font-weight: bold;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3), inset 1px 1px 3px rgba(255, 255, 255, 0.1);
-    font-family: 'MedievalSharp', cursive, Arial, sans-serif;
+    font-family: 'Times New Roman', serif;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
 }
 
@@ -594,7 +594,7 @@ select {
     border: 2px solid var(--aoe-border);
     color: var(--aoe-text-light);
     border-radius: 5px;
-    font-family: 'MedievalSharp', cursive, 'Inter', sans-serif;
+    font-family: 'Times New Roman', serif;
     text-align: center;
     box-sizing: border-box;
     box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.5);
@@ -773,7 +773,7 @@ textarea {
     border-radius: 5px;
     background-color: var(--aoe-panel-bg);
     color: var(--aoe-text-light);
-    font-family: 'MedievalSharp', cursive; /* O la fuente que uses en tu diseño */
+    font-family: 'Times New Roman', serif; /* O la fuente que uses en tu diseño */
     font-size: 1em;
     line-height: 1.5;
     min-height: 150px; /* Altura mínima para que sea visible */

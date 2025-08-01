@@ -271,40 +271,42 @@ def index():
                             details["booked_by"] = "Pasado"
         ordered_display_dates[d_obj.isoformat()] = day_bookings
 
-    first_in_queue = {}
-
+    current_in_queue = {}
+    
     for queue_name in QUEUES:
-        found_next_booked_slot = False
+        found_current_booked_slot = False
         for d_obj in display_dates:
-            if found_next_booked_slot:
+            if found_current_booked_slot:
                 break
 
-            current_day_bookings = ordered_display_dates[d_obj.isoformat()]
-            for hour_str, details in current_day_bookings[queue_name].items():
+            current_day_bookings = ordered_display_dates.get(d_obj.isoformat(), {})
+            
+            for hour_str, details in current_day_bookings.get(queue_name, {}).items():
                 slot_time_obj = datetime.strptime(hour_str, "%H:%M").time()
-                slot_datetime_aware = datetime.combine(d_obj, slot_time_obj).replace(tzinfo=timezone.utc)
+                
+                slot_datetime_aware_start = datetime.combine(d_obj, slot_time_obj).replace(tzinfo=timezone.utc)
+                slot_datetime_aware_end = slot_datetime_aware_start + timedelta(hours=1)
+                
+                # La reserva está activa si la hora actual está DENTRO del slot
+                is_currently_active = slot_datetime_aware_start <= now_utc < slot_datetime_aware_end
 
-                is_future_slot = False
-                if slot_datetime_aware > now_utc:
-                    is_future_slot = True
-
-                if not details["available"] and details["booked_by"] != "Pasado" and is_future_slot:
-                    first_in_queue[queue_name] = {
+                if not details["available"] and details["booked_by"] != "Pasado" and is_currently_active:
+                    current_in_queue[queue_name] = {
                         "date": d_obj.isoformat(),
                         "time": hour_str,
                         "queue": queue_name,
                         "booked_by": details["booked_by"]
                     }
-                    found_next_booked_slot = True
+                    found_current_booked_slot = True
                     break
-
-        if not found_next_booked_slot:
-            first_in_queue[queue_name] = {
+        
+        if not found_current_booked_slot:
+            current_in_queue[queue_name] = {
                 "date": "N/A",
                 "time": "N/A",
                 "queue": queue_name,
                 "booked_by": "N/A",
-                "message": "There are no upcoming shifts booked.."
+                "message": "There are no active shifts booked."
             }
 
     active_bonuses = Bonus.query.filter(Bonus.active == True).all()
@@ -351,7 +353,7 @@ def index():
         display_dates=display_dates,
         today=today_local.isoformat(),
         now_utc=now_utc.strftime("%Y-%m-%d %H:%M:%S UTC"),
-        first_in_queue=first_in_queue,
+        current_in_queue=current_in_queue,
         bonused_slots=bonused_slots,
         bonused_queues_now=bonused_queues_now,
         bonuses_for_display=bonuses_for_display

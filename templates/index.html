@@ -10,7 +10,7 @@
     <div class="first-in-queue-container">
         <h2>Queue</h2>
         <div class="queue-list">
-            {% for queue_name, slot_info in first_in_queue.items() %}
+            {% for queue_name, slot_info in current_in_queue.items() %}
                 <div class="queue-item">
                     <h3>{{ queue_name | capitalize }}
                         {% if bonused_queues_now[queue_name] %}
