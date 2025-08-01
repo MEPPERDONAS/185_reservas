@@ -3,8 +3,9 @@ from datetime import datetime, timedelta, date, time, timezone
 import requests
 import time
 import threading
+from flask_migrate import Migrate  # Flask-Migrate
 
-from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify # ¡Añadimos jsonify!
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import and_, or_
 
@@ -17,20 +18,45 @@ except ImportError:
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'development')
 DISCORD_BOT_TOKEN = os.getenv("TOKEN")
-DISCORD_ANNOUNCEMENT_CHANNEL_ID = os.getenv("CANAL_AVISOS_ID")
+
 
 DISCORD_CHANNELS = {
     "[SOL] General Channel": "1339362327593488506",
     "[SOL] Rules Channel": "1339366090244886611",
-    "[SOL] Announcements Channel": "1339366194330865685",
+    "[SOL] Announcements Channel": "1349021795046654023", #estos son canales deprueba
+    "[SOL] KVK Events Channel": "1349021802277376072" #Reemplaza con el ID de tu canal de eventos KVK
 }
+DISCORD_ANNOUNCEMENT_CHANNEL_ID = DISCORD_CHANNELS.get("[SOL] KVK Events Channel")
 
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL').replace("postgres://", "postgresql://", 1) if os.getenv('DATABASE_URL') else 'sqlite:///reservas.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
+migrate = Migrate(app, db) # Inicializamos Flask-Migrate y lo vinculamos a la app y la base de datos
 
 QUEUES = ["building", "research", "training"]
+
+# Nuevo modelo de base de datos para los eventos semanales
+class WeeklyEvent(db.Model):
+    __tablename__ = 'weekly_events'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    monday = db.Column(db.String(255), nullable=True)
+    tuesday = db.Column(db.String(255), nullable=True)
+    wednesday = db.Column(db.String(255), nullable=True)
+    thursday = db.Column(db.String(255), nullable=True)
+    friday = db.Column(db.String(255), nullable=True)
+    saturday = db.Column(db.String(255), nullable=True)
+    sunday = db.Column(db.String(255), nullable=True)
+    start_date = db.Column(db.Date, nullable=False)
+    end_date = db.Column(db.Date, nullable=False)
+    reminder_time = db.Column(db.String(5), nullable=True, default="10:00") # Hora del recordatorio, formato HH:MM
+    last_sent_date = db.Column(db.Date, nullable=True) # Para evitar recordatorios duplicados
+    active = db.Column(db.Boolean, default=True, nullable=False)
+
+    def __repr__(self):
+        return f"<WeeklyEvent {self.name} from {self.start_date} to {self.end_date} (Active: {self.active}) at {self.reminder_time}>"
+
 
 class Booking(db.Model):
     __tablename__ = 'bookings'
@@ -92,7 +118,8 @@ def get_bookings_for_display(target_date_obj):
         if booking.queue_type in bookings_data:
             bookings_data[booking.queue_type][booking.time_slot] = {
                 "available": booking.available,
-                "booked_by": booking.booked_by
+                "booked_by": booking.booked_by,
+                "id": booking.id
             }
 
     for queue in QUEUES:
@@ -110,170 +137,16 @@ def get_bookings_for_display(target_date_obj):
 def update_daily_bookings_in_db():
     today_local = date.today()
     
-    # Queremos mantener datos para los próximos 7 días para la visualización.
-    # Así que eliminamos cualquier cosa más allá de eso.
-    max_date_to_keep = today_local + timedelta(days=6) # Hoy + 6 días = 7 días en total
+    max_date_to_keep = today_local + timedelta(days=6)
     
-    # Obtener todas las fechas que deberíamos tener inicializadas (hoy hasta 6 días en el futuro)
     expected_dates_objs = [today_local + timedelta(days=i) for i in range(7)]
 
-    # Eliminar reservas que estén fuera del rango de los próximos 7 días
     Booking.query.filter(Booking.booking_date > max_date_to_keep).delete(synchronize_session=False)
     db.session.commit()
 
-    # Asegurarse de que todos los slots para los próximos 7 días estén inicializados
     for d_obj in expected_dates_objs:
         initialize_all_slots_for_day(d_obj)
 
-
-# --- Rutas de la Aplicación Web (Flask) ---
-
-@app.route('/')
-def index():
-    with app.app_context():
-        update_daily_bookings_in_db()
-
-    now_utc = datetime.now(timezone.utc)
-    
-    today_local = date.today()
-    
-    # Generar las fechas para los próximos 7 días
-    display_dates = []
-    for i in range(7):
-        display_dates.append(today_local + timedelta(days=i))
-
-    ordered_display_dates = {}
-
-    for d_obj in display_dates:
-        day_bookings = get_bookings_for_display(d_obj)
-        # Marcar slots pasados como no disponibles para el día actual
-        if d_obj == today_local:
-            for queue in QUEUES:
-                for hour_str, details in day_bookings[queue].items():
-                    slot_dt_obj = datetime.combine(d_obj, datetime.strptime(hour_str, "%H:%M").time()).replace(tzinfo=timezone.utc)
-                    if slot_dt_obj < now_utc:
-                        details["available"] = False
-                        if details["booked_by"] is None:
-                            details["booked_by"] = "Pasado"
-        ordered_display_dates[d_obj.isoformat()] = day_bookings
-
-    first_in_queue = {}
-
-    for queue_name in QUEUES:
-        found_next_booked_slot = False
-        for d_obj in display_dates: # Iterar por todos los días a mostrar
-            if found_next_booked_slot:
-                break
-
-            current_day_bookings = ordered_display_dates[d_obj.isoformat()]
-            for hour_str, details in current_day_bookings[queue_name].items():
-                slot_time_obj = datetime.strptime(hour_str, "%H:%M").time()
-                slot_datetime_aware = datetime.combine(d_obj, slot_time_obj).replace(tzinfo=timezone.utc)
-
-                is_future_slot = False
-                if slot_datetime_aware > now_utc:
-                    is_future_slot = True
-
-                if not details["available"] and details["booked_by"] != "Pasado" and is_future_slot:
-                    first_in_queue[queue_name] = {
-                        "date": d_obj.isoformat(),
-                        "time": hour_str,
-                        "queue": queue_name,
-                        "booked_by": details["booked_by"]
-                    }
-                    found_next_booked_slot = True
-                    break
-
-        if not found_next_booked_slot:
-            first_in_queue[queue_name] = {
-                "date": "N/A",
-                "time": "N/A",
-                "queue": queue_name,
-                "booked_by": "N/A",
-                "message": "There are no upcoming shifts booked.."
-            }
-
-    active_bonuses = Bonus.query.filter(Bonus.active == True).all()
-
-    # Ajustar bonused_slots para todos los días a mostrar
-    bonused_slots = {queue: {d.isoformat(): set() for d in display_dates} for queue in QUEUES}
-
-    bonused_queues_now = {queue: False for queue in QUEUES}
-
-    for bonus in active_bonuses:
-        bonus_start_dt = datetime.combine(bonus.start_date, datetime.strptime(bonus.start_time, "%H:%M").time()).replace(tzinfo=timezone.utc)
-        bonus_end_dt = bonus_start_dt + timedelta(hours=bonus.duration_hours)
-
-        if bonus_start_dt <= now_utc < bonus_end_dt:
-            bonused_queues_now[bonus.queue_type] = True
-
-        current_slot_dt = bonus_start_dt
-        while current_slot_dt < bonus_end_dt:
-            if current_slot_dt.date() in display_dates: # Verificar si la fecha del bonus está en las fechas a mostrar
-                bonused_slots[bonus.queue_type][current_slot_dt.date().isoformat()].add(current_slot_dt.strftime("%H:%M"))
-            current_slot_dt += timedelta(hours=1)
-            # Limitar el loop para que no genere slots para días muy lejanos
-            if current_slot_dt.date() > display_dates[-1]: # Si la fecha actual excede el último día a mostrar
-                break
-
-
-    bonuses_for_display = []
-    for bonus in active_bonuses:
-        bonus_start_dt = datetime.combine(bonus.start_date, datetime.strptime(bonus.start_time, "%H:%M").time()).replace(tzinfo=timezone.utc)
-        bonus_end_dt = bonus_start_dt + timedelta(hours=bonus.duration_hours)
-
-        if bonus_end_dt > now_utc:
-            bonuses_for_display.append({
-                "queue_type": bonus.queue_type.capitalize(),
-                "start_time": bonus_start_dt.strftime("%Y-%m-%d %H:%M"),
-                "end_time": bonus_end_dt.strftime("%H:%M"),
-                "duration": bonus.duration_hours
-            })
-    bonuses_for_display.sort(key=lambda x: datetime.strptime(x['start_time'], "%Y-%m-%d %H:%M"))
-
-
-    return render_template(
-        'index.html',
-        bookings=ordered_display_dates,
-        queues=QUEUES,
-        display_dates=display_dates, # Pasar la lista de objetos de fecha
-        today=today_local.isoformat(),
-        now_utc=now_utc.strftime("%Y-%m-%d %H:%M:%S UTC"),
-        first_in_queue=first_in_queue,
-        bonused_slots=bonused_slots,
-        bonused_queues_now=bonused_queues_now,
-        bonuses_for_display=bonuses_for_display
-    )
-
-@app.route('/find_closest_slot', methods=['POST'])
-def find_closest_slot():
-    # Ya no necesitamos queue_type aquí, ya que no se busca en la BD
-    days_input = request.form.get('days', type=int)
-    hours_input = request.form.get('hours', type=int)
-    minutes_input = request.form.get('minutes', type=int)
-
-    # Validaciones básicas
-    if days_input is None or hours_input is None or minutes_input is None:
-        return jsonify({"success": False, "message": "Por favor, ingresa todos los valores (días, horas, minutos)."}), 400
-    
-    if not isinstance(days_input, int) or not isinstance(hours_input, int) or not isinstance(minutes_input, int):
-         return jsonify({"success": False, "message": "Los valores deben ser números enteros."}), 400
-
-    # Calcular el tiempo de referencia desde ahora (UTC)
-    now_utc = datetime.now(timezone.utc)
-    target_datetime_utc = now_utc + timedelta(days=days_input, hours=hours_input, minutes=minutes_input)
-    # Redondear a la hora más cercana (sin segundos ni microsegundos)
-    target_datetime_rounded = target_datetime_utc.replace(second=0, microsecond=0)
-
-
-    # Devolver la fecha y hora calculadas
-    return jsonify({
-        "success": True,
-        "date": target_datetime_rounded.date().isoformat(),
-        "time": target_datetime_rounded.strftime("%H:%M"),
-        "message": f"The approximate slot will be on [{target_datetime_rounded.date().isoformat()}] at [{target_datetime_rounded.strftime('%H:%M')}] UTC**.",
-        "timestamp_utc": target_datetime_rounded.timestamp() # Unix timestamp para la cuenta regresiva en JS
-    })
 
 def send_discord_notification(message, channel_id=None, max_retries=3):
     """Envía un mensaje al canal de Discord especificado o al canal de anuncios por defecto, con manejo de Rate Limits."""
@@ -321,6 +194,194 @@ def send_discord_notification(message, channel_id=None, max_retries=3):
         print(f"Falló el envío de la notificación de Discord después de {max_retries} intentos: {message}")
 
 
+def check_and_send_weekly_event_reminders():
+    """
+    Verifica si hay eventos semanales activos y envía recordatorios a Discord.
+    Esta función se ejecuta en un bucle constante para revisar cada minuto.
+    """
+    with app.app_context():
+        now_utc = datetime.now(timezone.utc)
+        today = now_utc.date()
+        current_time = now_utc.time()
+        weekday = today.weekday() # 0 = Lunes, 6 = Domingo
+        
+        # Obtenemos todos los eventos semanales activos
+        active_events = WeeklyEvent.query.filter(
+            WeeklyEvent.active == True
+        ).all()
+
+        for active_event in active_events:
+            # Comprobar si el evento está activo para hoy
+            if active_event.start_date <= today and active_event.end_date >= today:
+                day_messages = [
+                    active_event.monday,
+                    active_event.tuesday,
+                    active_event.wednesday,
+                    active_event.thursday,
+                    active_event.friday,
+                    active_event.saturday,
+                    active_event.sunday
+                ]
+                
+                message_for_today = day_messages[weekday]
+                
+                if message_for_today and active_event.reminder_time:
+                    reminder_time_obj = datetime.strptime(active_event.reminder_time, "%H:%M").time()
+                    # Comprobar si la hora actual es igual o posterior a la hora del recordatorio
+                    if current_time >= reminder_time_obj and (active_event.last_sent_date is None or active_event.last_sent_date < today):
+                        message = f"🔔 **Recordatorio de Evento @everyone : {active_event.name}**\n" \
+                                  f"**Día de hoy ({today.strftime('%A')}):** {message_for_today}"
+                        
+                        kvk_channel_id = DISCORD_CHANNELS.get("[SOL] KVK Events Channel")
+                        if kvk_channel_id:
+                            thread = threading.Thread(target=send_discord_notification, args=(message, kvk_channel_id))
+                            thread.start()
+                            active_event.last_sent_date = today
+                            db.session.commit()
+                        else:
+                            print("Error: 'KVK Events Channel' no está configurado en DISCORD_CHANNELS.")
+
+
+# --- Rutas de la Aplicación Web (Flask) ---
+
+@app.route('/')
+def index():
+    with app.app_context():
+        update_daily_bookings_in_db()
+
+    now_utc = datetime.now(timezone.utc)
+    
+    today_local = date.today()
+    
+    display_dates = []
+    for i in range(7):
+        display_dates.append(today_local + timedelta(days=i))
+
+    ordered_display_dates = {}
+
+    for d_obj in display_dates:
+        day_bookings = get_bookings_for_display(d_obj)
+        if d_obj == today_local:
+            for queue in QUEUES:
+                for hour_str, details in day_bookings[queue].items():
+                    slot_dt_obj = datetime.combine(d_obj, datetime.strptime(hour_str, "%H:%M").time()).replace(tzinfo=timezone.utc)
+                    if slot_dt_obj < now_utc:
+                        details["available"] = False
+                        if details["booked_by"] is None:
+                            details["booked_by"] = "Pasado"
+        ordered_display_dates[d_obj.isoformat()] = day_bookings
+
+    first_in_queue = {}
+
+    for queue_name in QUEUES:
+        found_next_booked_slot = False
+        for d_obj in display_dates:
+            if found_next_booked_slot:
+                break
+
+            current_day_bookings = ordered_display_dates[d_obj.isoformat()]
+            for hour_str, details in current_day_bookings[queue_name].items():
+                slot_time_obj = datetime.strptime(hour_str, "%H:%M").time()
+                slot_datetime_aware = datetime.combine(d_obj, slot_time_obj).replace(tzinfo=timezone.utc)
+
+                is_future_slot = False
+                if slot_datetime_aware > now_utc:
+                    is_future_slot = True
+
+                if not details["available"] and details["booked_by"] != "Pasado" and is_future_slot:
+                    first_in_queue[queue_name] = {
+                        "date": d_obj.isoformat(),
+                        "time": hour_str,
+                        "queue": queue_name,
+                        "booked_by": details["booked_by"]
+                    }
+                    found_next_booked_slot = True
+                    break
+
+        if not found_next_booked_slot:
+            first_in_queue[queue_name] = {
+                "date": "N/A",
+                "time": "N/A",
+                "queue": queue_name,
+                "booked_by": "N/A",
+                "message": "There are no upcoming shifts booked.."
+            }
+
+    active_bonuses = Bonus.query.filter(Bonus.active == True).all()
+
+    bonused_slots = {queue: {d.isoformat(): set() for d in display_dates} for queue in QUEUES}
+
+    bonused_queues_now = {queue: False for queue in QUEUES}
+
+    for bonus in active_bonuses:
+        bonus_start_dt = datetime.combine(bonus.start_date, datetime.strptime(bonus.start_time, "%H:%M").time()).replace(tzinfo=timezone.utc)
+        bonus_end_dt = bonus_start_dt + timedelta(hours=bonus.duration_hours)
+
+        if bonus_start_dt <= now_utc < bonus_end_dt:
+            bonused_queues_now[bonus.queue_type] = True
+
+        current_slot_dt = bonus_start_dt
+        while current_slot_dt < bonus_end_dt:
+            if current_slot_dt.date() in display_dates:
+                bonused_slots[bonus.queue_type][current_slot_dt.date().isoformat()].add(current_slot_dt.strftime("%H:%M"))
+            current_slot_dt += timedelta(hours=1)
+            if current_slot_dt.date() > display_dates[-1]:
+                break
+
+
+    bonuses_for_display = []
+    for bonus in active_bonuses:
+        bonus_start_dt = datetime.combine(bonus.start_date, datetime.strptime(bonus.start_time, "%H:%M").time()).replace(tzinfo=timezone.utc)
+        bonus_end_dt = bonus_start_dt + timedelta(hours=bonus.duration_hours)
+
+        if bonus_end_dt > now_utc:
+            bonuses_for_display.append({
+                "queue_type": bonus.queue_type.capitalize(),
+                "start_time": bonus_start_dt.strftime("%Y-%m-%d %H:%M"),
+                "end_time": bonus_end_dt.strftime("%H:%M"),
+                "duration": bonus.duration_hours
+            })
+    bonuses_for_display.sort(key=lambda x: datetime.strptime(x['start_time'], "%Y-%m-%d %H:%M"))
+
+
+    return render_template(
+        'index.html',
+        bookings=ordered_display_dates,
+        queues=QUEUES,
+        display_dates=display_dates,
+        today=today_local.isoformat(),
+        now_utc=now_utc.strftime("%Y-%m-%d %H:%M:%S UTC"),
+        first_in_queue=first_in_queue,
+        bonused_slots=bonused_slots,
+        bonused_queues_now=bonused_queues_now,
+        bonuses_for_display=bonuses_for_display
+    )
+
+@app.route('/find_closest_slot', methods=['POST'])
+def find_closest_slot():
+    days_input = request.form.get('days', type=int)
+    hours_input = request.form.get('hours', type=int)
+    minutes_input = request.form.get('minutes', type=int)
+
+    if days_input is None or hours_input is None or minutes_input is None:
+        return jsonify({"success": False, "message": "Por favor, ingresa todos los valores (días, horas, minutos)."}), 400
+    
+    if not isinstance(days_input, int) or not isinstance(hours_input, int) or not isinstance(minutes_input, int):
+         return jsonify({"success": False, "message": "Los valores deben ser números enteros."}), 400
+
+    now_utc = datetime.now(timezone.utc)
+    target_datetime_utc = now_utc + timedelta(days=days_input, hours=hours_input, minutes=minutes_input)
+    target_datetime_rounded = target_datetime_utc.replace(second=0, microsecond=0)
+
+
+    return jsonify({
+        "success": True,
+        "date": target_datetime_rounded.date().isoformat(),
+        "time": target_datetime_rounded.strftime("%H:%M"),
+        "message": f"The approximate slot will be on [{target_datetime_rounded.date().isoformat()}] at [{target_datetime_rounded.strftime('%H:%M')}] UTC**.",
+        "timestamp_utc": target_datetime_rounded.timestamp()
+    })
+
 @app.route('/book', methods=['POST'])
 def book_slot():
     with app.app_context():
@@ -328,8 +389,6 @@ def book_slot():
         queue_type = request.form['queue']
         time_slot = request.form['time']
         
-        # Consideración: Idealmente, booked_by debería venir de la sesión del usuario si está logueado.
-        # Por ahora, usamos el valor del formulario, asumiendo que es un identificador único.
         booked_by = request.form['booked_by'] 
 
         if not all([date_str, queue_type, time_slot, booked_by]):
@@ -339,13 +398,12 @@ def book_slot():
         try:
             booking_date_obj = datetime.strptime(date_str, '%Y-%m-%d').date()
             
-            # 1. Verificar si el usuario ya tiene una reserva activa en OTRA cola para la misma fecha y hora.
             existing_conflict_booking = Booking.query.filter(
-                Booking.booked_by == booked_by,                  # Mismo usuario
-                Booking.booking_date == booking_date_obj,        # Misma fecha
-                Booking.time_slot == time_slot,                  # Misma hora
-                Booking.queue_type != queue_type,                # PERO en una cola DIFERENTE
-                Booking.available == False                       # Y que la reserva existente esté ocupada/activa
+                Booking.booked_by == booked_by,
+                Booking.booking_date == booking_date_obj,
+                Booking.time_slot == time_slot,
+                Booking.queue_type != queue_type,
+                Booking.available == False
             ).first()
 
             if existing_conflict_booking:
@@ -353,7 +411,6 @@ def book_slot():
                       'You cannot book multiple queues at the same time.', 'error')
                 return redirect(url_for('index'))
             
-            # 2. Verificar la disponibilidad del slot actual
             slot = Booking.query.filter_by(
                 booking_date=booking_date_obj,
                 time_slot=time_slot,
@@ -381,29 +438,9 @@ def book_slot():
             
     return redirect(url_for('index'))
 
-
-# Asegúrate de que tu `get_bookings_for_display` devuelve el ID de la reserva:
-def get_bookings_for_display(target_date_obj):
-    bookings_data = {queue: {} for queue in QUEUES}
-    all_day_bookings = Booking.query.filter_by(booking_date=target_date_obj).all()
-
-    for booking in all_day_bookings:
-        if booking.queue_type in bookings_data:
-            bookings_data[booking.queue_type][booking.time_slot] = {
-                "available": booking.available,
-                "booked_by": booking.booked_by,
-                "id": booking.id # <--- ASEGÚRATE DE QUE ESTO ESTÁ AQUÍ
-            }
-
-    # ... el resto de la función (sin cambios) ...
-    return bookings_data
-
-# Nueva ruta para cancelar una reserva
 @app.route('/cancel_booking', methods=['POST'])
 def cancel_booking():
-    # Asumo que recibes 'booking_id' y 'booked_by_user' para validación
     booking_id = request.form.get('booking_id', type=int)
-    # booked_by_user debería ser el nombre que el usuario introdujo al reservar
     booked_by_user = request.form.get('booked_by_user') 
 
     if not booking_id or not booked_by_user:
@@ -415,23 +452,17 @@ def cancel_booking():
         if not booking_to_cancel:
             return jsonify({"success": False, "message": "Booking not found."}), 404
 
-        # Validación de seguridad: Asegúrate de que el usuario que intenta cancelar sea el que reservó
-        # O si hay un sistema de login de administrador, permitirle cancelar.
-        # Por ahora, nos basamos en el nombre 'booked_by'.
         if booking_to_cancel.booked_by != booked_by_user:
-            # Puedes añadir una validación adicional si 'session.get('role') == 'admin'' aquí
             return jsonify({"success": False, "message": "You are not authorized to cancel this booking."}), 403
 
-        # Opcional: Impedir cancelar slots pasados
         booking_dt_obj = datetime.combine(booking_to_cancel.booking_date, datetime.strptime(booking_to_cancel.time_slot, "%H:%M").time()).replace(tzinfo=timezone.utc)
         now_utc = datetime.now(timezone.utc)
         if booking_dt_obj <= now_utc:
             return jsonify({"success": False, "message": "Cannot cancel a slot that has already passed."}), 400
 
-
         try:
             booking_to_cancel.available = True
-            booking_to_cancel.booked_by = None # Limpiar el campo del usuario
+            booking_to_cancel.booked_by = None
             db.session.commit()
             
             message = (
@@ -451,9 +482,6 @@ def cancel_booking():
 
 @app.route('/admin')
 def admin_panel():
-    """
-    Muestra un panel de administración con todas las reservas.
-    """
     if 'username' not in session or session.get('role') != 'admin':
         flash('Access denied. Only administrators can access.', 'error')
         return redirect(url_for('login'))
@@ -463,15 +491,14 @@ def admin_panel():
         current_date_utc = now_utc.date()
         current_time_utc_str = now_utc.strftime('%H:%M')
 
-        # Mostrar todas las reservas futuras y las de hoy que no han pasado
         all_bookings = Booking.query.filter(
             and_(
-                Booking.available == False, # Solo reservas ocupadas
+                Booking.available == False,
                 or_(
-                    Booking.booking_date > current_date_utc, # Fechas futuras
+                    Booking.booking_date > current_date_utc,
                     and_(
-                        Booking.booking_date == current_date_utc, # O fecha de hoy
-                        Booking.time_slot >= current_time_utc_str # Y hora actual o futura
+                        Booking.booking_date == current_date_utc,
+                        Booking.time_slot >= current_time_utc_str
                     )
                 )
             )
@@ -482,9 +509,6 @@ def admin_panel():
 
 @app.route('/admin/delete/<int:booking_id>', methods=['POST'])
 def delete_booking(booking_id):
-    """
-    Borra una reserva específica de la base de datos.
-    """
     if 'username' not in session or session.get('role') != 'admin':
         flash('Access denied. Only administrators can access.', 'error')
         return redirect(url_for('login'))
@@ -503,9 +527,6 @@ def delete_booking(booking_id):
 
 @app.route('/admin/edit/<int:booking_id>', methods=['GET', 'POST'])
 def edit_booking(booking_id):
-    """
-    Muestra un formulario para editar una reserva y procesa la actualización.
-    """
     if 'username' not in session or session.get('role') != 'admin':
         flash('Access denied. Only administrators can access.', 'error')
         return redirect(url_for('login'))
@@ -648,10 +669,137 @@ def delete_bonus(bonus_id):
     return redirect(url_for('manage_bonuses'))
 
 
+# ##########################################################################
+# # NUEVA FUNCIONALIDAD: GESTIÓN DE EVENTOS SEMANALES                       #
+# ##########################################################################
+
+@app.route('/admin/weekly_events', methods=['GET', 'POST'])
+def manage_weekly_events():
+    """
+    Ruta para gestionar los eventos semanales (crear, ver, activar/desactivar, borrar).
+    """
+    if 'username' not in session or session.get('role') != 'admin':
+        flash('Acceso denegado. Solo los administradores pueden acceder.', 'error')
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        name = request.form['name']
+        monday = request.form['monday']
+        tuesday = request.form['tuesday']
+        wednesday = request.form['wednesday']
+        thursday = request.form['thursday']
+        friday = request.form['friday']
+        saturday = request.form['saturday']
+        sunday = request.form['sunday']
+        start_date_str = request.form['start_date']
+        end_date_str = request.form['end_date']
+        reminder_time_str = request.form['reminder_time']
+
+        try:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+            # Validar el formato de la hora
+            datetime.strptime(reminder_time_str, '%H:%M').time()
+
+            if start_date > end_date:
+                flash('Error: La fecha de inicio no puede ser posterior a la fecha de fin.', 'error')
+                return redirect(url_for('manage_weekly_events'))
+
+            new_event = WeeklyEvent(
+                name=name,
+                monday=monday,
+                tuesday=tuesday,
+                wednesday=wednesday,
+                thursday=thursday,
+                friday=friday,
+                saturday=saturday,
+                sunday=sunday,
+                start_date=start_date,
+                end_date=end_date,
+                reminder_time=reminder_time_str,
+                active=True  # Un nuevo evento se crea como activo por defecto
+            )
+            db.session.add(new_event)
+            db.session.commit()
+            flash('Evento semanal creado exitosamente.', 'success')
+
+            # Notificar a Discord sobre la creación del evento
+            message = (
+                f"🎉 **¡Nuevo Evento Semanal Programado!**\n"
+                f"**Nombre:** {name}\n"
+                f"**Duración:** desde {start_date_str} hasta {end_date_str}"
+            )
+            thread = threading.Thread(target=send_discord_notification, args=(message,))
+            thread.start()
+
+        except ValueError:
+            flash('Error: Formato de fecha u hora inválido.', 'error')
+            db.session.rollback()
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Ocurrió un error al crear el evento: {e}', 'error')
+        
+        return redirect(url_for('manage_weekly_events'))
+
+    all_weekly_events = WeeklyEvent.query.order_by(WeeklyEvent.start_date.desc()).all()
+    return render_template('manage_weekly_events.html', events=all_weekly_events)
+
+
+@app.route('/admin/weekly_events/toggle/<int:event_id>', methods=['POST'])
+def toggle_weekly_event_active(event_id):
+    """
+    Ruta para activar o desactivar un evento semanal.
+    """
+    if 'username' not in session or session.get('role') != 'admin':
+        flash('Acceso denegado. Solo los administradores pueden acceder.', 'error')
+        return redirect(url_for('login'))
+    
+    with app.app_context():
+        event = WeeklyEvent.query.get_or_404(event_id)
+        event.active = not event.active
+        try:
+            db.session.commit()
+            flash(f'Estado del evento ID {event_id} cambiado a {"activo" if event.active else "inactivo"}.', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error al cambiar el estado del evento: {e}', 'error')
+    return redirect(url_for('manage_weekly_events'))
+
+
+@app.route('/admin/weekly_events/delete/<int:event_id>', methods=['POST'])
+def delete_weekly_event(event_id):
+    """
+    Ruta para borrar un evento semanal.
+    """
+    if 'username' not in session or session.get('role') != 'admin':
+        flash('Acceso denegado. Solo los administradores pueden acceder.', 'error')
+        return redirect(url_for('login'))
+
+    with app.app_context():
+        event_to_delete = WeeklyEvent.query.get_or_404(event_id)
+        try:
+            db.session.delete(event_to_delete)
+            db.session.commit()
+            flash(f'Evento ID {event_id} eliminado exitosamente.', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error al eliminar el evento: {e}', 'error')
+    return redirect(url_for('manage_weekly_events'))
+
+
+# ##########################################################################
+# # FIN DE LA NUEVA FUNCIONALIDAD                                          #
+# ##########################################################################
+
+
 USERS = {
     "admin": {"password": "admin185", "role": "admin"},
     "user1": {"password": "userpassword", "role": "user"}
 }
+
+@app.shell_context_processor
+def make_shell_context():
+    return dict(db=db) # Esto permite que 'flask db' encuentre el objeto 'db'
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -683,8 +831,16 @@ def logout():
 
 if __name__ == '__main__':
     with app.app_context():
-        db.create_all()
-        update_daily_bookings_in_db()
+        # Ya no necesitamos db.create_all(). Flask-Migrate lo manejará.
+        # update_daily_bookings_in_db()
+        # Iniciar un hilo para verificar y enviar recordatorios cada 60 segundos
+        def start_reminder_thread():
+            while True:
+                check_and_send_weekly_event_reminders()
+                time.sleep(60)
+
+        reminder_thread = threading.Thread(target=start_reminder_thread, daemon=True)
+        reminder_thread.start()
 
     port = int(os.getenv('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=os.getenv('FLASK_DEBUG', 'False') == 'True')

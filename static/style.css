@@ -58,7 +58,7 @@ button.toggle-btn {
 
 /* --- 2. Estilo General del Cuerpo --- */
 body {
-    font-family: 'MedievalSharp', cursive, 'Inter', sans-serif;
+    font-family: 'Times New Roman', serif;
     margin: 0;
     background-color: var(--aoe-dark-bg);
     background-size: cover;
