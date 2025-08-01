@@ -496,20 +496,22 @@ tbody tr:nth-child(even) {
     position: relative;
     background-color: var(--aoe-info); /* Un color azul/gris para destacar */
     border: 2px solid var(--aoe-accent-gold);
-    box-shadow: 0 0 10px rgba(184, 154, 90, 0.7); /* Sombra dorada */
-    animation: pulse-border 1.5s infinite ease-in-out;
+    box-shadow: 0 0 15px rgba(184, 154, 90, 1);
+    /* Se cambia el nombre de la animación para evitar conflictos de caché */
+    animation: current-slot-pulse 1.5s infinite ease-in-out; 
 }
 
-/* Animación para el efecto de "pulso" en el borde */
-@keyframes pulse-border {
-    0% {
+/* Animación de pulso más agresiva: cambia el tamaño, la sombra y el color */
+@keyframes current-slot-pulse {
+    0%, 100% {
         box-shadow: 0 0 5px rgba(184, 154, 90, 0.7);
+        transform: scale(1);
+        background-color: var(--aoe-info); /* Vuelve al color original */
     }
     50% {
-        box-shadow: 0 0 15px rgba(184, 154, 90, 1);
-    }
-    100% {
-        box-shadow: 0 0 5px rgba(184, 154, 90, 0.7);
+        box-shadow: 0 0 25px rgba(184, 154, 90, 1.5);
+        transform: scale(1); /* Aumenta el tamaño del slot */
+        background-color: var(--aoe-accent-gold); /* Cambio de color para un efecto muy visible */
     }
 }
 
