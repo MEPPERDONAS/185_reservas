@@ -60,8 +60,9 @@ button.toggle-btn {
 body {
     font-family: 'Times New Roman', serif;
     margin: 0;
-    background-color: var(--aoe-dark-bg);
-    background-size: cover;
+    /* Aplica un degradado de fondo de arriba a abajo usando tus variables de color */
+    background: linear-gradient(to bottom, var(--aoe-dark-bg), var(--aoe-panel-bg), var(--aoe-dark-bg));
+    background-attachment: fixed; /* Mantiene el degradado fijo al hacer scroll */
     color: var(--aoe-text-light);
     display: flex;
     flex-direction: column;
@@ -82,7 +83,7 @@ h1 {
     text-shadow: 
         2px 2px 4px rgba(0, 0, 0, 0.7), /* Sombra para darle profundidad */
         -2px -2px 4px rgba(0, 0, 0, 0.7); /* Sombra para realzar los bordes */
-    background: linear-gradient(to right, #2C201C, #4A3728, #2C201C); /* Un gradiente sutil de fondo */
+    /*background: linear-gradient(to right, #2C201C, #4A3728, #2C201C); /* Un gradiente sutil de fondo */
     /*border-bottom: 3px double var(--aoe-border); /* Una doble línea para separar */
     /*box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5); /* Sombra para levantar el encabezado */
     letter-spacing: 2px; /* Espaciado entre letras para un efecto más grandioso */
@@ -116,11 +117,11 @@ form button[type="submit"] {
 form button:not(.delete-btn):not(.toggle-btn):not(.edit-btn), /* Otros botones dentro de form */
 form a:not(.edit-btn) { /* Otros enlaces dentro de form */
     flex-direction: column;
-    background-color: var(--aoe-panel-bg);
+    /*background-color: var(--aoe-panel-bg);*/
     border: 3px solid var(--aoe-border);
     padding: 25px;
     margin: 20px auto;
-    width: 90%;
+    width: 100%;
     max-width: 1200px;
     box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.5);
     text-align: center;
@@ -188,7 +189,12 @@ form a:not(.edit-btn) { /* Otros enlaces dentro de form */
 
 /* --- 5. Contenedor del Calendario/Tablas (General) --- */
 #calendar-container {
+    /* Revertimos a las propiedades de flexbox originales para mantener el diseño,
+     * y añadimos `overflow-x: auto` para el desplazamiento horizontal si el
+     * contenido es demasiado ancho.
+     */
     display: flex;
+    overflow-x: auto;
     justify-content: center;
     flex-wrap: wrap;
     gap: 25px;
@@ -196,10 +202,47 @@ form a:not(.edit-btn) { /* Otros enlaces dentro de form */
     max-width: 1200px;
     margin-top: 20px;
 }
+#calendar-container table {
+    /* Agrega un ancho mínimo para que las columnas no se colapsen en pantallas pequeñas */
+    min-width: 100%;
+}
+
+/* La propiedad sticky ahora se aplica directamente a las celdas del encabezado `<th>`
+ * en lugar del `<thead>`. Esto es a menudo más fiable.
+ */
+#calendar-container thead {
+    /* Se quita position: sticky del thead */
+    background-color: var(--aoe-dark-bg); 
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* También hacemos que la leyenda de la tabla sea sticky */
+#calendar-container table caption {
+    position: sticky;
+    top: 0;
+    z-index: 11; /* Mayor que el th para que se mantenga por encima */
+    /*background-color: var(--aoe-text-dark);*/
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    padding: 10px;
+    font-weight: bold;
+    font-size: 1.2em;
+    border-bottom: 2px solid var(--aoe-accent-gold);
+}
+
+/* Asegura que las celdas de la cabecera tengan un ancho definido y sean sticky */
+#calendar-container th {
+    white-space: nowrap;
+    padding: 10px;
+    position: sticky;
+    top: 0; /* Se pegará en la parte superior del contenedor de desplazamiento */
+    z-index: 10;
+    /*background-color: var(--aoe-panel-bg); /* Un color de fondo es crucial */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
 
 /* --- 5. Sección de Búsqueda de Slots por Tiempo (New Feature) --- */
 .find-slot-section {
-    background-color: var(--aoe-dark-bg); /* Fondo oscuro como la tierra */
+    /*background-color: var(--aoe-dark-bg); /* Fondo oscuro como la tierra */
     padding: 15px; /* Un poco más de padding */
     margin-top: 30px; /* <--- Añade o ajusta esta línea */
     margin-bottom: 30px;
