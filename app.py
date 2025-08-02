@@ -392,7 +392,7 @@ def find_closest_slot():
         "success": True,
         "date": target_datetime_rounded.date().isoformat(),
         "time": target_datetime_rounded.strftime("%H:%M"),
-        "message": f"The approximate slot will be on [{target_datetime_rounded.date().isoformat()}] at [{target_datetime_rounded.strftime('%H:%M')}] UTC**.",
+        "message": f"The approximate slot will be on [{target_datetime_rounded.date().isoformat()}] at [{target_datetime_rounded.strftime('%H:%M')}] UTC.",
         "timestamp_utc": target_datetime_rounded.timestamp()
     })
 
@@ -421,7 +421,7 @@ def book_slot():
             ).first()
 
             if existing_conflict_booking:
-                flash(f'You already have an active booking for **{date_str} at {time_slot}** in the **{existing_conflict_booking.queue_type.capitalize()}** queue. '
+                flash(f'You already have an active booking for {date_str} at {time_slot} in the {existing_conflict_booking.queue_type.capitalize()} queue. '
                       'You cannot book multiple queues at the same time.', 'error')
                 return redirect(url_for('index'))
             

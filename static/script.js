@@ -156,7 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let diffMs = targetTimestampMs - now; // Diferencia en milisegundos
 
             if (diffMs <= 0) {
-                displayElement.textContent = '¡El tiempo calculado es ahora o ya pasó!';
+                displayElement.textContent = 'The time calculated is now or it has already passed!';
                 clearInterval(countdownInterval);
                 return;
             }
@@ -169,7 +169,7 @@ document.addEventListener('DOMContentLoaded', () => {
             diffMs -= minutes * (1000 * 60);
             const seconds = Math.floor(diffMs / 1000);
 
-            displayElement.textContent = `TIME:: ${days} Days, ${hours} Hours, ${minutes} mins, ${seconds} seconds`;
+            displayElement.textContent = `TIME: ${days} Days, ${hours} Hours, ${minutes} mins, ${seconds} seconds`;
         }
 
         update(); // Llamada inicial para mostrar el tiempo inmediatamente

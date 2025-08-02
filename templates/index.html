@@ -28,28 +28,29 @@
     </div>
 
 <section class="find-slot-section">
-        <h2>Find Slot by Time Ahead</h2> {# Añadido el h2 para completar la sección #}
-        <p>Enter the days, hours, and minutes from now to calculate a future date and time.</p>
-        <form id="find-slot-form" class="find-slot-form">
-            <div class="form-group time-inputs">
-                <input type="number" id="find-slot-days" name="days" min="0" value="0" required>
-                <span class="time-unit">D</span>
+    <h2>Find Slot by Time Ahead</h2> {# Added h2 to complete the section #}
+    <p>Enter the days, hours, and minutes from now to calculate a future date and time.</p>
+    <form id="find-slot-form" class="find-slot-form">
+        <div class="form-group time-inputs">
+            <input type="number" id="find-slot-days" name="days" min="0" value="0" required>
+            <span class="time-unit">D</span>
 
-                <input type="number" id="find-slot-hours" name="hours" min="0" max="23" value="0" required>
-                <span class="time-unit">H</span>
+            <input type="number" id="find-slot-hours" name="hours" min="0" max="23" value="0" required>
+            <span class="time-unit">H</span>
 
-                <input type="number" id="find-slot-minutes" name="minutes" min="0" max="59" value="0" required>
-                <span class="time-unit">M</span>
-            </div>
-            <button type="submit" class="nav-button">Calculate</button>
-        </form>
-        <div id="find-slot-results" class="results-box" style="display: none;">
-            <h3>Calculated Time:</h3>
-            <p id="result-message"></p>
-            <p id="result-details"></p>
-            <p id="result-countdown"></p>
+            <input type="number" id="find-slot-minutes" name="minutes" min="0" max="59" value="0" required>
+            <span class="time-unit">M</span>
         </div>
-    </section>
+        {# Se ha agregado una clase CSS específica para el botón de calcular #}
+        <button type="submit" id="calculate-button" class="nav-button calculate-button">Calculate</button>
+    </form>
+    <div id="find-slot-results" class="results-box" style="display: none;">
+        <h3>Calculated Time:</h3>
+        <p id="result-message"></p>
+        <p id="result-details"></p>
+        <p id="result-countdown"></p>
+    </div>
+</section>
 
 <div id="calendar-container">
     {# Iterar sobre todos los días, pero ocultar los que van más allá del segundo día #}
@@ -82,7 +83,6 @@
                                     {% if slot_data.is_current %}
                                         current-slot
                                     {% elif slot_data.is_past %}
-                                        {# Corregido: Ahora se distingue entre slots pasados reservados y no reservados #}
                                         {% if slot_data.booked_by == 'Pasado' %}
                                             past-slot
                                         {% else %}
@@ -99,10 +99,17 @@
                                     data-time="{{ time_str }}">
                                     {% if slot_data.is_current %}
                                         <span class="current-label">NOW</span>
-                                    {% endif %}
-                                    {% if slot_data.booked_by and slot_data.booked_by != 'Pasado' %}
+                                        {% if slot_data.booked_by and slot_data.booked_by != 'Pasado' %}
+                                            {{ slot_data.booked_by }}
+                                            <span class="cancel-x" 
+                                                  data-booking-id="{{ slot_data.id }}"
+                                                  data-booked-by-name="{{ slot_data.booked_by }}"
+                                                  title="Cancel this booking">✖</span>
+                                        {% else %}
+                                            Cooldown
+                                        {% endif %}
+                                    {% elif slot_data.booked_by and slot_data.booked_by != 'Pasado' %}
                                         {{ slot_data.booked_by }}
-                                        {# AQUI AÑADIMOS LA 'X' #}
                                         <span class="cancel-x" 
                                               data-booking-id="{{ slot_data.id }}"
                                               data-booked-by-name="{{ slot_data.booked_by }}"
