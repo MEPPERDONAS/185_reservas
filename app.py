@@ -50,7 +50,7 @@ class WeeklyEvent(db.Model):
     sunday = db.Column(db.String(255), nullable=True)
     start_date = db.Column(db.Date, nullable=False)
     end_date = db.Column(db.Date, nullable=False)
-    reminder_time = db.Column(db.String(5), nullable=True, default="10:00") # Hora del recordatorio, formato HH:MM
+    reminder_time = db.Column(db.String(5), nullable=True, default="00:00") # Hora del recordatorio, formato HH:MM
     last_sent_date = db.Column(db.Date, nullable=True) # Para evitar recordatorios duplicados
     active = db.Column(db.Boolean, default=True, nullable=False)
 
