@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, date, time, timezone
 import requests
 import time
 import threading
-from flask_migrate import Migrate  # Flask-Migrate
+from flask_migrate import Migrate
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import and_, or_
@@ -18,12 +18,11 @@ app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'development')
 DISCORD_BOT_TOKEN = os.getenv("TOKEN")
 
-
 DISCORD_CHANNELS = {
     "[SOL] General Channel": "1339362327593488506",
     "[SOL] Rules Channel": "1339366090244886611",
-    "[SOL] Announcements Channel": "1349021795046654023", #estos son canales deprueba
-    "[SOL] KVK Events Channel": "1349021802277376072" #Reemplaza con el ID de tu canal de eventos KVK
+    "[SOL] Announcements Channel": "1349021795046654023",
+    "[SOL] KVK Events Channel": "1349021802277376072"
 }
 DISCORD_ANNOUNCEMENT_CHANNEL_ID = DISCORD_CHANNELS.get("[SOL] KVK Events Channel")
 
@@ -31,11 +30,10 @@ app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL').replace("postg
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
-migrate = Migrate(app, db) # Inicializamos Flask-Migrate y lo vinculamos a la app y la base de datos
+migrate = Migrate(app, db)
 
 QUEUES = ["building", "research", "training"]
 
-# Nuevo modelo de base de datos para los eventos semanales
 class WeeklyEvent(db.Model):
     __tablename__ = 'weekly_events'
     id = db.Column(db.Integer, primary_key=True)
@@ -49,8 +47,8 @@ class WeeklyEvent(db.Model):
     sunday = db.Column(db.String(255), nullable=True)
     start_date = db.Column(db.Date, nullable=False)
     end_date = db.Column(db.Date, nullable=False)
-    reminder_time = db.Column(db.String(5), nullable=True, default="00:00") # Hora del recordatorio, formato HH:MM
-    last_sent_date = db.Column(db.Date, nullable=True) # Para evitar recordatorios duplicados
+    reminder_time = db.Column(db.String(5), nullable=True, default="00:00")
+    last_sent_date = db.Column(db.Date, nullable=True)
     active = db.Column(db.Boolean, default=True, nullable=False)
 
     def __repr__(self):
@@ -75,14 +73,13 @@ class Bonus(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     queue_type = db.Column(db.String(50), nullable=False)
     start_date = db.Column(db.Date, nullable=False)
-    start_time = db.Column(db.String(5), nullable=False) # e.g., "10:00"
+    start_time = db.Column(db.String(5), nullable=False)
     duration_hours = db.Column(db.Integer, nullable=False)
     active = db.Column(db.Boolean, default=True, nullable=False)
 
     def __repr__(self):
         return f"<Bonus {self.queue_type} from {self.start_date} {self.start_time} for {self.duration_hours}h (Active: {self.active})>"
 
-# --- Funciones de Utilidad para la Base de Datos ---
 
 def initialize_all_slots_for_day(target_date_obj):
     for queue_name in QUEUES:
@@ -148,7 +145,6 @@ def update_daily_bookings_in_db():
 
 
 def send_discord_notification(message, channel_id=None, max_retries=3):
-    """Envía un mensaje al canal de Discord especificado o al canal de anuncios por defecto, con manejo de Rate Limits."""
     if not DISCORD_BOT_TOKEN:
         print("Error: TOKEN de Discord no configurado en variables de entorno.")
         return
@@ -196,57 +192,56 @@ def send_discord_notification(message, channel_id=None, max_retries=3):
 def check_and_send_weekly_event_reminders():
     """
     Verifica si hay eventos semanales activos y envía recordatorios a Discord.
-    Esta función se ejecuta en un bucle constante para revisar cada minuto.
+    Esta función debe ser llamada DENTRO de un contexto de aplicación.
     """
-    with app.app_context():
-        now_utc = datetime.now(timezone.utc)
-        today = now_utc.date()
-        current_time = now_utc.time()
-        weekday = today.weekday() # 0 = Lunes, 6 = Domingo
+    now_utc = datetime.now(timezone.utc)
+    today = now_utc.date()
+    current_time_obj = now_utc.time().replace(second=0, microsecond=0)
+    weekday = today.weekday()
+
+    active_events = WeeklyEvent.query.filter(
+        WeeklyEvent.active == True,
+        WeeklyEvent.start_date <= today,
+        WeeklyEvent.end_date >= today
+    ).all()
+
+    for active_event in active_events:
+        day_messages = [
+            active_event.monday,
+            active_event.tuesday,
+            active_event.wednesday,
+            active_event.thursday,
+            active_event.friday,
+            active_event.saturday,
+            active_event.sunday
+        ]
         
-        # Obtenemos todos los eventos semanales activos
-        active_events = WeeklyEvent.query.filter(
-            WeeklyEvent.active == True
-        ).all()
-
-        for active_event in active_events:
-            # Comprobar si el evento está activo para hoy
-            if active_event.start_date <= today and active_event.end_date >= today:
-                day_messages = [
-                    active_event.monday,
-                    active_event.tuesday,
-                    active_event.wednesday,
-                    active_event.thursday,
-                    active_event.friday,
-                    active_event.saturday,
-                    active_event.sunday
-                ]
-                
-                message_for_today = day_messages[weekday]
-                
-                if message_for_today and active_event.reminder_time:
-                    reminder_time_obj = datetime.strptime(active_event.reminder_time, "%H:%M").time()
-                    # Comprobar si la hora actual es igual o posterior a la hora del recordatorio
-                    if current_time >= reminder_time_obj and (active_event.last_sent_date is None or active_event.last_sent_date < today):
-                        message = f"🔔 **Recordatorio de Evento @everyone : {active_event.name}**\n" \
-                                  f"**Día de hoy ({today.strftime('%A')}):** {message_for_today}"
-                        
-                        kvk_channel_id = DISCORD_CHANNELS.get("[SOL] KVK Events Channel")
-                        if kvk_channel_id:
-                            thread = threading.Thread(target=send_discord_notification, args=(message, kvk_channel_id))
-                            thread.start()
-                            active_event.last_sent_date = today
-                            db.session.commit()
-                        else:
-                            print("Error: 'KVK Events Channel' no está configurado en DISCORD_CHANNELS.")
-
-
-# --- Rutas de la Aplicación Web (Flask) ---
+        message_for_today = day_messages[weekday]
+        
+        try:
+            # Convertir el string de la DB a un objeto time para la comparación
+            reminder_time_from_db = datetime.strptime(active_event.reminder_time, "%H:%M").time()
+            
+            if message_for_today and reminder_time_from_db <= current_time_obj:
+                if active_event.last_sent_date is None or active_event.last_sent_date < today:
+                    message = (
+                        f"🔔 **Recordatorio de Evento @everyone : {active_event.name}**\n"
+                        f"**Día de hoy ({today.strftime('%A')}):** {message_for_today}"
+                    )
+                    
+                    kvk_channel_id = DISCORD_CHANNELS.get("[SOL] KVK Events Channel")
+                    if kvk_channel_id:
+                        send_discord_notification(message, kvk_channel_id)
+                        active_event.last_sent_date = today
+                        db.session.commit()
+                    else:
+                        print("Error: 'KVK Events Channel' no está configurado en DISCORD_CHANNELS.")
+        except ValueError:
+            print(f"Error: Formato de hora inválido para el evento {active_event.name}. Se esperaba HH:MM.")
 
 @app.route('/')
 def index():
     with app.app_context():
-        # Lógica para obtener las reservas y bonificaciones
         now_utc = datetime.now(timezone.utc)
         today_local = date.today()
         
@@ -489,7 +484,6 @@ def cancel_booking():
             print(f"Error cancelling booking: {e}")
             return jsonify({"success": False, "message": f"Server error: {str(e)}"}), 500
 
-
 USERS = {
     "admin": {"password": "admin185", "role": "admin"},
     "user1": {"password": "userpassword", "role": "user"}
@@ -715,8 +709,6 @@ def delete_bonus(bonus_id):
             flash(f'Error al eliminar bonificación: {e}', 'error')
     return redirect(url_for('manage_bonuses'))
 
-# # NUEVA FUNCIONALIDAD: GESTIÓN DE EVENTOS SEMANALES
-
 @app.route('/admin/weekly_events', methods=['GET', 'POST'])
 def manage_weekly_events():
     if 'username' not in session or session.get('role') != 'admin':
@@ -785,9 +777,6 @@ def manage_weekly_events():
 
 @app.route('/admin/weekly_events/toggle/<int:event_id>', methods=['POST'])
 def toggle_weekly_event_active(event_id):
-    """
-    Ruta para activar o desactivar un evento semanal.
-    """
     if 'username' not in session or session.get('role') != 'admin':
         flash('Acceso denegado. Solo los administradores pueden acceder.', 'error')
         return redirect(url_for('login'))
@@ -806,9 +795,6 @@ def toggle_weekly_event_active(event_id):
 
 @app.route('/admin/weekly_events/delete/<int:event_id>', methods=['POST'])
 def delete_weekly_event(event_id):
-    """
-    Ruta para borrar un evento semanal.
-    """
     if 'username' not in session or session.get('role') != 'admin':
         flash('Acceso denegado. Solo los administradores pueden acceder.', 'error')
         return redirect(url_for('login'))
@@ -824,17 +810,23 @@ def delete_weekly_event(event_id):
             flash(f'Error al eliminar el evento: {e}', 'error')
     return redirect(url_for('manage_weekly_events'))
 
-
-#INICIALIZACIÓN DE LA APP
 if __name__ == '__main__':
     with app.app_context():
-        def start_reminder_thread():
-            while True:
+        db.create_all()
+    
+    # La función para el hilo ahora envuelve la lógica del recordatorio
+    # en un contexto de aplicación.
+    def start_reminder_thread():
+        print("Iniciando el hilo de recordatorios de eventos semanales...")
+        while True:
+            with app.app_context():
                 check_and_send_weekly_event_reminders()
-                time.sleep(60)
+            time.sleep(60)
 
-        reminder_thread = threading.Thread(target=start_reminder_thread, daemon=True)
-        reminder_thread.start()
+    # Creación e inicio del hilo
+    reminder_thread = threading.Thread(target=start_reminder_thread, daemon=True)
+    reminder_thread.start()
 
+    # Configuración de la ejecución de la aplicación, adaptada para Render
     port = int(os.getenv('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=os.getenv('FLASK_DEBUG', 'False') == 'True')
