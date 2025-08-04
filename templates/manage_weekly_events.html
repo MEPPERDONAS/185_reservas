@@ -3,89 +3,143 @@
 <head>
     <meta charset="UTF-8">
     <title>Manage Weekly Events</title>
-    <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .time-picker-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 100;
+        }
+        .hour-grid, .minute-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 0.5rem;
+        }
+        .time-button {
+            padding: 0.5rem;
+            border-radius: 0.375rem;
+            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+    </style>
 </head>
-<body>
-    <div class="container">
-        <h1>Manage Weekly Events</h1>
-        <div class="admin-return-buttons">
-            <a href="{{ url_for('admin_panel') }}" class="nav-button">&larr; Back to Admin Panel</a>
-        </div>
-        
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-md">
+        <h1 class="text-3xl font-bold mb-6">Manage Weekly Events</h1>
+        <a href="{{ url_for('admin_panel') }}" class="text-blue-500 hover:text-blue-700 mb-4 inline-block">&larr; Back to Admin Panel</a>
+
         {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-            <ul class="flashes">
+            <div class="mb-4">
                 {% for category, message in messages %}
-                <li class="{{ category }}">{{ message }}</li>
+                <div class="bg-{{ 'green' if category == 'success' else 'red' }}-100 border border-{{ 'green' if category == 'success' else 'red' }}-400 text-{{ 'green' if category == 'success' else 'red' }}-700 px-4 py-3 rounded relative" role="alert">
+                    <span class="block sm:inline">{{ message }}</span>
+                </div>
                 {% endfor %}
-            </ul>
+            </div>
         {% endif %}
         {% endwith %}
 
-        <div class="first-in-queue-container">
-            <h2>Create a New Weekly Event</h2>
-            <form action="{{ url_for('manage_weekly_events') }}" method="POST">
-                <div class="form-group">
-                    <label for="name">Event Name</label>
-                    <input type="text" id="name" name="name" required>
-                </div>
-                <div class="form-group">
-                    <label for="start_date">Start Date</label>
-                    <input type="date" id="start_date" name="start_date" required>
-                </div>
-                <div class="form-group">
-                    <label for="end_date">End Date</label>
-                    <input type="date" id="end_date" name="end_date" required>
-                </div>
-                <div class="form-group">
-                    <label for="reminder_time">Reminder Time (UTC)</label>
-                    <input type="time" id="reminder_time" name="reminder_time" required value="10:00">
+        <!-- Formulario para crear un nuevo evento -->
+        <div class="mb-8 p-6 border rounded-lg shadow-sm">
+            <h2 class="text-2xl font-semibold mb-4">Create a New Weekly Event</h2>
+            <form id="weekly-event-form" action="{{ url_for('manage_weekly_events') }}" method="POST">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label for="name" class="block text-sm font-medium text-gray-700">Event Name</label>
+                        <input type="text" id="name" name="name" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                    </div>
+                    <div>
+                        <label for="start_date" class="block text-sm font-medium text-gray-700">Start Date</label>
+                        <input type="date" id="start_date" name="start_date" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                    </div>
+                    <div>
+                        <label for="end_date" class="block text-sm font-medium text-gray-700">End Date</label>
+                        <input type="date" id="end_date" name="end_date" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                    </div>
+                    <div>
+                        <label for="reminder_time_display" class="block text-sm font-medium text-gray-700">Reminder Time (UTC)</label>
+                        <!-- Campo de entrada de solo lectura que activará el panel -->
+                        <input type="text" id="reminder_time_display" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm bg-white cursor-pointer focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" value="10:00" readonly>
+                        <!-- Campo oculto que enviará el valor al servidor -->
+                        <input type="hidden" id="reminder_time_hidden" name="reminder_time" value="10:00">
+                    </div>
                 </div>
 
-                <div class="weekly-days">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {% set days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] %}
                     {% for day in days %}
-                        <div class="form-group">
-                            <label for="{{ day }}">{{ day|capitalize }}</label>
-                            <input type="text" id="{{ day }}" name="{{ day }}" placeholder="Enter activity for {{ day }}" maxlength="100">
+                        <div>
+                            <label for="{{ day }}" class="block text-sm font-medium text-gray-700">{{ day|capitalize }}</label>
+                            <input type="text" id="{{ day }}" name="{{ day }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" placeholder="Enter activity for {{ day }}">
                         </div>
                     {% endfor %}
                 </div>
                 
-                <button type="submit">Create Event</button>
+                <button type="submit" class="mt-4 w-full md:w-auto px-6 py-2 bg-indigo-600 text-white font-medium rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Create Event
+                </button>
             </form>
         </div>
 
-        <div class="first-in-queue-container">
-            <h2>Existing Weekly Events</h2>
+        <!-- Panel de selección de hora personalizado (oculto por defecto) -->
+        <div id="customTimePickerModal" class="time-picker-modal hidden bg-white p-6 rounded-lg shadow-xl border border-gray-200 w-11/12 max-w-sm">
+            <h3 class="text-xl font-bold mb-4">Select Time (UTC)</h3>
+            
+            <!-- Selector de Horas -->
+            <div class="mb-4">
+                <p class="font-semibold mb-2">Hours (00-23)</p>
+                <div class="hour-grid">
+                    {% for hour in range(24) %}
+                    <button type="button" class="time-button bg-gray-200 hover:bg-indigo-200" data-hour="{{ '%02d' % hour }}">{{ '%02d' % hour }}</button>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Selector de Minutos -->
+            <div>
+                <p class="font-semibold mb-2">Minutes (00-59)</p>
+                <div class="minute-grid">
+                    {% for minute in range(0, 60, 5) %}
+                    <button type="button" class="time-button bg-gray-200 hover:bg-indigo-200" data-minute="{{ '%02d' % minute }}">{{ '%02d' % minute }}</button>
+                    {% endfor %}
+                </div>
+            </div>
+            <button type="button" class="close-button mt-4 w-full px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600">Close</button>
+        </div>
+
+        <!-- Lista de eventos existentes -->
+        <div>
+            <h2 class="text-2xl font-semibold mb-4">Existing Weekly Events</h2>
             {% if events %}
-                <ul class="queue-list">
+                <ul class="space-y-4">
                     {% for event in events %}
-                    <li class="queue-item">
-                        <div class="event-header">
-                            <h3>{{ event.name }}</h3>
-                            <p class="event-dates">From: {{ event.start_date.isoformat() }} to: {{ event.end_date.isoformat() }}</p>
-                            <p class="event-time">Reminder Time: {{ event.reminder_time }} UTC</p>
-                            <p class="event-status">Status: <span class="status-{{ 'active' if event.active else 'inactive' }}">{{ 'Active' if event.active else 'Inactive' }}</span></p>
+                    <li class="p-4 border rounded-lg shadow-sm {{ 'bg-green-50' if event.active else 'bg-red-50' }}">
+                        <div class="flex justify-between items-center mb-2">
+                            <div>
+                                <h3 class="text-xl font-bold">{{ event.name }}</h3>
+                                <p class="text-sm text-gray-500">From: {{ event.start_date.isoformat() }} to: {{ event.end_date.isoformat() }}</p>
+                                <p class="text-sm font-medium text-gray-500">Reminder Time: {{ event.reminder_time }} UTC</p>
+                                <p class="text-sm font-medium text-{{ 'green' if event.active else 'red' }}-600">Status: {{ 'Active' if event.active else 'Inactive' }}</p>
+                            </div>
+                            <div class="flex space-x-2">
+                                <form action="{{ url_for('toggle_weekly_event_active', event_id=event.id) }}" method="POST">
+                                    <button type="submit" class="px-4 py-2 text-sm font-medium rounded-md text-white {{ 'bg-yellow-500 hover:bg-yellow-600' if event.active else 'bg-green-500 hover:bg-green-600' }}">
+                                        {{ 'Deactivate' if event.active else 'Activate' }}
+                                    </button>
+                                </form>
+                                <form action="{{ url_for('delete_weekly_event', event_id=event.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this event?');">
+                                    <button type="submit" class="px-4 py-2 text-sm font-medium rounded-md text-white bg-red-500 hover:bg-red-600">
+                                        Delete
+                                    </button>
+                                </form>
+                            </div>
                         </div>
-                        <div class="event-actions">
-                            <form action="{{ url_for('toggle_weekly_event_active', event_id=event.id) }}" method="POST">
-                                <button type="submit" class="toggle-btn" title="{{ 'Deactivate' if event.active else 'Activate' }}">
-                                    {% if event.active %}
-                                        <i class="fas fa-toggle-on fa-lg"></i>
-                                    {% else %}
-                                        <i class="fas fa-toggle-off fa-lg"></i>
-                                    {% endif %}
-                                </button>
-                            </form>
-                            <form action="{{ url_for('delete_weekly_event', event_id=event.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this event?');">
-                                <button type="submit" class="delete-btn" title="Delete">
-                                    <i class="fas fa-trash-alt fa-lg"></i>
-                                </button>
-                            </form>
-                        </div>
-                        <div class="event-details">
+                        <div class="mt-4 border-t pt-4">
                             <p><strong>Monday:</strong> {{ event.monday or 'No activity' }}</p>
                             <p><strong>Tuesday:</strong> {{ event.tuesday or 'No activity' }}</p>
                             <p><strong>Wednesday:</strong> {{ event.wednesday or 'No activity' }}</p>
@@ -102,5 +156,68 @@
             {% endif %}
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Referencias a los elementos del DOM
+            const timeDisplayInput = document.getElementById('reminder_time_display');
+            const timeHiddenInput = document.getElementById('reminder_time_hidden');
+            const timePickerModal = document.getElementById('customTimePickerModal');
+            const hourButtons = document.querySelectorAll('.hour-grid .time-button');
+            const minuteButtons = document.querySelectorAll('.minute-grid .time-button');
+            const closeButton = timePickerModal.querySelector('.close-button');
+
+            let selectedHour = timeDisplayInput.value.split(':')[0] || '10';
+            let selectedMinute = timeDisplayInput.value.split(':')[1] || '00';
+
+            // Función para mostrar el modal del selector de hora
+            timeDisplayInput.addEventListener('click', () => {
+                timePickerModal.classList.remove('hidden');
+            });
+
+            // Función para cerrar el modal
+            closeButton.addEventListener('click', () => {
+                timePickerModal.classList.add('hidden');
+            });
+
+            // Lógica para manejar la selección de horas
+            hourButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    // Quitar el estilo de 'activo' de los botones de hora anteriores
+                    hourButtons.forEach(btn => btn.classList.remove('bg-indigo-600', 'text-white'));
+                    // Añadir el estilo de 'activo' al botón actual
+                    button.classList.add('bg-indigo-600', 'text-white');
+                    selectedHour = button.dataset.hour;
+                    timeDisplayInput.value = `${selectedHour}:${selectedMinute}`;
+                    timeHiddenInput.value = timeDisplayInput.value;
+                });
+            });
+
+            // Lógica para manejar la selección de minutos
+            minuteButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    // Quitar el estilo de 'activo' de los botones de minuto anteriores
+                    minuteButtons.forEach(btn => btn.classList.remove('bg-indigo-600', 'text-white'));
+                    // Añadir el estilo de 'activo' al botón actual
+                    button.classList.add('bg-indigo-600', 'text-white');
+                    selectedMinute = button.dataset.minute;
+                    timeDisplayInput.value = `${selectedHour}:${selectedMinute}`;
+                    timeHiddenInput.value = timeDisplayInput.value;
+                });
+            });
+
+            // Lógica para actualizar el campo oculto en la carga inicial y al enviar
+            document.getElementById('weekly-event-form').addEventListener('submit', function(event) {
+                // Verificar que se haya seleccionado un valor
+                if (!timeDisplayInput.value) {
+                    alert('Por favor, selecciona una hora válida.');
+                    event.preventDefault();
+                } else {
+                    timeHiddenInput.value = timeDisplayInput.value;
+                }
+            });
+
+        });
+    </script>
 </body>
 </html>

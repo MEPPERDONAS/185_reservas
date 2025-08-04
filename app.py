@@ -24,9 +24,9 @@ DISCORD_CHANNELS = {
     "[SOL] General Channel": "1339362327593488506",
     "[SOL] Rules Channel": "1339366090244886611",
     "[SOL] Announcements Channel": "1349021795046654023", #estos son canales deprueba
-    "[SOL] KVK Events Channel": "1349021802277376072" #Reemplaza con el ID de tu canal de eventos KVK
+    "[SOL] KVK Events Channel": "1349021802277376072" #donde se envian los eventos de KVK
 }
-DISCORD_ANNOUNCEMENT_CHANNEL_ID = DISCORD_CHANNELS.get("[SOL] KVK Events Channel")
+DISCORD_ANNOUNCEMENT_CHANNEL_ID = DISCORD_CHANNELS.get("[SOL] Announcements Channel") # Canal donde se envian las reservas
 
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL').replace("postgres://", "postgresql://", 1) if os.getenv('DATABASE_URL') else 'sqlite:///reservas.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -604,7 +604,8 @@ def manage_bonuses():
                     f"will have a bonus from **{start_date_str} at {start_time_formatted} UTC** "
                     f"for **{duration_hours} hour(s)** (until {bonus_end_dt_utc.strftime('%H:%M')} UTC)."
                 )
-                thread = threading.Thread(target=send_discord_notification, args=(message,))
+                bonus_channel_id = "1401742177108885515" #donde se envian los bonos
+                thread = threading.Thread(target=send_discord_notification, args=(message,bonus_channel_id))
                 thread.start()
 
             except ValueError:
