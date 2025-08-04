@@ -61,9 +61,9 @@ body {
     font-family: 'Times New Roman', serif;
     margin: 0;
     /* Combina el degradado y la imagen de fondo */
-    background: linear-gradient(to bottom, var(--aoe-dark-bg), var(--aoe-panel-bg), var(--aoe-dark-bg)),
+    background: linear-gradient(to bottom, var(--aoe-dark-bg), var(--aoe-panel-bg), var(--aoe-dark-bg));
                 /* Reemplaza la siguiente URL con la URL de tu imagen de fondo */
-                url('https://imgeucdn.gamespress.com/cdn/files/LevelInfinite/2024/10/111918-7e04443b/AOEM-River_battle_29.jpg?otf=y&lightbox=y&sky=54c6e5fcf53e83c98728ef877d3f678e374bbae3e95a923d3b5ba0ade091d038&w=1024&maxheight=4096&mode=pad&format=jpg') center center no-repeat;
+                /*url('https://imgeucdn.gamespress.com/cdn/files/LevelInfinite/2024/10/111918-7e04443b/AOEM-River_battle_29.jpg?otf=y&lightbox=y&sky=54c6e5fcf53e83c98728ef877d3f678e374bbae3e95a923d3b5ba0ade091d038&w=1024&maxheight=4096&mode=pad&format=jpg') center center no-repeat;
     /* Aplica un modo de mezcla para fusionar el degradado y la imagen */
     background-blend-mode: multiply; 
     background-size: cover;
@@ -551,7 +551,7 @@ tbody tr:nth-child(even) {
 
 /* Animación de pulso más agresiva: cambia el tamaño, la sombra y el color */
 @keyframes current-slot-pulse {
-    0%, 100% {
+    0%, 75%, 100% {
         box-shadow: 0 0 5px rgba(184, 154, 90, 0.7);
         transform: scale(1);
         background-color: var(--aoe-info); /* Vuelve al color original */
