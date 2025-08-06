@@ -3,7 +3,7 @@
 /* --- 0. Variables de Color (Paleta Age of Empires Mobile) --- */
 :root {
     --aoe-dark-bg: #2C201C; /* Base oscura, como tierra o madera profunda */
-    --aoe-panel-bg: #4A3728; /* Marrón para paneles, como madera o piedra oscura */
+    --aoe-panel-bg: #243a57; /* Marrón para paneles, como madera o piedra oscura */
     --aoe-border: #6B5B4C; /* Borde de piedra o metal envejecido */
     --aoe-accent-gold: #B89A5A; /* Dorado/Bronce para acentos y elementos importantes */
     --aoe-text-light: #D4C29D; /* Color de texto crema/pergamino para contraste */
@@ -60,14 +60,7 @@ button.toggle-btn {
 body {
     font-family: 'Times New Roman', serif;
     margin: 0;
-    /* Combina el degradado y la imagen de fondo */
-    background: linear-gradient(to bottom, var(--aoe-dark-bg), var(--aoe-panel-bg), var(--aoe-dark-bg));
-                /* Reemplaza la siguiente URL con la URL de tu imagen de fondo */
-                /*url('https://imgeucdn.gamespress.com/cdn/files/LevelInfinite/2024/10/111918-7e04443b/AOEM-River_battle_29.jpg?otf=y&lightbox=y&sky=54c6e5fcf53e83c98728ef877d3f678e374bbae3e95a923d3b5ba0ade091d038&w=1024&maxheight=4096&mode=pad&format=jpg') center center no-repeat;
-    /* Aplica un modo de mezcla para fusionar el degradado y la imagen */
-    background-blend-mode: multiply; 
-    background-size: cover;
-    background-attachment: fixed; /* Mantiene el fondo fijo al hacer scroll */
+    /* El color del texto del body */
     color: var(--aoe-text-light);
     display: flex;
     flex-direction: column;
@@ -75,8 +68,32 @@ body {
     min-height: 100vh;
     padding: 20px;
     box-sizing: border-box;
+    position: relative; /* Necesario para posicionar el pseudo-elemento */
+    z-index: 0; /* Asegura que el contenido del body esté por encima del pseudo-elemento */
+    overflow-x: hidden; /* Evita barras de desplazamiento horizontales si el blur causa un pequeño desbordamiento */
 }
 
+body::before {
+    content: ''; /* Esencial para que el pseudo-elemento sea visible */
+    position: fixed; /* Fijo para que cubra toda la ventana de visualización */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    /* Combina un degradado oscuro con tu imagen de fondo */
+    background: 
+        linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), /* Capa oscura (ajusta la opacidad aquí) */
+        url('https://bleedingcool.com/wp-content/uploads/2024/02/Age-Of-Empires-Mobile-Art-2000x1125.jpg') center center no-repeat;
+    background-size: cover;
+    background-attachment: fixed; /* Mantiene el fondo fijo al hacer scroll */
+    background-blend-mode: multiply; /* Mantiene tu modo de mezcla para la imagen y el degradado */
+    
+    /* Aplica el desenfoque a la imagen de fondo combinada */
+    filter: blur(5px); /* Ajusta este valor (en píxeles) para más o menos desenfoque */
+    -webkit-filter: blur(5px); /* Prefijo para compatibilidad con Safari */
+    
+    z-index: -1; /* Coloca el pseudo-elemento detrás de todo el contenido del body */
+}
 /* --- 3. Estilos de Títulos --- */
 h1 {
     font-family: 'Cinzel', serif; /* Una fuente más majestuosa para el título principal */
@@ -119,10 +136,16 @@ form button[type="submit"] {
 }
 .first-in-queue-container,
 .login-container,
-form button:not(.delete-btn):not(.toggle-btn):not(.edit-btn), /* Otros botones dentro de form */
-form a:not(.edit-btn) { /* Otros enlaces dentro de form */
+form button:not(.delete-btn):not(.toggle-btn):not(.edit-btn),
+form a:not(.edit-btn) {
     flex-direction: column;
-    /*background-color: var(--aoe-panel-bg);*/
+    /* Ajusta la opacidad del color de fondo para hacerlo más tenue */
+    background-color: rgba(var(--aoe-panel-bg-rgb), 0.5); /* Ejemplo: si --aoe-panel-bg es #1A2B3C, esto sería rgba(26, 43, 60, 0.5) */
+    
+    /* Aplica el efecto de desenfoque al fondo detrás del elemento */
+    backdrop-filter: blur(10px); /* Ajusta el valor en px para más o menos desenfoque */
+    -webkit-backdrop-filter: blur(10px); /* Para compatibilidad con Safari */
+
     border: 3px solid var(--aoe-border);
     padding: 25px;
     margin: 20px auto;
@@ -131,10 +154,6 @@ form a:not(.edit-btn) { /* Otros enlaces dentro de form */
     box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.5);
     text-align: center;
     box-sizing: border-box;
-    
-    /*display: flex;
-    justify-content: center;
-    flex-wrap: wrap;*/
 }
 
 .first-in-queue-container h2 {
@@ -153,7 +172,9 @@ form a:not(.edit-btn) { /* Otros enlaces dentro de form */
 }
 
 .queue-item {
-    background-color: rgba(74, 55, 40, 0.7);
+    /*background-color: rgba(0, 0, 0, 0.7);*/
+    backdrop-filter: blur(2px); /* Ajusta el valor en px para más o menos desenfoque */
+    -webkit-backdrop-filter: blur(8px); /* Para compatibilidad con Safari */
     border: 1px solid var(--aoe-border);
     border-radius: 8px;
     padding: 15px 20px;
@@ -272,11 +293,22 @@ form a:not(.edit-btn) { /* Otros enlaces dentro de form */
 
 .find-slot-form {
     display: flex;
-    flex-wrap: wrap; /* Permite que los elementos se envuelvan en pantallas pequeñas */
-    gap: 15px; /* Espacio entre los grupos de input (ej. "Días: [input] D") */
+    flex-wrap: wrap;
+    gap: 15px;
     justify-content: center;
-    align-items: center; /* Alinea los elementos al centro verticalmente */
-    margin-bottom: 20px; /* Espacio antes de los resultados */
+    align-items: center;
+    margin-bottom: 20px;
+    
+    /* --- PROPIEDADES DE FONDO PARA LA IMAGEN --- */
+    background-image: 
+        linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), /* Capa oscura semitransparente para legibilidad */
+        url('https://www.ageofempires.com/wp-content/uploads/2023/02/Civ_Banners_chi_blank.jpg'); /* Tu imagen de fondo */
+    background-size: cover; /* Cubre todo el área del elemento */
+    background-position: center; /* Centra la imagen */
+    background-repeat: no-repeat; /* Evita que la imagen se repita */
+    border-radius: 8px; /* Opcional: para que la caja se vea mejor con la imagen */
+    padding: 20px; /* Asegura que haya espacio alrededor del contenido y la imagen */
+    /* ------------------------------------------- */
 }
 
 /* Modificación: Cada grupo de input (Días, Horas, Minutos) */
@@ -410,6 +442,10 @@ form a:not(.edit-btn) { /* Otros enlaces dentro de form */
         flex-direction: column; /* Apila los grupos de inputs en pantallas pequeñas */
         align-items: center; /* Centra los grupos de inputs */
         gap: 10px; /* Reduce el espacio entre grupos en móviles */
+        
+        /* --- NUEVA PROPIEDAD PARA MÓVILES --- */
+        background-position: right center; /* La imagen de fondo se alinea a la derecha */
+        /* ------------------------------------ */
     }
 
     .find-slot-form .form-group {

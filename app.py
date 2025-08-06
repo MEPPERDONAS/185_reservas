@@ -219,7 +219,6 @@ def check_and_send_weekly_event_reminders():
         message_for_today = day_messages[weekday]
         
         try:
-            # Convertir el string de la DB a un objeto time para la comparación
             reminder_time_from_db = datetime.strptime(active_event.reminder_time, "%H:%M").time()
             
             if message_for_today and reminder_time_from_db <= current_time_obj:
@@ -810,19 +809,16 @@ def delete_weekly_event(event_id):
             flash(f'Error al eliminar el evento: {e}', 'error')
     return redirect(url_for('manage_weekly_events'))
 
+def start_reminder_thread():
+    print("Iniciando el hilo de recordatorios de eventos semanales...")
+    while True:
+        with app.app_context():
+            check_and_send_weekly_event_reminders()
+        time.sleep(60)
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-    
-    # La función para el hilo ahora envuelve la lógica del recordatorio
-    # en un contexto de aplicación.
-    def start_reminder_thread():
-        print("Iniciando el hilo de recordatorios de eventos semanales...")
-        while True:
-            with app.app_context():
-                check_and_send_weekly_event_reminders()
-            time.sleep(60)
-
     # Creación e inicio del hilo
     reminder_thread = threading.Thread(target=start_reminder_thread, daemon=True)
     reminder_thread.start()
