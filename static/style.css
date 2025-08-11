@@ -87,11 +87,8 @@ h1 {
     text-shadow: 
         2px 2px 4px rgba(0, 0, 0, 0.7), /* Sombra para darle profundidad */
         -2px -2px 4px rgba(0, 0, 0, 0.7); /* Sombra para realzar los bordes */
-    /*background: linear-gradient(to right, #2C201C, #4A3728, #2C201C); /* Un gradiente sutil de fondo */
-    /*border-bottom: 3px double var(--aoe-border); /* Una doble línea para separar */
-    /*box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5); /* Sombra para levantar el encabezado */
-    letter-spacing: 2px; /* Espaciado entre letras para un efecto más grandioso */
-    text-transform: uppercase; /* Convertir a mayúsculas */
+    letter-spacing: 2px;
+    text-transform: uppercase;
 }
 
 h2, h3 {
@@ -220,7 +217,7 @@ form a:not(.edit-btn) {
  */
 #calendar-container thead {
     /* Se quita position: sticky del thead */
-    background-color: var(--aoe-dark-bg); 
+    background-color: var(--aoe-accent-gold); 
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
@@ -1180,12 +1177,12 @@ button.toggle-btn .fa-toggle-off {
 /* --- 14. Estilos para el Footer --- */
 .main-footer {
     width: 100%;
-    background-color: var(--aoe-dark-bg); /* Fondo oscuro del footer */
+    /*background-color: var(--aoe-dark-bg); /* Fondo oscuro del footer */
     border-top: 3px double var(--aoe-border); /* Borde superior como el título */
     padding: 20px 0;
     margin-top: auto; /* Empuja el footer hacia abajo en la página flex */
     text-align: center;
-    box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.5); /* Sombra superior */
+    /*box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.5); /* Sombra superior */
     flex-shrink: 0; /* Evita que el footer se encoja */
 }
 
