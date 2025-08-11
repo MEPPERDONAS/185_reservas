@@ -386,22 +386,33 @@ def find_closest_slot():
         "timestamp_utc": target_datetime_rounded.timestamp()
     })
 
+# La ruta para reservar un slot
 @app.route('/book', methods=['POST'])
 def book_slot():
     with app.app_context():
+        # Recuperamos los datos del formulario de reserva
         date_str = request.form['date']
         queue_type = request.form['queue']
         time_slot = request.form['time']
         
-        booked_by = request.form['booked_by'] 
+        # Obtenemos el nombre del usuario del formulario
+        booked_by = request.form.get('booked_by')
 
+        # Verificamos que todos los campos necesarios estén presentes
         if not all([date_str, queue_type, time_slot, booked_by]):
             flash('Error: Todos los campos son requeridos.', 'error')
             return redirect(url_for('index'))
 
         try:
             booking_date_obj = datetime.strptime(date_str, '%Y-%m-%d').date()
+
+            # **NUEVO: Llama a la función de inicialización para garantizar que los slots existan.**
+            # Esto evita el error de "el slot no existe" al asegurar que se creen los slots
+            # para el día actual si aún no lo están.
+            initialize_all_slots_for_day(booking_date_obj)
             
+            # Paso 1: Verificamos si el usuario ya tiene una reserva en otra cola para la misma hora.
+            # Esta es una verificación de lógica de negocio, no una de estado de disponibilidad.
             existing_conflict_booking = Booking.query.filter(
                 Booking.booked_by == booked_by,
                 Booking.booking_date == booking_date_obj,
@@ -411,22 +422,30 @@ def book_slot():
             ).first()
 
             if existing_conflict_booking:
-                flash(f'You already have an active booking for {date_str} at {time_slot} in the {existing_conflict_booking.queue_type.capitalize()} queue. '
-                      'You cannot book multiple queues at the same time.', 'error')
+                flash(f'Ya tienes una reserva activa para {date_str} a las {time_slot} en la cola de {existing_conflict_booking.queue_type.capitalize()}. '
+                      'No puedes reservar varias colas a la vez.', 'error')
                 return redirect(url_for('index'))
             
-            slot = Booking.query.filter_by(
+            # Paso 2: Intentamos realizar una actualización atómica.
+            # Esto intenta cambiar el estado del slot de 'disponible' a 'reservado'
+            # en una sola operación. Si falla, es porque el slot ya no estaba disponible.
+            updated_count = Booking.query.filter_by(
                 booking_date=booking_date_obj,
                 time_slot=time_slot,
-                queue_type=queue_type
-            ).first()
+                queue_type=queue_type,
+                available=True # Solo actualizamos si el slot está marcado como disponible
+            ).update({
+                'booked_by': booked_by,
+                'available': False
+            })
+            
+            db.session.commit()
 
-            if slot and slot.available:
-                slot.booked_by = booked_by
-                slot.available = False
-                db.session.commit()
-                flash(f'Slot {time_slot} in {queue_type.capitalize()} for {date_str} successfully booked by {booked_by}.', 'success')
+            if updated_count == 1:
+                # Si se actualizó 1 fila, la reserva fue exitosa.
+                flash(f'Espacio {time_slot} en {queue_type.capitalize()} para el {date_str} reservado por {booked_by} exitosamente.', 'success')
                 
+                # Enviamos la notificación a Discord en un hilo separado
                 message = (
                     f"📢  **New Booking!**\n"
                     f"👤 **[ {booked_by} ]** \nhas booked a slot for **{queue_type.capitalize()}** "
@@ -435,9 +454,29 @@ def book_slot():
                 thread = threading.Thread(target=send_discord_notification, args=(message,))
                 thread.start()
             else:
-                flash(f'Error: El slot de {time_slot} en {queue_type.capitalize()} para el {date_str} no está disponible o ya fue reservado.', 'error')
+                # Si no se actualizó ninguna fila, necesitamos saber por qué.
+                # Podría ser porque el slot no existe o ya estaba reservado.
+                
+                # Buscamos el slot sin importar su estado de disponibilidad
+                slot = Booking.query.filter_by(
+                    booking_date=booking_date_obj,
+                    time_slot=time_slot,
+                    queue_type=queue_type
+                ).first()
+
+                if not slot:
+                    # El slot no existe en la base de datos.
+                    flash(f'Error: El slot de {time_slot} en {queue_type.capitalize()} para el {date_str} no existe. Por favor, revisa la función de inicialización de slots.', 'error')
+                elif not slot.available:
+                    # El slot existe, pero ya está reservado.
+                    flash(f'Error: El slot de {time_slot} en {queue_type.capitalize()} para el {date_str} ya está reservado por {slot.booked_by}.', 'error')
+                else:
+                    # Este caso es inusual si la lógica atómica funciona correctamente.
+                    flash(f'Error: No se pudo reservar el slot de {time_slot} en {queue_type.capitalize()} para el {date_str} por una razón desconocida.', 'error')
+
         except Exception as e:
             db.session.rollback()
+            print(f"Ocurrió un error en la reserva: {e}")
             flash(f'Ocurrió un error al reservar: {e}', 'error')
             
     return redirect(url_for('index'))
