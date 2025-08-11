@@ -194,10 +194,6 @@ form a:not(.edit-btn) {
 
 /* --- 5. Contenedor del Calendario/Tablas (General) --- */
 #calendar-container {
-    /* Revertimos a las propiedades de flexbox originales para mantener el diseño,
-     * y añadimos `overflow-x: auto` para el desplazamiento horizontal si el
-     * contenido es demasiado ancho.
-     */
     display: flex;
     overflow-x: auto;
     justify-content: center;
@@ -208,25 +204,19 @@ form a:not(.edit-btn) {
     margin-top: 20px;
 }
 #calendar-container table {
-    /* Agrega un ancho mínimo para que las columnas no se colapsen en pantallas pequeñas */
     min-width: 100%;
 }
 
-/* La propiedad sticky ahora se aplica directamente a las celdas del encabezado `<th>`
- * en lugar del `<thead>`. Esto es a menudo más fiable.
- */
 #calendar-container thead {
     /* Se quita position: sticky del thead */
     background-color: var(--aoe-accent-gold); 
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
-/* También hacemos que la leyenda de la tabla sea sticky */
 #calendar-container table caption {
     position: sticky;
     top: 0;
     z-index: 11; /* Mayor que el th para que se mantenga por encima */
-    /*background-color: var(--aoe-text-dark);*/
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
     padding: 10px;
     font-weight: bold;
@@ -234,7 +224,6 @@ form a:not(.edit-btn) {
     border-bottom: 2px solid var(--aoe-accent-gold);
 }
 
-/* Asegura que las celdas de la cabecera tengan un ancho definido y sean sticky */
 #calendar-container th {
     white-space: nowrap;
     padding: 10px;
@@ -245,9 +234,7 @@ form a:not(.edit-btn) {
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
-/* --- 5. Sección de Búsqueda de Slots por Tiempo (New Feature) --- */
 .find-slot-section {
-    /*background-color: var(--aoe-dark-bg); /* Fondo oscuro como la tierra */
     padding: 15px; /* Un poco más de padding */
     margin-top: 30px; /* <--- Añade o ajusta esta línea */
     margin-bottom: 30px;
@@ -287,10 +274,8 @@ form a:not(.edit-btn) {
     background-repeat: no-repeat; /* Evita que la imagen se repita */
     border-radius: 8px; /* Opcional: para que la caja se vea mejor con la imagen */
     padding: 20px; /* Asegura que haya espacio alrededor del contenido y la imagen */
-    /* ------------------------------------------- */
 }
 
-/* Modificación: Cada grupo de input (Días, Horas, Minutos) */
 .find-slot-form .form-group {
     display: flex; /* Ahora es un flex container para label, input y el span de la unidad */
     flex-direction: row; /* Coloca los elementos en línea */
@@ -306,7 +291,6 @@ form a:not(.edit-btn) {
     white-space: nowrap; /* Evita que el texto del label se rompa en varias líneas */
 }
 
-/* Modificación: Estilo para los inputs de número */
 .find-slot-form input[type="number"] {
     background-color: var(--aoe-panel-bg); /* Fondo de input como panel */
     color: var(--aoe-text-light); /* Texto de input en color pergamino */
@@ -318,44 +302,26 @@ form a:not(.edit-btn) {
     text-align: center;
 }
 
-/* Quita las flechas de los input type="number" en Chrome/Safari/Edge */
 .find-slot-form input[type="number"]::-webkit-outer-spin-button,
 .find-slot-form input[type="number"]::-webkit-inner-spin-button {
     -webkit-appearance: none;
     margin: 0;
 }
 
-/* Nuevo estilo para la unidad de tiempo (D, H, M) */
 .find-slot-form .time-unit {
     color: var(--aoe-text-light);
     font-weight: bold;
-    /* No se necesita margin-right aquí porque el 'gap' del .find-slot-form maneja el espaciado */
     min-width: 15px; /* Asegura que la 'D', 'H', 'M' tengan un ancho mínimo para consistencia */
     text-align: left; /* Alinea la unidad de tiempo a la izquierda */
 }
 
-/* Simplificación: .time-inputs ya no necesita ser un contenedor especial
-   porque cada .form-group ya maneja su propio label/input/unit.
-   El .find-slot-form ya maneja el flex y el gap entre cada form-group.
-*/
 .find-slot-form .time-inputs {
-    /* Si decides que cada "Días: [input] D" es un .form-group,
-       entonces el .time-inputs como contenedor alrededor de esos
-       form-groups no tendría un propósito adicional.
-       Si lo usas para agrupar D, H, M y tenerlos juntos con un gap,
-       entonces sí.
-       Basado en el HTML que te di, .time-inputs es un solo form-group
-       que contiene todos los labels, inputs y units.
-       Mantengo los estilos para él por si quieres agruparlos visualmente.
-    */
     display: flex;
     flex-wrap: wrap; /* Permite que se envuelvan */
     justify-content: center;
     gap: 15px; /* Espacio entre los grupos (ej. entre "Días D" y "Horas H") */
     align-items: baseline;
-    /* margin-bottom: 10px; Si necesitas un margen inferior para este grupo antes del botón */
 }
-
 
 .find-slot-form button[type="submit"] {
     background-color: var(--aoe-accent-gold); /* Botón en dorado/bronce */
@@ -413,18 +379,12 @@ form a:not(.edit-btn) {
     font-size: 1.1em; /* Un poco más grande para el contador */
 }
 
-/* Media Query específica para este bloque si es necesario, 
-   o deja que las media queries generales del final del CSS manejen la responsividad.
-*/
 @media (max-width: 768px) {
     .find-slot-form {
         flex-direction: column; /* Apila los grupos de inputs en pantallas pequeñas */
         align-items: center; /* Centra los grupos de inputs */
         gap: 10px; /* Reduce el espacio entre grupos en móviles */
-        
-        /* --- NUEVA PROPIEDAD PARA MÓVILES --- */
         background-position: right center; /* La imagen de fondo se alinea a la derecha */
-        /* ------------------------------------ */
     }
 
     .find-slot-form .form-group {
@@ -437,7 +397,6 @@ form a:not(.edit-btn) {
     }
 }
 
-/* Contenedor específico para tablas responsivas (donde va el overflow-x) */
 .table-responsive {
     width: 100%;
     overflow-x: auto; /* Permite el desplazamiento horizontal si el contenido es demasiado ancho */
@@ -459,13 +418,11 @@ table {
     border: 2px solid var(--aoe-border);
 }
 
-/* Reglas específicas para tablas dentro de .table-responsive (para el min-width en móvil) */
 .table-responsive table {
     width: 100%;
     min-width: 600px; /* Ancho mínimo para la tabla en móvil para forzar scroll */
     max-width: 100%; /* Anula cualquier max-width para que la tabla pueda expandirse */
 }
-
 
 caption {
     font-family: 'Cinzel', serif;
@@ -844,8 +801,6 @@ input[type="submit"]:active {
     max-width: 800px; /* Opcional: limita el ancho máximo del contenedor de botones */
 }
 #calculate-button {
-    /* Aquí puedes definir o redefinir los estilos del botón si es necesario */
-    /* Por ejemplo, si los otros selectores cambian el padding, puedes restablecerlo */
     padding: 10px 20px;
     border: 2px solid var(--aoe-accent-gold);
     border-radius: 0px;
@@ -867,7 +822,6 @@ input[type="submit"]:active {
     transform: translateY(-2px);
 }
 /* --- 10. Estilos de Tablas (Generales y Específicas) --- */
-/* Estilo para la tabla de bonificaciones */
 .bonus-table {
     width: 95%;
     max-width: 1000px;
@@ -888,7 +842,6 @@ input[type="submit"]:active {
     font-size: 0.9em;
 }
 
-/* Columna de ACCIONES en tablas: Aseguramos que tenga espacio para los botones */
 .action-buttons { /* Clase para la celda td que contiene los botones de acción */
     width: 120px;
     min-width: 100px;
@@ -924,8 +877,6 @@ textarea::placeholder {
     opacity: 0.7; /* Lo hace un poco transparente */
 }
 
-/* --- 11. Estilos para los íconos limpios (Font Awesome) --- */
-/* El elemento <i> de Font Awesome es el que contendrá el ícono visible */
 button.delete-btn .fas,
 button.edit-btn .fas, /* Si el botón de borrar aún tiene esta clase */
 a.edit-btn .fas,
@@ -939,7 +890,6 @@ button.toggle-btn .fas {
     display: block !important;
 }
 
-/* Efecto al pasar el ratón y al hacer clic */
 button.delete-btn:hover,
 button.edit-btn:hover, /* Si el botón de borrar aún tiene esta clase */
 a.edit-btn:hover,
@@ -961,12 +911,11 @@ a.edit-btn .fas {
     text-shadow: 0 0 5px rgba(255, 215, 0, 0.5) !important;
 }
 
-/* Color para el icono de borrar */
 button.delete-btn .fas,
 button.edit-btn .fas, /* Si el botón de borrar aún tiene esta clase */
 .bonus-table .delete-btn .fas { /* Asegura que el de bonificaciones también tenga su color */
     color: var(--aoe-error) !important;
-    text-shadow: 0 0 5px rgba(139, 0, 0, 0.5) !important;
+    text-shadow: 0 0 5px rgba(255, 3, 3, 0.5) !important;
 }
 
 /* Colores para el icono de toggle */
@@ -980,9 +929,6 @@ button.toggle-btn .fa-toggle-off {
     text-shadow: none !important;
 }
 
-
-/* --- 12. Media Queries (Diseño Responsivo) --- */
-
 @media (max-width: 768px) {
     h1 {
         font-size: 2em; /* Reducir tamaño de título principal */
@@ -993,8 +939,6 @@ button.toggle-btn .fa-toggle-off {
     h3 {
         font-size: 1.3em;
     }
-
-    /* Contenedores generales */
     .first-in-queue-container,
     .login-container,
     form button:not(.delete-btn):not(.toggle-btn):not(.edit-btn),
@@ -1035,8 +979,7 @@ button.toggle-btn .fa-toggle-off {
         align-items: center;
         gap: 15px; /* Menos espacio entre tablas en móvil */
     }
-    
-    /* Tablas en general */
+
     table {
         width: 98%; /* Ocupa casi todo el ancho disponible */
         max-width:1200px; /* Limita el ancho en pantallas muy grandes */
@@ -1182,7 +1125,6 @@ button.toggle-btn .fa-toggle-off {
     padding: 20px 0;
     margin-top: auto; /* Empuja el footer hacia abajo en la página flex */
     text-align: center;
-    /*box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.5); /* Sombra superior */
     flex-shrink: 0; /* Evita que el footer se encoja */
 }
 
@@ -1201,16 +1143,9 @@ button.toggle-btn .fa-toggle-off {
     color: var(--aoe-text-light);
     font-size: 0.9em;
     margin: 0;
-    flex-basis: 100%; /* Ocupa todo el ancho si hay varios elementos, centra el texto */
-    /*padding-top: 15px; /* Espacio encima del copyright si está en una nueva línea */
-    /*border-top: 1px dashed rgba(107, 91, 76, 0.3); /* Línea punteada sutil */
-    /*margin-top: 15px;*/
+    flex-basis: 100%;
 }
 
-/* Reutilizando la clase nav-button para el botón de admin */
-/* El estilo base ya está en tu CSS principal */
-
-/* Estilo específico para el botón de Discord */
 .discord-button {
     background: linear-gradient(to bottom, #7289DA, #5865F2); /* Colores de Discord */
     border-color: #434B80;
@@ -1222,13 +1157,11 @@ button.toggle-btn .fa-toggle-off {
     border-color: #535B90;
 }
 
-/* Iconos dentro de los botones (Font Awesome) */
 .nav-button .fas,
 .nav-button .fab { /* fab para iconos de marcas como Discord */
     margin-right: 8px; /* Espacio entre el icono y el texto */
 }
 
-/* Media Queries para responsividad del footer */
 @media (max-width: 768px) {
     .footer-content {
         flex-direction: column; /* Apilar elementos en pantallas pequeñas */
@@ -1241,7 +1174,6 @@ button.toggle-btn .fa-toggle-off {
         font-size: 0.8em;
     }
 }
-/* Modal Styles */
 .modal {
     display: none; /* Hidden by default */
     position: fixed; /* Stay in place */
