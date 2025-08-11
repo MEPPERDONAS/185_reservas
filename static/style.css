@@ -60,7 +60,14 @@ button.toggle-btn {
 body {
     font-family: 'Times New Roman', serif;
     margin: 0;
-    /* El color del texto del body */
+    /* Combina el degradado y la imagen de fondo */
+    background: linear-gradient(to bottom, var(--aoe-dark-bg), var(--aoe-panel-bg), var(--aoe-panel-bg));
+                /* Reemplaza la siguiente URL con la URL de tu imagen de fondo */
+                /*url('https://imgeucdn.gamespress.com/cdn/files/LevelInfinite/2024/10/111918-7e04443b/AOEM-River_battle_29.jpg?otf=y&lightbox=y&sky=54c6e5fcf53e83c98728ef877d3f678e374bbae3e95a923d3b5ba0ade091d038&w=1024&maxheight=4096&mode=pad&format=jpg') center center no-repeat;
+    /* Aplica un modo de mezcla para fusionar el degradado y la imagen */
+    background-blend-mode: multiply; 
+    background-size: cover;
+    background-attachment: fixed; /* Mantiene el fondo fijo al hacer scroll */
     color: var(--aoe-text-light);
     display: flex;
     flex-direction: column;
@@ -68,31 +75,6 @@ body {
     min-height: 100vh;
     padding: 20px;
     box-sizing: border-box;
-    position: relative; /* Necesario para posicionar el pseudo-elemento */
-    z-index: 0; /* Asegura que el contenido del body esté por encima del pseudo-elemento */
-    overflow-x: hidden; /* Evita barras de desplazamiento horizontales si el blur causa un pequeño desbordamiento */
-}
-
-body::before {
-    content: ''; /* Esencial para que el pseudo-elemento sea visible */
-    position: fixed; /* Fijo para que cubra toda la ventana de visualización */
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    /* Combina un degradado oscuro con tu imagen de fondo */
-    background: 
-        linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), /* Capa oscura (ajusta la opacidad aquí) */
-        url('https://bleedingcool.com/wp-content/uploads/2024/02/Age-Of-Empires-Mobile-Art-2000x1125.jpg') center center no-repeat;
-    background-size: cover;
-    background-attachment: fixed; /* Mantiene el fondo fijo al hacer scroll */
-    background-blend-mode: multiply; /* Mantiene tu modo de mezcla para la imagen y el degradado */
-    
-    /* Aplica el desenfoque a la imagen de fondo combinada */
-    filter: blur(5px); /* Ajusta este valor (en píxeles) para más o menos desenfoque */
-    -webkit-filter: blur(5px); /* Prefijo para compatibilidad con Safari */
-    
-    z-index: -1; /* Coloca el pseudo-elemento detrás de todo el contenido del body */
 }
 /* --- 3. Estilos de Títulos --- */
 h1 {
@@ -642,9 +624,7 @@ tbody tr:nth-child(even) {
 }
 
 .flashes .success {
-    background-color: var(--aoe-success);
-    color: var(--aoe-text-dark);
-    border: 1px solid #4C5F4A; /* Usar un color directo o una variable si tienes darken definido */
+    color: var(--aoe-accent-gold);
 }
 
 .flashes .error {
