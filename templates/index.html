@@ -109,7 +109,7 @@
                                             Cooldown
                                         {% endif %}
                                     {% elif slot_data.booked_by and slot_data.booked_by != 'Pasado' %}
-                                        {{ slot_data.booked_by }}
+                                        <span translate="no">{{ slot_data.booked_by }}</span>
                                         <span class="cancel-x" 
                                               data-booking-id="{{ slot_data.id }}"
                                               data-booked-by-name="{{ slot_data.booked_by }}"

@@ -6,33 +6,7 @@
     <title>{% block title %}Empire 185{% endblock %}</title> {# Bloque para el título de la página #}
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <style>
-        /* CSS for the bonus icon */
-        .bonus-icon {
-            margin-left: 5px;
-            color: gold;
-            font-weight: bold;
-        }
-        /* Class for bonused slots in the table */
-        .bonused-slot {
-            background-color: #fffacd;
-        }
-        /* Style for the icon in "Next in Queue" */
-        .queue-item .bonus-active-indicator {
-            color: gold;
-            font-size: 1.2em;
-            margin-left: 5px;
-        }
 
-        /* Opcional: Estilo para centrar los botones en el footer si es necesario */
-        .footer-buttons {
-            display: flex;
-            justify-content: center; /* Centra horizontalmente los botones */
-            gap: 15px; /* Espacio entre los botones */
-            margin-bottom: 10px; /* Espacio entre los botones y el texto de copyright */
-            flex-wrap: wrap; /* Permite que los botones se envuelvan si no hay espacio */
-        }
-    </style>
 </head>
 <body>
     <header>
