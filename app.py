@@ -129,11 +129,8 @@ def get_bookings_for_display(target_date_obj):
 
 def update_daily_bookings_in_db():
     today_local = date.today()
-    
     max_date_to_keep = today_local + timedelta(days=6)
-    
     expected_dates_objs = [today_local + timedelta(days=i) for i in range(7)]
-
     Booking.query.filter(Booking.booking_date > max_date_to_keep).delete(synchronize_session=False)
     db.session.commit()
 
@@ -263,7 +260,6 @@ def index():
                         
             ordered_display_dates[d_obj.isoformat()] = day_bookings
 
-
         current_in_queue = {}
         for queue_name in QUEUES:
             found_current_booked_slot = False
@@ -301,9 +297,7 @@ def index():
                 }
 
         active_bonuses = Bonus.query.filter(Bonus.active == True).all()
-
         bonused_slots = {queue: {d.isoformat(): set() for d in display_dates} for queue in QUEUES}
-
         bonused_queues_now = {queue: False for queue in QUEUES}
 
         for bonus in active_bonuses:
@@ -365,7 +359,6 @@ def find_closest_slot():
     target_datetime_utc = now_utc + timedelta(days=days_input, hours=hours_input, minutes=minutes_input)
     target_datetime_rounded = target_datetime_utc.replace(second=0, microsecond=0)
 
-
     return jsonify({
         "success": True,
         "date": target_datetime_rounded.date().isoformat(),
@@ -380,7 +373,7 @@ def book_slot():
         date_str = request.form['date']
         queue_type = request.form['queue']
         time_slot = request.form['time']
-        
+         
         booked_by = request.form.get('booked_by')
 
         if not all([date_str, queue_type, time_slot, booked_by]):
@@ -528,7 +521,6 @@ def logout():
     flash('You have been logged out.', 'info')
     return redirect(url_for('index'))
 
-
 @app.route('/admin')
 def admin_panel():
     if 'username' not in session or session.get('role') != 'admin':
@@ -555,7 +547,6 @@ def admin_panel():
         
     return render_template('admin.html', all_bookings=all_bookings, queues=QUEUES)
 
-
 @app.route('/admin/delete/<int:booking_id>', methods=['POST'])
 def delete_booking(booking_id):
     if 'username' not in session or session.get('role') != 'admin':
@@ -572,7 +563,6 @@ def delete_booking(booking_id):
             db.session.rollback()
             flash(f'Error deleting the booking: {e}', 'error')
     return redirect(url_for('admin_panel'))
-
 
 @app.route('/admin/edit/<int:booking_id>', methods=['GET', 'POST'])
 def edit_booking(booking_id):
@@ -781,7 +771,6 @@ def manage_weekly_events():
 
     all_weekly_events = WeeklyEvent.query.order_by(WeeklyEvent.start_date.desc()).all()
     return render_template('manage_weekly_events.html', events=all_weekly_events)
-
 
 @app.route('/admin/weekly_events/toggle/<int:event_id>', methods=['POST'])
 def toggle_weekly_event_active(event_id):
