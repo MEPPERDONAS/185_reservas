@@ -114,7 +114,6 @@ form button[type="submit"] {
     width: 100%; /* Asegura que tome el 100% del ancho disponible de su max-width */
 }
 .first-in-queue-container,
-.login-container,
 form button:not(.delete-btn):not(.toggle-btn):not(.edit-btn),
 form a:not(.edit-btn) {
     flex-direction: column;
@@ -133,6 +132,32 @@ form a:not(.edit-btn) {
     box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.5);
     text-align: center;
     box-sizing: border-box;
+}
+.login-container,
+form button:not(.delete-btn):not(.toggle-btn):not(.edit-btn),
+form a:not(.edit-btn) {
+    flex-direction: column;
+    /* Ajusta la opacidad del color de fondo para hacerlo más tenue */
+    background-color: rgba((--aoe-panel-bg),0.5); /* Ejemplo: si --aoe-panel-bg es #1A2B3C, esto sería rgba(26, 43, 60, 0.5) */
+    
+    /* Aplica el efecto de desenfoque al fondo detrás del elemento */
+    backdrop-filter: blur(10px); /* Ajusta el valor en px para más o menos desenfoque */
+    -webkit-backdrop-filter: blur(10px); /* Para compatibilidad con Safari */
+
+    border: 1px solid var(--aoe-border);
+    padding: 5px;
+    margin: 20px auto;
+    width: 100%;
+    max-width: 480px;
+    box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.5);
+    text-align: center;
+    box-sizing: border-box;
+}
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Espacio entre los campos del formulario */
+    align-items: center;
 }
 
 .first-in-queue-container h2 {
@@ -651,10 +676,10 @@ input[type="date"],
 input[type="number"],
 input[type="password"],
 select {
-    width: calc(100% - 24px);
+    width: calc(80%);
     padding: 10px 12px;
     margin-bottom: 1px;
-    background-color: #2A1F1B;
+    background-color: var(--aoe-info); /* Fondo de input como panel */
     border: 2px solid var(--aoe-border);
     color: var(--aoe-text-light);
     border-radius: 5px;
