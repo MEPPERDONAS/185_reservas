@@ -61,7 +61,7 @@ body {
     font-family: 'Times New Roman', serif;
     margin: 0;
     /* Combina el degradado y la imagen de fondo */
-    background: linear-gradient(to bottom, var(--aoe-dark-bg), var(--aoe-panel-bg), var(--aoe-panel-bg));
+    background: linear-gradient(to bottom, var(--aoe-dark-bg), var(--aoe-panel-bg), var(--aoe-header-bg));
                 /* Reemplaza la siguiente URL con la URL de tu imagen de fondo */
                 /*url('https://imgeucdn.gamespress.com/cdn/files/LevelInfinite/2024/10/111918-7e04443b/AOEM-River_battle_29.jpg?otf=y&lightbox=y&sky=54c6e5fcf53e83c98728ef877d3f678e374bbae3e95a923d3b5ba0ade091d038&w=1024&maxheight=4096&mode=pad&format=jpg') center center no-repeat;
     /* Aplica un modo de mezcla para fusionar el degradado y la imagen */
@@ -119,13 +119,13 @@ form button:not(.delete-btn):not(.toggle-btn):not(.edit-btn),
 form a:not(.edit-btn) {
     flex-direction: column;
     /* Ajusta la opacidad del color de fondo para hacerlo más tenue */
-    background-color: rgba(var(--aoe-panel-bg-rgb), 0.5); /* Ejemplo: si --aoe-panel-bg es #1A2B3C, esto sería rgba(26, 43, 60, 0.5) */
+    background-color: rgba(var(--aoe-header-bg), 0.9); /* Ejemplo: si --aoe-panel-bg es #1A2B3C, esto sería rgba(26, 43, 60, 0.5) */
     
     /* Aplica el efecto de desenfoque al fondo detrás del elemento */
     backdrop-filter: blur(10px); /* Ajusta el valor en px para más o menos desenfoque */
     -webkit-backdrop-filter: blur(10px); /* Para compatibilidad con Safari */
 
-    border: 3px solid var(--aoe-border);
+    border: 1px solid var(--aoe-border);
     padding: 25px;
     margin: 20px auto;
     width: 100%;
@@ -687,8 +687,8 @@ input[type="submit"] {
     background: linear-gradient(to bottom, var(--aoe-accent-gold), #8A7340);
     color: var(--aoe-text-dark);
     border: 2px solid #5C4A28;
-    border-radius: 5px;
-    padding: 12px 25px;
+    border-radius: none;
+    padding: 6px 15px;
     font-size: 1.2em;
     cursor: pointer;
     text-transform: uppercase;
@@ -971,7 +971,7 @@ button.toggle-btn .fa-toggle-off {
         font-size: 1.3em;
     }
     .queue-item p {
-        font-size: 1.15em;
+        font-size: 1.05em;
     }
 
     #calendar-container {

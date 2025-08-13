@@ -54,7 +54,6 @@ class WeeklyEvent(db.Model):
     def __repr__(self):
         return f"<WeeklyEvent {self.name} from {self.start_date} to {self.end_date} (Active: {self.active}) at {self.reminder_time}>"
 
-
 class Booking(db.Model):
     __tablename__ = 'bookings'
     id = db.Column(db.Integer, primary_key=True)
@@ -79,7 +78,6 @@ class Bonus(db.Model):
 
     def __repr__(self):
         return f"<Bonus {self.queue_type} from {self.start_date} {self.start_time} for {self.duration_hours}h (Active: {self.active})>"
-
 
 def initialize_all_slots_for_day(target_date_obj):
     for queue_name in QUEUES:
@@ -129,7 +127,6 @@ def get_bookings_for_display(target_date_obj):
 
     return bookings_data
 
-
 def update_daily_bookings_in_db():
     today_local = date.today()
     
@@ -142,7 +139,6 @@ def update_daily_bookings_in_db():
 
     for d_obj in expected_dates_objs:
         initialize_all_slots_for_day(d_obj)
-
 
 def send_discord_notification(message, channel_id=None, max_retries=3):
     if not DISCORD_BOT_TOKEN:
@@ -188,12 +184,7 @@ def send_discord_notification(message, channel_id=None, max_retries=3):
     else:
         print(f"Falló el envío de la notificación de Discord después de {max_retries} intentos: {message}")
 
-
 def check_and_send_weekly_event_reminders():
-    """
-    Verifica si hay eventos semanales activos y envía recordatorios a Discord.
-    Esta función debe ser llamada DENTRO de un contexto de aplicación.
-    """
     now_utc = datetime.now(timezone.utc)
     today = now_utc.date()
     current_time_obj = now_utc.time().replace(second=0, microsecond=0)
@@ -330,7 +321,6 @@ def index():
                 if current_slot_dt.date() > display_dates[-1]:
                     break
 
-
         bonuses_for_display = []
         for bonus in active_bonuses:
             bonus_start_dt = datetime.combine(bonus.start_date, datetime.strptime(bonus.start_time, "%H:%M").time()).replace(tzinfo=timezone.utc)
@@ -345,7 +335,6 @@ def index():
                 })
         bonuses_for_display.sort(key=lambda x: datetime.strptime(x['start_time'], "%Y-%m-%d %H:%M"))
 
-
         return render_template(
             'index.html',
             bookings=ordered_display_dates,
@@ -359,7 +348,6 @@ def index():
             bonuses_for_display=bonuses_for_display,
             session=session
         )
-
 
 @app.route('/find_closest_slot', methods=['POST'])
 def find_closest_slot():
@@ -386,19 +374,15 @@ def find_closest_slot():
         "timestamp_utc": target_datetime_rounded.timestamp()
     })
 
-# La ruta para reservar un slot
 @app.route('/book', methods=['POST'])
 def book_slot():
     with app.app_context():
-        # Recuperamos los datos del formulario de reserva
         date_str = request.form['date']
         queue_type = request.form['queue']
         time_slot = request.form['time']
         
-        # Obtenemos el nombre del usuario del formulario
         booked_by = request.form.get('booked_by')
 
-        # Verificamos que todos los campos necesarios estén presentes
         if not all([date_str, queue_type, time_slot, booked_by]):
             flash('Error: Todos los campos son requeridos.', 'error')
             return redirect(url_for('index'))
@@ -406,13 +390,8 @@ def book_slot():
         try:
             booking_date_obj = datetime.strptime(date_str, '%Y-%m-%d').date()
 
-            # **NUEVO: Llama a la función de inicialización para garantizar que los slots existan.**
-            # Esto evita el error de "el slot no existe" al asegurar que se creen los slots
-            # para el día actual si aún no lo están.
             initialize_all_slots_for_day(booking_date_obj)
             
-            # Paso 1: Verificamos si el usuario ya tiene una reserva en otra cola para la misma hora.
-            # Esta es una verificación de lógica de negocio, no una de estado de disponibilidad.
             existing_conflict_booking = Booking.query.filter(
                 Booking.booked_by == booked_by,
                 Booking.booking_date == booking_date_obj,
@@ -427,8 +406,6 @@ def book_slot():
                 return redirect(url_for('index'))
             
             # Paso 2: Intentamos realizar una actualización atómica.
-            # Esto intenta cambiar el estado del slot de 'disponible' a 'reservado'
-            # en una sola operación. Si falla, es porque el slot ya no estaba disponible.
             updated_count = Booking.query.filter_by(
                 booking_date=booking_date_obj,
                 time_slot=time_slot,
@@ -442,10 +419,8 @@ def book_slot():
             db.session.commit()
 
             if updated_count == 1:
-                # Si se actualizó 1 fila, la reserva fue exitosa.
                 flash(f'Espacio {time_slot} en {queue_type.capitalize()} para el {date_str} reservado por {booked_by} exitosamente.', 'success')
                 
-                # Enviamos la notificación a Discord en un hilo separado
                 message = (
                     f"📢  **New Booking!**\n"
                     f"👤 **[ {booked_by} ]** \nhas booked a slot for **{queue_type.capitalize()}** "
@@ -454,10 +429,7 @@ def book_slot():
                 thread = threading.Thread(target=send_discord_notification, args=(message,))
                 thread.start()
             else:
-                # Si no se actualizó ninguna fila, necesitamos saber por qué.
-                # Podría ser porque el slot no existe o ya estaba reservado.
-                
-                # Buscamos el slot sin importar su estado de disponibilidad
+
                 slot = Booking.query.filter_by(
                     booking_date=booking_date_obj,
                     time_slot=time_slot,
@@ -465,13 +437,11 @@ def book_slot():
                 ).first()
 
                 if not slot:
-                    # El slot no existe en la base de datos.
                     flash(f'Error: El slot de {time_slot} en {queue_type.capitalize()} para el {date_str} no existe. Por favor, revisa la función de inicialización de slots.', 'error')
                 elif not slot.available:
                     # El slot existe, pero ya está reservado.
                     flash(f'Error: El slot de {time_slot} en {queue_type.capitalize()} para el {date_str} ya está reservado por {slot.booked_by}.', 'error')
                 else:
-                    # Este caso es inusual si la lógica atómica funciona correctamente.
                     flash(f'Error: No se pudo reservar el slot de {time_slot} en {queue_type.capitalize()} para el {date_str} por una razón desconocida.', 'error')
 
         except Exception as e:
@@ -858,10 +828,7 @@ def start_reminder_thread():
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-    # Creación e inicio del hilo
     reminder_thread = threading.Thread(target=start_reminder_thread, daemon=True)
     reminder_thread.start()
-
-    # Configuración de la ejecución de la aplicación, adaptada para Render
     port = int(os.getenv('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=os.getenv('FLASK_DEBUG', 'False') == 'True')
