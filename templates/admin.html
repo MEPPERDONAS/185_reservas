@@ -21,12 +21,12 @@
             {% endif %}
         {% endwith %}
         
-        <a href="{{ url_for('index') }}" class="back-link nav-button">&larr; Back to main view</a>
+        <a href="{{ url_for('index') }}" class="back-link nav-button">&larr; Home</a>
 
         <div class="admin-links">
-            <a href="{{ url_for('manage_bonuses') }}" class="nav-button"><i class="fas fa-star"></i> Manage Bonuses</a>
-            <a href="{{ url_for('send_discord_message') }}" class="nav-button">Send Message to Discord</a>
-            <a href="{{ url_for('manage_weekly_events') }}" class="nav-button">KVK EVENT</a>
+            <a href="{{ url_for('manage_bonuses') }}" class="nav-button"><i class="fas fa-star"></i>Bonuses</a>
+            <a href="{{ url_for('send_discord_message') }}" class="nav-button">Messages</a>
+            <a href="{{ url_for('manage_weekly_events') }}" class="nav-button">EVENTS</a>
         </div>
 
         <h2>Occupied Bookings</h2>
