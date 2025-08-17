@@ -409,7 +409,7 @@ form a:not(.edit-btn) {
         flex-direction: column; /* Apila los grupos de inputs en pantallas pequeñas */
         align-items: center; /* Centra los grupos de inputs */
         gap: 10px; /* Reduce el espacio entre grupos en móviles */
-        background-position: right center; /* La imagen de fondo se alinea a la derecha */
+        background-position: 70%  center; /* La imagen de fondo se alinea a la derecha */
     }
 
     .find-slot-form .form-group {
@@ -840,7 +840,7 @@ input[type="submit"]:active {
     max-width: 800px; /* Opcional: limita el ancho máximo del contenedor de botones */
 }
 #calculate-button {
-    padding: 10px 20px;
+    padding: 1px 2px;
     border: 2px solid var(--aoe-accent-gold);
     border-radius: 0px;
     margin: 1px 1px; /* Centra el botón horizontalmente */
@@ -980,7 +980,7 @@ button.toggle-btn .fa-toggle-off {
     }
     .first-in-queue-container,
     .login-container,
-    form button:not(.delete-btn):not(.toggle-btn):not(.edit-btn),
+    /*form button:not(.delete-btn):not(.toggle-btn):not(.edit-btn),*/
     form a:not(.edit-btn) {
         flex-direction: column;
         width: 95%; /* Ocupa más ancho en móviles */
@@ -1011,6 +1011,23 @@ button.toggle-btn .fa-toggle-off {
     }
     .queue-item p {
         font-size: 1.05em;
+    }
+
+    .calculate-button {
+    /* padding: 10px 20px; */
+    border: 2px solid var(--aoe-accent-gold);
+    border-radius: 0px;
+    margin: 1px 1px;
+    max-width: 200px;
+    font-family: 'Cinzel', serif;
+    flex-direction: column;
+    font-size: 1em;
+    background-color: var(--aoe-panel-bg);
+    color: var(--aoe-text-light);
+    cursor: pointer;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
+    transition: background-color 0.3s ease, transform 0.3s ease;
+
     }
 
     #calendar-container {
@@ -1105,7 +1122,7 @@ button.toggle-btn .fa-toggle-off {
 
     .first-in-queue-container,
     .login-container,
-    form button:not(.delete-btn):not(.toggle-btn):not(.edit-btn),
+    /*form button:not(.delete-btn):not(.toggle-btn):not(.edit-btn),*/
     form a:not(.edit-btn):not(.nav-button) {
         padding: 15px;
         margin: 2px auto;
