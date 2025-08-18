@@ -289,7 +289,8 @@ form a:not(.edit-btn) {
     justify-content: center;
     align-items: center;
     margin-bottom: 20px;
-    
+    border: #9a7b15c1 1px solid;
+    box-shadow: #000000 0px 0px 10px; /* Sombra sutil para el formulario */
     /* --- PROPIEDADES DE FONDO PARA LA IMAGEN --- */
     background-image: 
         linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), /* Capa oscura semitransparente para legibilidad */
@@ -410,6 +411,7 @@ form a:not(.edit-btn) {
         align-items: center; /* Centra los grupos de inputs */
         gap: 10px; /* Reduce el espacio entre grupos en móviles */
         background-position: 70%  center; /* La imagen de fondo se alinea a la derecha */
+        background-size: cover;
     }
 
     .find-slot-form .form-group {
@@ -555,7 +557,7 @@ tbody tr:nth-child(even) {
     }
     50% {
         box-shadow: 0 0 25px rgba(184, 154, 90, 1.5);
-        transform: scale(1.05); /* Aumenta el tamaño del slot */
+        transform: scale(1.0); /* Aumenta el tamaño del slot */
         background-color: var(--aoe-accent-gold); /* Cambio de color para un efecto muy visible */
     }
 }
@@ -563,8 +565,8 @@ tbody tr:nth-child(even) {
 /* Estilo para la etiqueta 'NOW' */
 .slot.current-slot .current-label {
     position: absolute;
-    top: 1px;
-    right: auto;
+    top: -5px;
+    left: calc(1%); /* Asegura que esté a la derecha del slot */
     font-size: 0.3em;
     font-weight: bold;
     color: var(--aoe-text-dark);
