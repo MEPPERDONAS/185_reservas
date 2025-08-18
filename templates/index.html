@@ -62,7 +62,7 @@
                     {{ date_obj.strftime('%A, %B %d, %Y') }}
                     {% if date_obj.isoformat() == today %} (Today){% endif %}
                 </caption>
-                <thead>
+                <thead class="header-row">
                     <tr>
                         <th>Time</th>
                         {% for queue in queues %}

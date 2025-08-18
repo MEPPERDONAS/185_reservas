@@ -211,6 +211,7 @@ form a:not(.edit-btn) {
     font-size: 1.25em; /* Tu tamaño de fuente está bien */
     color: var(--aoe-text-light); /* Color de texto claro que te sugerí */
     line-height: 1; /* Puedes añadir para mejor legibilidad */
+    text-shadow: #000000 1px 1px 2px; /* Sombra sutil para el texto */
 }
 
 .queue-item p strong {
@@ -232,8 +233,10 @@ form a:not(.edit-btn) {
     min-width: 100%;
 }
 
-#calendar-container thead {
-    /* Se quita position: sticky del thead */
+#calendar-container table thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
     background-color: var(--aoe-accent-gold); 
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
@@ -241,12 +244,21 @@ form a:not(.edit-btn) {
 #calendar-container table caption {
     position: sticky;
     top: 0;
-    z-index: 11; /* Mayor que el th para que se mantenga por encima */
+    z-index: 1; /* Mayor que el th para que se mantenga por encima */
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
     padding: 10px;
     font-weight: bold;
     font-size: 1.2em;
     border-bottom: 2px solid var(--aoe-accent-gold);
+}
+#calendar-container-header-row{
+    background-color: blueviolet;
+    z-index: 11;
+    color: var(--aoe-text-light);
+    font-weight: bold;
+    font-size: 1.1em;
+    text-transform: uppercase;
+    font-family: 'Cinzel', serif;
 }
 
 #calendar-container th {
@@ -505,8 +517,7 @@ tbody tr:nth-child(even) {
     box-shadow: inset 0 0 0px rgba(0,0,0,0);
     text-align: center;
     position: relative; /* Necesario para el efecto hover */
-    padding: 10px 30px 10px 10px; /* Ejemplo: 30px a la derecha para la X */
-
+    padding: 10px 30px 10px 10px; /* Ejemplo: 30px a la derecha para la X */  
 }
 
 .slot.available {
@@ -519,7 +530,7 @@ tbody tr:nth-child(even) {
     background-color: #728F70;
     color: white;
     transform: scale(1.03);
-    box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.3), 0 0 10px rgba(0, 0, 0, 0.5);
+    box-shadow: inset 0 0 10px rgba(63, 241, 3, 0.959), 0 0 10px rgba(0, 0, 0, 0.5);
 }
 
 .slot.booked {
@@ -545,7 +556,7 @@ tbody tr:nth-child(even) {
     border: 2px solid var(--aoe-accent-gold);
     box-shadow: 0 0 15px rgba(184, 154, 90, 1);
     /* Se cambia el nombre de la animación para evitar conflictos de caché */
-    animation: current-slot-pulse 1.5s infinite ease-in-out; 
+    animation: current-slot-pulse 2.5s infinite ease-in-out; 
 }
 
 /* Animación de pulso más agresiva: cambia el tamaño, la sombra y el color */
@@ -949,14 +960,14 @@ button.toggle-btn:active {
 /* Color para el icono de editar */
 a.edit-btn .fas {
     color: var(--aoe-accent-gold) !important;
-    text-shadow: 0 0 5px rgba(255, 215, 0, 0.5) !important;
+    text-shadow: 0 0 5px rgba(0, 0, 0, 0.5) !important;
 }
 
 button.delete-btn .fas,
 button.edit-btn .fas, /* Si el botón de borrar aún tiene esta clase */
 .bonus-table .delete-btn .fas { /* Asegura que el de bonificaciones también tenga su color */
-    color: var(--aoe-error) !important;
-    text-shadow: 0 0 5px rgba(255, 3, 3, 0.5) !important;
+    color: rgb(215, 66, 66) !important;
+    text-shadow: 0 0 5px rgba(12, 2, 2, 0.921) !important;
 }
 
 /* Colores para el icono de toggle */
@@ -1347,10 +1358,4 @@ button.toggle-btn .fa-toggle-off {
 .cancel-x:hover {
     background-color: var(--aoe-error); /* Fondo rojo al pasar el ratón */
     color: var(--aoe-text-light); /* 'X' blanca/clara */
-}
-
-/* Asegúrate de que .slot-item o .slot tenga 'position: relative;' para que .cancel-x se posicione correctamente */
-.slot {
-    position: relative; /* Esto es CRUCIAL para que .cancel-x funcione */
-    /* ... otros estilos de tu slot-item ... */
 }
