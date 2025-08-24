@@ -49,7 +49,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     let showingAllDays = false; // Estado inicial: solo se muestran los primeros dos días
 
-    // *** MODIFICACIÓN CLAVE AQUÍ: FORZAR OCULTAMIENTO AL CARGAR ***
     if (hiddenDayContainers.length > 0) {
         hiddenDayContainers.forEach(container => {
             container.style.display = 'none';
@@ -194,7 +193,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentBookingIdToCancel = null;
     let currentBookedByName = null;
 
-    // Función para mostrar el modal (igual que antes)
     window.showCancelModal = (bookingId, bookedByName) => { // Ahora recibe los parámetros directamente
         currentBookingIdToCancel = bookingId;
         currentBookedByName = bookedByName;
@@ -213,14 +211,12 @@ document.addEventListener('DOMContentLoaded', () => {
         currentBookedByName = null;
     };
 
-    // Cerrar el modal al hacer clic fuera de él (igual que antes)
     window.onclick = (event) => {
         if (event.target === cancelModal) {
             closeCancelModal();
         }
     };
 
-    // Manejar el clic del botón de confirmar cancelación (igual que antes)
     if (confirmCancelButton) {
         confirmCancelButton.addEventListener('click', async () => {
             const userNameConfirm = confirmCancelName.value.trim();
@@ -271,15 +267,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Cerrar modal con el botón 'x'
     if (closeButton) {
         closeButton.addEventListener('click', closeCancelModal);
     }
 
-    // --- NUEVO: Manejar clics en las 'X' de cancelación ---
-    // Seleccionar todos los elementos con la clase 'cancel-x'
     const cancelXButtons = document.querySelectorAll('.cancel-x');
-
     cancelXButtons.forEach(xButton => {
         xButton.addEventListener('click', (event) => {
             // Detener la propagación del evento para que no se active el clic del slot-item si lo tiene
@@ -290,5 +282,4 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // ... (El resto de tu código JS existente) ...
 });
