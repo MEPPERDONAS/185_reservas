@@ -412,7 +412,7 @@ def book_slot():
             db.session.commit()
 
             if updated_count == 1:
-                flash(f'Espacio {time_slot} en {queue_type.capitalize()} para el {date_str} reservado por {booked_by} exitosamente.', 'success')
+                flash(f'Slot on {queue_type.capitalize()} booked by [ {booked_by} ].', 'success')
                 
                 message = (
                     f"📢  **New Booking!**\n"

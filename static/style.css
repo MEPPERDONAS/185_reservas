@@ -52,7 +52,7 @@ button.toggle-btn {
 body {
     font-family: 'Times New Roman', serif;
     margin: 0;
-    background: linear-gradient(to bottom, var(--aoe-dark-bg), #000000, #091826);
+    background: linear-gradient(to bottom, var(--aoe-dark-bg), #221844, #091826);
                 /*url('https://imgeucdn.gamespress.com/cdn/files/LevelInfinite/2024/10/111918-7e04443b/AOEM-River_battle_29.jpg?otf=y&lightbox=y&sky=54c6e5fcf53e83c98728ef877d3f678e374bbae3e95a923d3b5ba0ade091d038&w=1024&maxheight=4096&mode=pad&format=jpg') center center no-repeat;
     /* Aplica un modo de mezcla para fusionar el degradado y la imagen */
     background-blend-mode: multiply; 
@@ -524,7 +524,6 @@ tbody tr:nth-child(even) {
 .slot.available {
     background-color: var(--aoe-success);
     color: var(--aoe-text-dark);
-    font-weight: bold;
 }
 
 .slot.available:hover {
@@ -1033,6 +1032,10 @@ button.toggle-btn .fa-toggle-off {
     box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
     transition: background-color 0.3s ease, transform 0.3s ease;
 
+    }
+
+    .day-table-wrapper {
+         width: 100%;
     }
 
     #calendar-container {
