@@ -5,5 +5,5 @@ from app import app, db
 # Esto es necesario para que SQLAlchemy sepa a qué aplicación y base de datos se refiere
 with app.app_context():
     print("Intentando crear tablas de la base de datos...")
-    db.create_all() # Esto creará las tablas si no existen (es idempotente)
+    db.create_all()  # Esto creará las tablas si no existen (es idempotente)
     print("Proceso de creación de tablas completado.")

@@ -39,7 +39,7 @@
             <span class="time-unit">H</span>
 
             <input type="number" id="find-slot-minutes" name="minutes" min="0" max="59" value="0" required>
-            <span class="time-unit">M</span>
+            <span class="time-unit">min</span>
         </div>
         {# Se ha agregado una clase CSS específica para el botón de calcular #}
         <button type="submit" id="calculate-button" class="nav-button calculate-button">Calculate</button>
@@ -53,9 +53,7 @@
 </section>
 
 <div id="calendar-container">
-    {# Iterar sobre todos los días, pero ocultar los que van más allá del segundo día #}
     {% for date_obj in display_dates %}
-        {# Wrap each table in a div to easily hide/show #}
         <div class="day-table-wrapper {% if loop.index > 2 %}hidden-day-container{% endif %}">
             <table data-date="{{ date_obj.isoformat() }}">
                 <caption>
@@ -134,7 +132,6 @@
     {% endfor %}
 </div>
 
-    {# Botón para mostrar/ocultar días adicionales #}
     <div class="show-more-button-container">
         <button id="toggleDaysButton" class="nav-button show-more-button">Show More Days</button>
     </div>
@@ -161,6 +158,5 @@
         </div>
     </div>
 
-    {# El script.js debe seguir incluyéndose aquí o en base.html si es un bloque #}
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 {% endblock %}
