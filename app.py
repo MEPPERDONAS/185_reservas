@@ -508,6 +508,7 @@ def book_slot():
                     f"📢  **New Booking!**\n"
                     f"👤 **[{booked_by}]** \nHas booked a slot for **{queue_type.capitalize()}** "
                     f"on: \n**{date_str} at {time_slot} UTC**."
+                    f"https://one85-reservas.onrender.com"
                 )
                 thread = threading.Thread(
                     target=send_discord_notification, args=(message,)

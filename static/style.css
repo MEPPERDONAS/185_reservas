@@ -276,7 +276,6 @@ form a:not(.edit-btn) {
 
 .find-slot-section {
     padding: 15px;
-    margin-top: 30px;
     margin-bottom: 30px;
     text-align: center;
     border-bottom: 2px solid var(--aoe-border);
@@ -423,7 +422,7 @@ form a:not(.edit-btn) {
     .find-slot-form {
         flex-direction: column; 
         align-items: center;
-        gap: 10px;
+        gap: 5px;
         background-position: 70%  center;
         background-size: cover;
     }
@@ -431,10 +430,12 @@ form a:not(.edit-btn) {
     .find-slot-form .form-group {
         width: 100%;
         justify-content: center;
+        gap: 5px;
     }
 
     .find-slot-form input[type="number"] {
-        width: 50px;
+        width: 40px;
+        height: 25px;
     }
 }
 
@@ -472,8 +473,6 @@ caption {
     background-color: var(--aoe-header-bg);
     color: var(--aoe-accent-gold);
     border-bottom: 2px solid var(--aoe-border);
-    border-top-left-radius: 8px;
-    border-top-right-radius: 8px;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
 }
 
@@ -514,7 +513,6 @@ tbody tr:nth-child(even) {
 .slot {
     cursor: pointer;
     transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
-    border-radius: 5px;
     box-shadow: inset 0 0 0px rgba(0,0,0,0);
     text-align: center;
     position: relative;
@@ -530,14 +528,13 @@ tbody tr:nth-child(even) {
     /*background-color: #728F70;*/
     color: white;
     /*transform: scale(1.03);*/
-    box-shadow: inset 0 0 10px rgba(241, 221, 3, 0.959), 0 0 10px rgba(0, 0, 0, 0.5);
+    box-shadow: inset 0 0 10px rgba(255, 245, 136, 0.959), 0 0 10px rgba(0, 0, 0, 0.5);
 }
 
 .slot.booked {
     background-color: var(--aoe-error);
     color: var(--aoe-text-light);
     cursor: not-allowed;
-    font-style: italic;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
 }
 .slot.booked-past {
