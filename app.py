@@ -32,9 +32,9 @@ DISCORD_CHANNELS = {
     "[SOL] General Channel": "1339362327593488506",
     "[SOL] Rules Channel": "1339366090244886611",
     "[SOL] Announcements Channel": "1349021795046654023",
-    "[SOL] KVK Events Channel": "1349021802277376072",
+    "[LOB] QUEUE Channel": "1361409725807329341",
 }
-DISCORD_ANNOUNCEMENT_CHANNEL_ID = DISCORD_CHANNELS.get("[SOL] KVK Events Channel")
+DISCORD_ANNOUNCEMENT_CHANNEL_ID = DISCORD_CHANNELS.get("[LOB] QUEUE Channel")
 
 app.config["SQLALCHEMY_DATABASE_URI"] = (
     os.getenv("DATABASE_URL").replace("postgres://", "postgresql://", 1)
@@ -188,7 +188,7 @@ def send_discord_notification(message, channel_id=None, max_retries=3):
             response = requests.post(url, headers=headers, json=payload)
             response.raise_for_status()
             print(
-                f"Notificación de Discord enviada exitosamente en intento {attempt + 1}: {message}"
+                f"Notificación de Discord enviada exitosamente en intento {attempt + 1}: {message} al canal: {target_channel_id}"
             )
             return
 
@@ -505,9 +505,8 @@ def book_slot():
                 )
 
                 message = (
-                    f"📢  **New Booking!**\n"
-                    f"👤 **[{booked_by}]** \nHas booked a slot for **{queue_type.capitalize()}** "
-                    f"on: \n**{date_str} at {time_slot} UTC**."
+                    f"👤 **[{booked_by}]** \nHas booked a slot "
+                    f"for **{queue_type.capitalize()}** on:**{date_str} at {time_slot} UTC**\n."
                     f"https://one85-reservas.onrender.com"
                 )
                 thread = threading.Thread(
