@@ -32,9 +32,9 @@ DISCORD_CHANNELS = {
     "[SOL] General Channel": "1339362327593488506",
     "[SOL] Rules Channel": "1339366090244886611",
     "[SOL] Announcements Channel": "1349021795046654023",
-    "[LOB] QUEUE Channel": "1361409725807329341",
+    "QUEUEChannel": "1349021795046654023",
 }
-DISCORD_ANNOUNCEMENT_CHANNEL_ID = DISCORD_CHANNELS.get("[LOB] QUEUE Channel")
+DISCORD_ANNOUNCEMENT_CHANNEL_ID = DISCORD_CHANNELS.get("QUEUEChannel")
 
 app.config["SQLALCHEMY_DATABASE_URI"] = (
     os.getenv("DATABASE_URL").replace("postgres://", "postgresql://", 1)
