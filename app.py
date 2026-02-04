@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, date, time, timezone
 import requests
 import time  # noqa: F811
 import threading
+from functools import wraps
 from flask_migrate import Migrate
 from flask import (
     Flask,
@@ -36,15 +37,46 @@ DISCORD_CHANNELS = {
 }
 DISCORD_ANNOUNCEMENT_CHANNEL_ID = DISCORD_CHANNELS.get("QUEUEChannel")
 
-app.config["SQLALCHEMY_DATABASE_URI"] = (
-    os.getenv("DATABASE_URL").replace("postgres://", "postgresql://", 1)
-    if os.getenv("DATABASE_URL")
-    else "sqlite:///reservas.db"
-)
+# Configuración de base de datos (líneas 39-47)
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///reservas.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
+
+# Variable global para controlar si la DB está disponible
+DB_AVAILABLE = True
+
+def check_database_connection():
+    """Verifica si la base de datos está disponible"""
+    global DB_AVAILABLE
+    try:
+        with app.app_context():
+            # Intenta una consulta simple
+            db.session.execute(db.text('SELECT 1'))
+            DB_AVAILABLE = True
+            return True
+    except Exception as e:
+        print(f"⚠️ Base de datos no disponible: {e}")
+        DB_AVAILABLE = False
+        return False
+
+def require_database(f):
+    """Decorador que verifica si la base de datos está disponible"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not DB_AVAILABLE:
+            flash("⚠️ Database is temporarily unavailable. Please try again later.", "warning")
+            return render_template("db_unavailable.html")
+        try:
+            return f(*args, **kwargs)
+        except Exception as e:
+            if "database" in str(e).lower() or "sqlite" in str(e).lower():
+                flash("⚠️ Database connection lost. Please try again later.", "error")
+                return render_template("db_unavailable.html")
+            raise
+    return decorated_function
+
 
 QUEUES = ["building", "research", "training"]
 
@@ -271,6 +303,7 @@ def check_and_send_weekly_event_reminders():
 
 
 @app.route("/")
+@require_database
 def index():
     with app.app_context():
         now_utc = datetime.now(timezone.utc)
@@ -455,6 +488,7 @@ def find_closest_slot():
 
 
 @app.route("/book", methods=["POST"])
+@require_database
 def book_slot():
     with app.app_context():
         date_str = request.form["date"]
@@ -546,6 +580,7 @@ def book_slot():
 
 
 @app.route("/cancel_booking", methods=["POST"])
+@require_database
 def cancel_booking():
     booking_id = request.form.get("booking_id", type=int)
     booked_by_user = request.form.get("booked_by_user")
@@ -647,6 +682,7 @@ def logout():
 
 
 @app.route("/admin")
+@require_database
 def admin_panel():
     if "username" not in session or session.get("role") != "admin":
         flash("Access denied. Only administrators can access.", "error")
@@ -678,6 +714,7 @@ def admin_panel():
 
 
 @app.route("/admin/delete/<int:booking_id>", methods=["POST"])
+@require_database
 def delete_booking(booking_id):
     if "username" not in session or session.get("role") != "admin":
         flash("Access denied. Only administrators can access.", "error")
@@ -817,6 +854,7 @@ def send_discord_message():
 
 
 @app.route("/admin/bonuses/toggle/<int:bonus_id>", methods=["POST"])
+@require_database
 def toggle_bonus_active(bonus_id):
     if "username" not in session or session.get("role") != "admin":
         flash("Access denied. Only administrators can access.", "error")
@@ -838,6 +876,7 @@ def toggle_bonus_active(bonus_id):
 
 
 @app.route("/admin/bonuses/delete/<int:bonus_id>", methods=["POST"])
+@require_database
 def delete_bonus(bonus_id):
     if "username" not in session or session.get("role") != "admin":
         flash("Access denied. Only administrators can access.", "error")
@@ -856,6 +895,7 @@ def delete_bonus(bonus_id):
 
 
 @app.route("/admin/weekly_events", methods=["GET", "POST"])
+@require_database
 def manage_weekly_events():
     if "username" not in session or session.get("role") != "admin":
         flash("Acceso denegado. Solo los administradores pueden acceder.", "error")
@@ -972,10 +1012,27 @@ def start_reminder_thread():
 
 
 if __name__ == "__main__":
+    # Verificar conexión a la base de datos
     with app.app_context():
-        db.create_all()
-    reminder_thread = threading.Thread(target=start_reminder_thread, daemon=True)
-    reminder_thread.start()
+        if check_database_connection():
+            print("✅ Base de datos conectada correctamente")
+            try:
+                db.create_all()
+                print("✅ Tablas creadas/verificadas")
+            except Exception as e:
+                print(f"⚠️ Error al crear tablas: {e}")
+                DB_AVAILABLE = False
+        else:
+            print("⚠️ Iniciando sin base de datos - modo limitado")
+    
+    # Iniciar hilo de recordatorios solo si DB está disponible
+    if DB_AVAILABLE:
+        reminder_thread = threading.Thread(target=start_reminder_thread, daemon=True)
+        reminder_thread.start()
+        print("✅ Hilo de recordatorios iniciado")
+    else:
+        print("⚠️ Recordatorios desactivados (DB no disponible)")
+    
     port = int(os.getenv("PORT", 5000))
     app.run(
         host="0.0.0.0", port=port, debug=os.getenv("FLASK_DEBUG", "False") == "True"

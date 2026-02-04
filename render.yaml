@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: queue-booking-system
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: SECRET_KEY
+        generateValue: true
+      - key: TOKEN
+        sync: false  # Tu token de Discord, configúralo manualmente
+    disk:
+      name: sqlite-database
+      mountPath: /data
+      sizeGB: 1
