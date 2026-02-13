@@ -1,32 +1,37 @@
 <!DOCTYPE html>
-<html lang="en"></html>
+<html lang="en">
+
+</html>
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Panel - Bookings</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+        integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
+
 <body>
     <div class="container">
         <h1>Admin Panel</h1>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <ul class="flashes" style="list-style: none; padding: 0;">
-                {% for category, message in messages %}
-                    <li class="{{ category }} flash-message">{{ message }}</li>
-                {% endfor %}
-                </ul>
-            {% endif %}
+        {% if messages %}
+        <ul class="flashes" style="list-style: none; padding: 0;">
+            {% for category, message in messages %}
+            <li class="{{ category }} flash-message">{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
         {% endwith %}
-        
+
         <a href="{{ url_for('index') }}" class="back-link nav-button">&larr; Home</a>
 
         <div class="admin-links">
             <a href="{{ url_for('manage_bonuses') }}" class="nav-button"><i class="fas fa-star"></i>Bonuses</a>
             <a href="{{ url_for('send_discord_message') }}" class="nav-button">Messages</a>
-            <a href="{{ url_for('manage_weekly_events') }}" class="nav-button">EVENTS</a>
         </div>
 
         <h2>Occupied Bookings</h2>
@@ -53,12 +58,16 @@
                         <td>{% if booking.booked_by %}{{ booking.booked_by }}{% else %}N/A{% endif %}</td>
                         <td>{% if booking.available %}Yes{% else %}No{% endif %}</td>
                         <td class="action-buttons">
-                            <a href="{{ url_for('edit_booking', booking_id=booking.id) }}" class="edit-btn" title="Edit booking">
-                                <i class="fas fa-edit"></i> 
+                            <a href="{{ url_for('edit_booking', booking_id=booking.id) }}" class="edit-btn"
+                                title="Edit booking">
+                                <i class="fas fa-edit"></i>
                             </a>
-                            <form action="{{ url_for('delete_booking', booking_id=booking.id) }}" method="POST" style="display:inline-block;">
-                                <button type="submit" class="edit-btn" onclick="return confirm('Are you sure you want to delete the booking for {{ booking.booked_by }} on {{ booking.booking_date }} at {{ booking.time_slot }}?');" title="Delete booking">
-                                    <i class="fas fa-trash-alt"></i> 
+                            <form action="{{ url_for('delete_booking', booking_id=booking.id) }}" method="POST"
+                                style="display:inline-block;">
+                                <button type="submit" class="edit-btn"
+                                    onclick="return confirm('Are you sure you want to delete the booking for {{ booking.booked_by }} on {{ booking.booking_date }} at {{ booking.time_slot }}?');"
+                                    title="Delete booking">
+                                    <i class="fas fa-trash-alt"></i>
                                 </button>
                             </form>
                         </td>
@@ -71,6 +80,7 @@
                 </tbody>
             </table>
         </div>
-        </div>
+    </div>
 </body>
+
 </html>
