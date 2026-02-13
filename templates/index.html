@@ -1,34 +1,31 @@
 {% extends "base.html" %}
 
-{# Opcional: Si quieres un título de pestaña diferente para Home #}
-{% block title %}Home - Empire #185{% endblock %} 
+{% block title %}Home - Empire #185{% endblock %}
 
-{# Opcional: Si quieres un título <h1> diferente para la página de inicio, sobrescríbelo aquí #}
-{# {% block page_heading %}Welcome to Empire #185!{% endblock %} #}
 
 {% block content %}
-    <div class="first-in-queue-container">
-        <h2>Queue</h2>
-        <div class="queue-list">
-            {% for queue_name, slot_info in current_in_queue.items() %}
-                <div class="queue-item">
-                    <h3>{{ queue_name | capitalize }}
-                        {% if bonused_queues_now[queue_name] %}
-                            <span class="bonus-active-indicator" title="Bonus Active Now!">⭐</span>
-                        {% endif %}
-                    </h3>
-                    {% if slot_info.date != 'N/A' %}
-                        <p> {{ slot_info.booked_by }}</p>
-                    {% else %}
-                        <p>{{ slot_info.message }}</p>
-                    {% endif %}
-                </div>
-            {% endfor %}
+<div class="first-in-queue-container">
+    <h2>Queue</h2>
+    <div class="queue-list">
+        {% for queue_name, slot_info in current_in_queue.items() %}
+        <div class="queue-item">
+            <h3>{{ queue_name | capitalize }}
+                {% if bonused_queues_now[queue_name] %}
+                <span class="bonus-active-indicator" title="Bonus Active Now!">⭐</span>
+                {% endif %}
+            </h3>
+            {% if slot_info.date != 'N/A' %}
+            <p> {{ slot_info.booked_by }}</p>
+            {% else %}
+            <p>{{ slot_info.message }}</p>
+            {% endif %}
         </div>
+        {% endfor %}
     </div>
+</div>
 
 <section class="find-slot-section">
-    <h2>Find Slot by Time Ahead</h2> {# Added h2 to complete the section #}
+    <h2>Find Slot by Time Ahead</h2>
     <p>Enter the days, hours, and minutes from now to calculate a future date and time.</p>
     <form id="find-slot-form" class="find-slot-form">
         <div class="form-group time-inputs">
@@ -41,7 +38,6 @@
             <input type="number" id="find-slot-minutes" name="minutes" min="0" max="59" value="0" required>
             <span class="time-unit">min</span>
         </div>
-        {# Se ha agregado una clase CSS específica para el botón de calcular #}
         <button type="submit" id="calculate-button" class="nav-button calculate-button">Calculate</button>
     </form>
     <div id="find-slot-results" class="results-box" style="display: none;">
@@ -54,30 +50,30 @@
 
 <div id="calendar-container">
     {% for date_obj in display_dates %}
-        <div class="day-table-wrapper {% if loop.index > 2 %}hidden-day-container{% endif %}">
-            <table data-date="{{ date_obj.isoformat() }}">
-                <caption>
-                    {{ date_obj.strftime('%A, %B %d, %Y') }}
-                    {% if date_obj.isoformat() == today %} (Today){% endif %}
-                </caption>
-                <thead class="header-row">
-                    <tr>
-                        <th>Time</th>
-                        {% for queue in queues %}
-                            <th>{{ queue | capitalize }}</th>
-                        {% endfor %}
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for hour in range(24) %}
-                        {% set time_str = '%02d:00' | format(hour) %}
-                        <tr>
-                            <td>{{ time_str }}</td>
-                            {% for queue in queues %}
-                                {% set slot_data = bookings[date_obj.isoformat()][queue][time_str] %}
-                                {% set is_bonused = date_obj.isoformat() in bonused_slots[queue] and time_str in bonused_slots[queue][date_obj.isoformat()] %}
-                                <td class="slot 
-                                    {# La lógica de 'current-slot' tiene la máxima prioridad #}
+    <div class="day-table-wrapper {% if loop.index > 2 %}hidden-day-container{% endif %}">
+        <table data-date="{{ date_obj.isoformat() }}">
+            <caption>
+                {{ date_obj.strftime('%A, %B %d, %Y') }}
+                {% if date_obj.isoformat() == today %} (Today){% endif %}
+            </caption>
+            <thead class="header-row">
+                <tr>
+                    <th>Time</th>
+                    {% for queue in queues %}
+                    <th>{{ queue | capitalize }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for hour in range(24) %}
+                {% set time_str = '%02d:00' | format(hour) %}
+                <tr>
+                    <td>{{ time_str }}</td>
+                    {% for queue in queues %}
+                    {% set slot_data = bookings[date_obj.isoformat()][queue][time_str] %}
+                    {% set is_bonused = date_obj.isoformat() in bonused_slots[queue] and time_str in
+                    bonused_slots[queue][date_obj.isoformat()] %}
+                    <td class="slot 
                                     {% if slot_data.is_current %}
                                         current-slot
                                     {% elif slot_data.is_past %}
@@ -92,71 +88,65 @@
                                         available
                                     {% endif %}
                                     {% if is_bonused %} bonused-slot {% endif %}"
-                                    data-date="{{ date_obj.isoformat() }}"
-                                    data-queue="{{ queue }}"
-                                    data-time="{{ time_str }}">
-                                    {% if slot_data.is_current %}
-                                        <span class="current-label">NOW</span>
-                                        {% if slot_data.booked_by and slot_data.booked_by != 'Pasado' %}
-                                            {{ slot_data.booked_by }}
-                                            <span class="cancel-x" 
-                                                  data-booking-id="{{ slot_data.id }}"
-                                                  data-booked-by-name="{{ slot_data.booked_by }}"
-                                                  title="Cancel this booking">✖</span>
-                                        {% else %}
-                                            Cooldown
-                                        {% endif %}
-                                    {% elif slot_data.booked_by and slot_data.booked_by != 'Pasado' %}
-                                        <span translate="no">{{ slot_data.booked_by }}</span>
-                                        <span class="cancel-x" 
-                                              data-booking-id="{{ slot_data.id }}"
-                                              data-booked-by-name="{{ slot_data.booked_by }}"
-                                              title="Cancel this booking">✖</span>
-                                    {% else %}
-                                        {% if slot_data.booked_by == 'Pasado' %}
-                                            Past
-                                        {% else %}
-                                            Available
-                                        {% endif %}
-                                    {% endif %}
-                                    {% if is_bonused %}
-                                        <span class="bonus-icon" title="Bonus Active!">⭐</span>
-                                    {% endif %}
-                                </td>
-                            {% endfor %}
-                        </tr>
+                        data-date="{{ date_obj.isoformat() }}" data-queue="{{ queue }}" data-time="{{ time_str }}">
+                        {% if slot_data.is_current %}
+                        <span class="current-label">NOW</span>
+                        {% if slot_data.booked_by and slot_data.booked_by != 'Pasado' %}
+                        {{ slot_data.booked_by }}
+                        <span class="cancel-x" data-booking-id="{{ slot_data.id }}"
+                            data-booked-by-name="{{ slot_data.booked_by }}" title="Cancel this booking">✖</span>
+                        {% else %}
+                        Cooldown
+                        {% endif %}
+                        {% elif slot_data.booked_by and slot_data.booked_by != 'Pasado' %}
+                        <span translate="no">{{ slot_data.booked_by }}</span>
+                        <span class="cancel-x" data-booking-id="{{ slot_data.id }}"
+                            data-booked-by-name="{{ slot_data.booked_by }}" title="Cancel this booking">✖</span>
+                        {% else %}
+                        {% if slot_data.booked_by == 'Pasado' %}
+                        Past
+                        {% else %}
+                        Available
+                        {% endif %}
+                        {% endif %}
+                        {% if is_bonused %}
+                        <span class="bonus-icon" title="Bonus Active!">⭐</span>
+                        {% endif %}
+                    </td>
                     {% endfor %}
-                </tbody>
-            </table>
-        </div>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
     {% endfor %}
 </div>
 
-    <div class="show-more-button-container">
-        <button id="toggleDaysButton" class="nav-button show-more-button">Show More Days</button>
+<div class="show-more-button-container">
+    <button id="toggleDaysButton" class="nav-button show-more-button">Show More Days</button>
+</div>
+
+<form id="booking-form" action="{{ url_for('book_slot') }}" method="POST" style="display: none;">
+    <input type="hidden" name="date" id="form-date">
+    <input type="hidden" name="queue" id="form-queue">
+    <input type="hidden" name="time" id="form-time">
+    <input type="text" name="booked_by" id="form-booked-by" placeholder="Your name" required>
+</form>
+
+<div id="cancelModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <span class="close-button" onclick="closeCancelModal()">&times;</span>
+        <h2>Confirm Cancellation</h2>
+        <p>Are you sure you want to cancel this booking?</p>
+        <p>Booking ID: <span id="modalBookingId"></span></p>
+        <p>Booked by: <span id="modalBookedBy"></span></p>
+        <label for="confirmCancelName">Confirm your name:</label>
+        <input type="text" id="confirmCancelName" required>
+        <button id="confirmCancelButton">Yes, Cancel It</button>
+        <button onclick="closeCancelModal()">No, Keep It</button>
+        <p id="cancelMessage" style="color: red;"></p>
     </div>
+</div>
 
-    <form id="booking-form" action="{{ url_for('book_slot') }}" method="POST" style="display: none;">
-        <input type="hidden" name="date" id="form-date">
-        <input type="hidden" name="queue" id="form-queue">
-        <input type="hidden" name="time" id="form-time">
-        <input type="text" name="booked_by" id="form-booked-by" placeholder="Your name" required>
-    </form>
-
-    <div id="cancelModal" class="modal" style="display: none;">
-        <div class="modal-content">
-            <span class="close-button" onclick="closeCancelModal()">&times;</span>
-            <h2>Confirm Cancellation</h2>
-            <p>Are you sure you want to cancel this booking?</p>
-            <p>Booking ID: <span id="modalBookingId"></span></p>
-            <p>Booked by: <span id="modalBookedBy"></span></p>
-            <label for="confirmCancelName">Confirm your name:</label>
-            <input type="text" id="confirmCancelName" required>
-            <button id="confirmCancelButton">Yes, Cancel It</button>
-            <button onclick="closeCancelModal()">No, Keep It</button>
-            <p id="cancelMessage" style="color: red;"></p>
-        </div>
-    </div>
-
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
+<script src="{{ url_for('static', filename='script.js') }}"></script>
 {% endblock %}

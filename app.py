@@ -620,7 +620,7 @@ def admin_panel():
         all_bookings = (
             Booking.query.filter(
                 and_(
-                    not Booking.available,
+                    Booking.available.is_(False),
                     or_(
                         Booking.booking_date > current_date_utc,
                         and_(
@@ -822,6 +822,7 @@ def delete_bonus(bonus_id):
 
 
 if __name__ == "__main__":
+    app.run(debug=True)
     # Verificar conexión a la base de datos
     with app.app_context():
         if check_database_connection():
