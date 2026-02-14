@@ -37,18 +37,28 @@ DISCORD_CHANNELS = {
 }
 DISCORD_ANNOUNCEMENT_CHANNEL_ID = DISCORD_CHANNELS.get("QUEUEChannel")
 
-# Configuración de base de datos (líneas 39-47)
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///reservas.db"
+USER = os.getenv("user")
+PASSWORD = os.getenv("password")
+HOST = os.getenv("host")
+PORT = os.getenv("port")
+DBNAME = os.getenv("dbname")
+
+# Construct the SQLAlchemy connection string
+SUPABASE_DB_URL = f"postgresql+psycopg2://{USER}:{PASSWORD}@{HOST}:{PORT}/{DBNAME}?sslmode=require"
+LOCAL_DB_URL = "sqlite:///reservas.db"
+
+def get_db_uri():
+    # Intentamos usar Supabase si está configurada, si no, directo a SQLite
+    return SUPABASE_DB_URL if SUPABASE_DB_URL else LOCAL_DB_URL
+
+app.config["SQLALCHEMY_DATABASE_URI"] = get_db_uri()
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
-migrate = Migrate(app, db)
 
-# Variable global para controlar si la DB está disponible
 DB_AVAILABLE = True
 
 def check_database_connection():
-    """Verifica si la base de datos está disponible"""
     global DB_AVAILABLE
     try:
         with app.app_context():
