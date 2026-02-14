@@ -72,13 +72,14 @@ body {
     flex-direction: column;
     align-items: center;
     min-height: 100vh;
-    padding: 20px;
+    padding: 0px;
     box-sizing: border-box;
 }
 
 h1 {
     font-family: 'Cinzel', serif;
     font-size: 2.8em;
+    margin: 0;
     color: var(--aoe-accent-gold);
     text-align: center;
     padding: 25px 0;
@@ -117,9 +118,6 @@ form button[type="submit"] {
 form button:not(.delete-btn):not(.toggle-btn):not(.edit-btn),
 form a:not(.edit-btn) {
     flex-direction: column;
-    background-color: rgba(var(--aoe-header-bg), 0.9);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
     border: 1px solid var(--aoe-border);
     padding: 25px;
     margin: 20px auto;
@@ -186,35 +184,28 @@ form a:not(.edit-btn) {
 }
 
 .queue-item {
-    /*background-color: rgba(0, 0, 0, 0.7);*/
-    backdrop-filter: blur(2px);
-    -webkit-backdrop-filter: blur(8px);
-    border: 1px solid var(--aoe-border);
-    border-radius: 8px;
+
     padding: 15px 20px;
     flex: 1;
     min-width: 200px;
     max-width: 280px;
     text-align: center;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3), inset 1px 1px 3px rgba(255, 255, 255, 0.1);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
     box-sizing: border-box;
 }
 
-.queue-item:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5), inset 1px 1px 5px rgba(255, 255, 255, 0.2);
-}
 
 .queue-item h3 {
     font-family: 'Cinzel', serif;
     color: var(--aoe-accent-gold);
     margin-top: 0;
-    margin-bottom: 10px;
+    margin-bottom: 0px;
     font-size: 1.5em;
-    border-bottom: 1px solid var(--aoe-border);
-    /* Separador debajo del título */
-    padding-bottom: 5px;
+    padding-bottom: 3px;
+    display: flex;
+    align-items: center;
+    text-align: center;
+    justify-items: center;
+    justify-content: center;
     text-shadow: #1f0606 3px 2px 30px;
     background: linear-gradient(to right, #fffd89f8, var(--aoe-accent-gold), #fffd85, var(--aoe-accent-gold), #fff874);
     background-size: 200%;
@@ -222,6 +213,7 @@ form a:not(.edit-btn) {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     animation: animate-gradient 4.5s linear infinite;
+
 }
 
 .queue-item p {
@@ -241,9 +233,18 @@ form a:not(.edit-btn) {
 
 header {
     width: 100%;
+    margin: 0;
     display: flex;
-    flex-direction: column;
+    flex-direction: row-reverse;
+}
+
+.qitem {
+    display: flex;
+    flex-direction: row;
     justify-content: center;
+    width: 100%;
+    border-bottom: 1px solid var(--aoe-border);
+    gap: 3px;
 }
 
 .main-nav {
@@ -675,9 +676,10 @@ tbody tr:nth-child(even) {
 /* --- 7. Estilos para Icono de Bonificación (estrella) --- */
 .bonus-active-indicator {
     color: var(--aoe-accent-gold);
-    margin-left: 5px;
-    font-size: 1.2em;
+    font-size: 1em;
     text-shadow: 0 0 8px rgba(255, 215, 0, 0.8), 0 0 2px rgba(0, 0, 0, 0.5);
+    height: fit-content;
+
 }
 
 .bonus-form form {
@@ -1322,6 +1324,10 @@ button.toggle-btn .fa-toggle-off {
     flex-shrink: 0;
 }
 
+main {
+    padding-left: 10px;
+    padding-right: 10px;
+}
 
 
 .footer-content {

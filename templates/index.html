@@ -5,15 +5,19 @@
 
 {% block content %}
 <div class="first-in-queue-container">
-    <h2>Queue</h2>
+    <h2> Queue </h2>
     <div class="queue-list">
         {% for queue_name, slot_info in current_in_queue.items() %}
         <div class="queue-item">
-            <h3>{{ queue_name | capitalize }}
+            <div class="qitem">
                 {% if bonused_queues_now[queue_name] %}
                 <span class="bonus-active-indicator" title="Bonus Active Now!">⭐</span>
                 {% endif %}
-            </h3>
+                <h3>{{ queue_name | capitalize }}</h3>
+                {% if bonused_queues_now[queue_name] %}
+                <span class="bonus-active-indicator" title="Bonus Active Now!">⭐</span>
+                {% endif %}
+            </div>
             {% if slot_info.date != 'N/A' %}
             <p> {{ slot_info.booked_by }}</p>
             {% else %}

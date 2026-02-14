@@ -13,17 +13,15 @@
 <body>
     <header>
         <nav class="main-nav">
-            {# Botón para Admin Panel - se mantiene en el header #}
             {% if session.get('role') == 'admin' %}
             <a href="{{ url_for('admin_panel') }}" class="nav-button">
-                <i class="fas fa-user-shield"></i> Admin Panel
+                <i class="fas fa-user-shield"></i> Admin
             </a>
             {% endif %}
-            {# Aquí puedes poner otros elementos de navegación si son exclusivos del header #}
         </nav>
 
-        <h1>{% block page_heading %} EMPIRE 185 {% endblock %}</h1>
     </header>
+    <h1>{% block page_heading %} EMPIRE 185 {% endblock %}</h1>
 
     <main>
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -36,7 +34,6 @@
         {% endif %}
         {% endwith %}
 
-        {# Este es el bloque principal donde irá el contenido específico de cada página #}
         {% block content %}{% endblock %}
     </main>
 
