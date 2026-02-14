@@ -822,7 +822,6 @@ def delete_bonus(bonus_id):
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
     # Verificar conexión a la base de datos
     with app.app_context():
         if check_database_connection():
