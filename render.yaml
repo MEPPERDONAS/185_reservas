@@ -10,7 +10,7 @@ services:
       - key: SECRET_KEY
         generateValue: true
       - key: TOKEN
-        sync: false  # Tu token de Discord, configúralo manualmente
+        sync: false
     disk:
       name: sqlite-database
       mountPath: /data

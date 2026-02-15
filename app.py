@@ -55,7 +55,7 @@ app.config["SQLALCHEMY_DATABASE_URI"] = get_db_uri()
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
-
+migrate = Migrate(app, db)
 DB_AVAILABLE = True
 
 def check_database_connection():
