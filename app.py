@@ -48,11 +48,12 @@ SUPABASE_DB_URL = f"postgresql+psycopg2://{USER}:{PASSWORD}@{HOST}:{PORT}/{DBNAM
 LOCAL_DB_URL = "sqlite:///reservas.db"
 
 def get_db_uri():
-    # Intentamos usar Supabase si está configurada, si no, directo a SQLite
-    return SUPABASE_DB_URL if SUPABASE_DB_URL else LOCAL_DB_URL
-
-app.config["SQLALCHEMY_DATABASE_URI"] = get_db_uri()
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    # Verificar si TODAS las variables de Supabase están configuradas
+    if all([USER, PASSWORD, HOST, PORT, DBNAME]):
+        return SUPABASE_DB_URL
+    else:
+        print("⚠️ Variables de entorno de Supabase incompletas, usando SQLite local")
+        return LOCAL_DB_URL
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
