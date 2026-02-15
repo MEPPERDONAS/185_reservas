@@ -43,17 +43,21 @@ HOST = os.getenv("host")
 PORT = os.getenv("port")
 DBNAME = os.getenv("dbname")
 
-# Construct the SQLAlchemy connection string
-SUPABASE_DB_URL = f"postgresql+psycopg2://{USER}:{PASSWORD}@{HOST}:{PORT}/{DBNAME}?sslmode=require"
-LOCAL_DB_URL = "sqlite:///reservas.db"
 
+# Función para construir la URI de la base de datos
 def get_db_uri():
-    # Verificar si TODAS las variables de Supabase están configuradas
     if all([USER, PASSWORD, HOST, PORT, DBNAME]):
-        return SUPABASE_DB_URL
+        supabase_uri = f"postgresql+psycopg2://{USER}:{PASSWORD}@{HOST}:{PORT}/{DBNAME}?sslmode=require"
+        print(f"✅ Usando Supabase: {HOST}:{PORT}/{DBNAME}")
+        return supabase_uri
     else:
         print("⚠️ Variables de entorno de Supabase incompletas, usando SQLite local")
-        return LOCAL_DB_URL
+        print(f"   USER={USER}, HOST={HOST}, PORT={PORT}, DBNAME={DBNAME}")
+        return "sqlite:///reservas.db"
+
+# Configurar la URI de la base de datos
+app.config["SQLALCHEMY_DATABASE_URI"] = get_db_uri()
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
