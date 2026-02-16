@@ -44,18 +44,48 @@ PORT = os.getenv("port")
 DBNAME = os.getenv("dbname")
 
 
-# Función para construir la URI de la base de datos
+def test_database_connection(uri):
+    try:
+        from sqlalchemy import create_engine, text
+        
+        engine = create_engine(uri, connect_args={'connect_timeout': 5})
+        with engine.connect() as connection:
+            connection.execute(text('SELECT 1'))
+        
+        engine.dispose()
+        return True
+    except Exception as e:
+        print(f"❌ Error al conectar a la base de datos: {e}")
+        return False
+
+
 def get_db_uri():
     if all([USER, PASSWORD, HOST, PORT, DBNAME]):
-        supabase_uri = f"postgresql+psycopg2://{USER}:{PASSWORD}@{HOST}:{PORT}/{DBNAME}?sslmode=require"
-        print(f"✅ Usando Supabase: {HOST}:{PORT}/{DBNAME}")
-        return supabase_uri
+        supabase_uri = f"postgresql+psycopg2://{USER}:{PASSWORD}@{HOST}:{PORT}/{DBNAME}?sslmode=require"        
+        if test_database_connection(supabase_uri):
+            print(f"✅ Conexión exitosa a Supabase: {HOST}:{PORT}/{DBNAME}")
+            return supabase_uri
+        else:
+            print("❌ No se pudo conectar a Supabase, usando SQLite local")
+            return "sqlite:///reservas.db"
     else:
-        print("⚠️ Variables de entorno de Supabase incompletas, usando SQLite local")
-        print(f"   USER={USER}, HOST={HOST}, PORT={PORT}, DBNAME={DBNAME}")
+        print("⚠️ Usando SQLite local")
         return "sqlite:///reservas.db"
 
-# Configurar la URI de la base de datos
+
+def check_database_connection():
+    global DB_AVAILABLE
+    try:
+        with app.app_context():
+            db.session.execute(db.text('SELECT 1'))
+            DB_AVAILABLE = True
+            print("✅ Base de datos operativa")
+            return True
+    except Exception as e:
+        print(f"⚠️ Base de datos no disponible: {e}")
+        DB_AVAILABLE = False
+        return False
+
 app.config["SQLALCHEMY_DATABASE_URI"] = get_db_uri()
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
@@ -63,21 +93,8 @@ db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 DB_AVAILABLE = True
 
-def check_database_connection():
-    global DB_AVAILABLE
-    try:
-        with app.app_context():
-            # Intenta una consulta simple
-            db.session.execute(db.text('SELECT 1'))
-            DB_AVAILABLE = True
-            return True
-    except Exception as e:
-        print(f"⚠️ Base de datos no disponible: {e}")
-        DB_AVAILABLE = False
-        return False
 
 def require_database(f):
-    """Decorador que verifica si la base de datos está disponible"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not DB_AVAILABLE:
@@ -243,7 +260,6 @@ def send_discord_notification(message, channel_id=None, max_retries=3):
 
 
 @app.route("/")
-@require_database
 def index():
     with app.app_context():
         now_utc = datetime.now(timezone.utc)
