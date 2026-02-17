@@ -465,6 +465,26 @@ def book_slot():
             booking_date_obj = datetime.strptime(date_str, "%Y-%m-%d").date()
             initialize_all_slots_for_day(booking_date_obj)
 
+            # Verificar si el usuario ya tiene una reserva en la misma hora en OTRA cola
+            existing_conflict_booking = Booking.query.filter(
+                Booking.booked_by == booked_by,
+                Booking.booking_date == booking_date_obj,
+                Booking.time_slot == time_slot,
+                Booking.queue_type != queue_type,
+                Booking.available == False,
+            ).first()
+
+            if existing_conflict_booking:
+                msg = (
+                    f"You already have a booking for {date_str} at {time_slot} "
+                    f"in the {existing_conflict_booking.queue_type.capitalize()} queue. "
+                    f"You cannot book multiple queues at the same time."
+                )
+                if is_ajax:
+                    return jsonify({"success": False, "message": msg}), 409
+                flash(msg, "error")
+                return redirect(url_for("index"))
+
             updated_count = Booking.query.filter_by(
                 booking_date=booking_date_obj,
                 time_slot=time_slot,
