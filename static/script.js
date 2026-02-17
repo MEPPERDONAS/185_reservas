@@ -20,7 +20,6 @@ function showToast(message, type = 'success') {
     setTimeout(() => toast.remove(), 3200);
 }
 
-// Inyectar keyframes una sola vez
 const _toastStyle = document.createElement('style');
 _toastStyle.textContent = `
     @keyframes toastIn  { from{transform:translateY(16px);opacity:0} to{transform:translateY(0);opacity:1} }
@@ -32,9 +31,6 @@ _toastStyle.textContent = `
 `;
 document.head.appendChild(_toastStyle);
 
-// ════════════════════════════════════════════════════════════
-//  SLOT BOOKING — Optimistic UI
-// ════════════════════════════════════════════════════════════
 function attachSlotListeners() {
     document.querySelectorAll('td.slot.available').forEach(cell => {
         if (cell.dataset.listenerAttached) return;
@@ -60,14 +56,12 @@ function handleSlotClick(cell) {
     savedUserName = trimmedName;
     localStorage.setItem('bookedByName', trimmedName);
 
-    // 1) OPTIMISTIC UPDATE — UI cambia instantaneamente (<50ms)
     const originalHTML = cell.innerHTML;
     const originalClasses = cell.className;
     cell.className = 'slot booked slot-loading';
     cell.removeAttribute('data-listener-attached');
     cell.innerHTML = '<span>⏳</span> <span translate="no">' + trimmedName + '</span>';
 
-    // 2) Peticion real al servidor en segundo plano
     const formData = new FormData();
     formData.append('date', date);
     formData.append('queue', queue);
@@ -83,7 +77,6 @@ function handleSlotClick(cell) {
         .then(data => {
             cell.classList.remove('slot-loading');
             if (data.success) {
-                // Confirmado — estado booked definitivo con boton cancelar
                 cell.className = 'slot booked';
                 cell.innerHTML =
                     '<span translate="no">' + trimmedName + '</span>' +
@@ -95,7 +88,6 @@ function handleSlotClick(cell) {
                 if (xBtn) attachCancelX(xBtn);
                 showToast('✅ [' + queue.toUpperCase() + '] booked for ' + trimmedName, 'success');
             } else {
-                // Revertir — slot ya ocupado u otro error
                 revertCell(cell, originalHTML, originalClasses);
                 showToast(data.message || 'This slot is no longer available.', 'error');
             }
