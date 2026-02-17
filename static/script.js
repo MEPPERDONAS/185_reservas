@@ -1,285 +1,332 @@
-document.addEventListener('DOMContentLoaded', () => {
-    // Obtener el formulario oculto y sus campos para la reserva normal
-    const bookingForm = document.getElementById('booking-form');
-    const formDate = document.getElementById('form-date');
-    const formQueue = document.getElementById('form-queue');
-    const formTime = document.getElementById('form-time');
-    const formBookedBy = document.getElementById('form-booked-by');
+// ── Nombre guardado entre sesiones ───────────────────────────
+let savedUserName = localStorage.getItem('bookedByName') || '';
 
-    // Seleccionar todas las celdas de slot (Research, Building, Training)
-    const slotCells = document.querySelectorAll('.slot');
+// ── Toast notification ────────────────────────────────────────
+function showToast(message, type = 'success') {
+    document.querySelectorAll('.toast-notification').forEach(t => t.remove());
+    const toast = document.createElement('div');
+    toast.className = 'toast-notification';
+    toast.textContent = message;
+    const bg = type === 'success' ? '#22c55e' : type === 'error' ? '#ef4444' : '#3b82f6';
+    toast.style.cssText = `
+        position:fixed; bottom:28px; right:28px; z-index:99999;
+        padding:14px 22px; border-radius:10px; color:white;
+        font-size:14px; font-weight:500; background:${bg};
+        box-shadow:0 8px 24px rgba(0,0,0,0.35); max-width:340px;
+        line-height:1.4; pointer-events:none;
+        animation: toastIn 0.3s ease, toastOut 0.4s ease 2.6s forwards;
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3200);
+}
 
-    slotCells.forEach(cell => {
-        cell.addEventListener('click', () => {
-            // Solo permitir hacer clic en slots disponibles
-            if (cell.classList.contains('available')) {
-                const date = cell.dataset.date;
-                const queue = cell.dataset.queue;
-                const time = cell.dataset.time;
+// Inyectar keyframes una sola vez
+const _toastStyle = document.createElement('style');
+_toastStyle.textContent = `
+    @keyframes toastIn  { from{transform:translateY(16px);opacity:0} to{transform:translateY(0);opacity:1} }
+    @keyframes toastOut { to{transform:translateY(10px);opacity:0} }
+    td.slot.available        { cursor: pointer; }
+    td.slot.available:hover  { filter: brightness(1.12); }
+    td.slot.slot-loading     { opacity: 0.6 !important; pointer-events: none !important; }
+    tr.highlight-row td      { background: rgba(250,204,21,0.2) !important; transition: background 0.5s; }
+`;
+document.head.appendChild(_toastStyle);
 
-                // Pedir el nombre al usuario
-                const bookedByName = prompt(`Book slot for ${date} at ${time} in ${queue}. Please enter your name:`);
-
-                if (bookedByName && bookedByName.trim() !== '') {
-                    // Rellenar el formulario oculto con los datos
-                    formDate.value = date;
-                    formQueue.value = queue;
-                    formTime.value = time;
-                    formBookedBy.value = bookedByName.trim();
-
-                    // Enviar el formulario
-                    bookingForm.submit();
-                } else if (bookedByName !== null) { // Si el usuario no canceló, pero dejó el campo vacío
-                    alert('Name is required to make a reservation.');
-                }
-            } else {
-                // Si el slot no está disponible, mostrar un mensaje
-                if (cell.classList.contains('past-slot')) {
-                    alert('This slot has already passed and cannot be booked.');
-                } else {
-                    alert('This slot is already booked.');
-                }
-            }
-        });
+// ════════════════════════════════════════════════════════════
+//  SLOT BOOKING — Optimistic UI
+// ════════════════════════════════════════════════════════════
+function attachSlotListeners() {
+    document.querySelectorAll('td.slot.available').forEach(cell => {
+        if (cell.dataset.listenerAttached) return;
+        cell.dataset.listenerAttached = 'true';
+        cell.addEventListener('click', () => handleSlotClick(cell));
     });
+}
 
-    // --- Lógica para el botón SHOW MORE / SHOW LESS ---
+function handleSlotClick(cell) {
+    const date = cell.dataset.date;
+    const queue = cell.dataset.queue;
+    const time = cell.dataset.time;
+
+    const name = prompt(
+        `Book slot for ${date} at ${time} in ${queue}.\nEnter your name:`,
+        savedUserName
+    );
+    if (!name || !name.trim()) {
+        if (name !== null) showToast('Name is required to book.', 'error');
+        return;
+    }
+    const trimmedName = name.trim();
+    savedUserName = trimmedName;
+    localStorage.setItem('bookedByName', trimmedName);
+
+    // 1) OPTIMISTIC UPDATE — UI cambia instantaneamente (<50ms)
+    const originalHTML = cell.innerHTML;
+    const originalClasses = cell.className;
+    cell.className = 'slot booked slot-loading';
+    cell.removeAttribute('data-listener-attached');
+    cell.innerHTML = '<span>⏳</span> <span translate="no">' + trimmedName + '</span>';
+
+    // 2) Peticion real al servidor en segundo plano
+    const formData = new FormData();
+    formData.append('date', date);
+    formData.append('queue', queue);
+    formData.append('time', time);
+    formData.append('booked_by', trimmedName);
+
+    fetch('/book', {
+        method: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        body: formData
+    })
+        .then(res => res.json())
+        .then(data => {
+            cell.classList.remove('slot-loading');
+            if (data.success) {
+                // Confirmado — estado booked definitivo con boton cancelar
+                cell.className = 'slot booked';
+                cell.innerHTML =
+                    '<span translate="no">' + trimmedName + '</span>' +
+                    '<span class="cancel-x"' +
+                    '      data-booking-id="' + (data.booking_id || '') + '"' +
+                    '      data-booked-by-name="' + trimmedName + '"' +
+                    '      title="Cancel this booking">&#x2716;</span>';
+                const xBtn = cell.querySelector('.cancel-x');
+                if (xBtn) attachCancelX(xBtn);
+                showToast('✅ [' + queue.toUpperCase() + '] booked for ' + trimmedName, 'success');
+            } else {
+                // Revertir — slot ya ocupado u otro error
+                revertCell(cell, originalHTML, originalClasses);
+                showToast(data.message || 'This slot is no longer available.', 'error');
+            }
+        })
+        .catch(() => {
+            revertCell(cell, originalHTML, originalClasses);
+            showToast('Network error. Please try again.', 'error');
+        });
+}
+
+function revertCell(cell, originalHTML, originalClasses) {
+    cell.innerHTML = originalHTML;
+    cell.className = originalClasses;
+    cell.removeAttribute('data-listener-attached');
+    attachSlotListeners();
+}
+
+// ════════════════════════════════════════════════════════════
+//  CANCEL BOOKINGS
+// ════════════════════════════════════════════════════════════
+function attachCancelX(xButton) {
+    xButton.addEventListener('click', function (e) {
+        e.stopPropagation();
+        showCancelModal(this.dataset.bookingId, this.dataset.bookedByName);
+    });
+}
+
+let currentBookingIdToCancel = null;
+let currentBookedByName = null;
+
+window.showCancelModal = function (bookingId, bookedByName) {
+    currentBookingIdToCancel = bookingId;
+    currentBookedByName = bookedByName;
+    document.getElementById('modalBookingId').textContent = bookingId;
+    document.getElementById('modalBookedBy').textContent = bookedByName;
+    document.getElementById('confirmCancelName').value = savedUserName;
+    document.getElementById('cancelMessage').textContent = '';
+    document.getElementById('cancelMessage').style.color = 'red';
+    document.getElementById('cancelModal').style.display = 'block';
+};
+
+window.closeCancelModal = function () {
+    document.getElementById('cancelModal').style.display = 'none';
+    currentBookingIdToCancel = null;
+    currentBookedByName = null;
+};
+
+window.onclick = function (event) {
+    const modal = document.getElementById('cancelModal');
+    if (event.target === modal) closeCancelModal();
+};
+
+// ════════════════════════════════════════════════════════════
+//  MAIN — DOMContentLoaded
+// ════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', function () {
+
+    // Slot listeners
+    attachSlotListeners();
+
+    // Show More / Show Less
     const toggleDaysButton = document.getElementById('toggleDaysButton');
     const hiddenDayContainers = document.querySelectorAll('.hidden-day-container');
-    
-    let showingAllDays = false; // Estado inicial: solo se muestran los primeros dos días
+    let showingAllDays = false;
 
     if (hiddenDayContainers.length > 0) {
-        hiddenDayContainers.forEach(container => {
-            container.style.display = 'none';
-        });
-        if (toggleDaysButton) { // Asegurarse de que el botón existe antes de manipularlo
-            toggleDaysButton.textContent = 'Show More Days'; // Asegurar el texto inicial
-        }
-        showingAllDays = false; // Confirmar el estado inicial
+        hiddenDayContainers.forEach(function (c) { c.style.display = 'none'; });
+        if (toggleDaysButton) toggleDaysButton.textContent = 'Show More Days';
     } else {
-        if (toggleDaysButton) {
-            toggleDaysButton.style.display = 'none'; // Oculta el botón si no hay nada que mostrar/ocultar
-        }
+        if (toggleDaysButton) toggleDaysButton.style.display = 'none';
     }
 
     if (toggleDaysButton) {
-        toggleDaysButton.addEventListener('click', function() {
-            if (showingAllDays) {
-                hiddenDayContainers.forEach(container => {
-                    container.style.display = 'none';
-                });
-                this.textContent = 'Show More Days';
-                showingAllDays = false;
-            } else {
-                hiddenDayContainers.forEach(container => {
-                    container.style.display = 'block'; 
-                });
-                this.textContent = 'Show Less Days';
-                showingAllDays = true;
-            }
+        toggleDaysButton.addEventListener('click', function () {
+            showingAllDays = !showingAllDays;
+            hiddenDayContainers.forEach(function (c) {
+                c.style.display = showingAllDays ? 'block' : 'none';
+            });
+            this.textContent = showingAllDays ? 'Show Less Days' : 'Show More Days';
         });
     }
-    // --- LÓGICA PARA CALCULAR EL TIEMPO FUTURO ---
+
+    // Find Slot Form
     const findSlotForm = document.getElementById('find-slot-form');
     const findSlotResults = document.getElementById('find-slot-results');
     const resultMessage = document.getElementById('result-message');
     const resultDetails = document.getElementById('result-details');
     const resultCountdown = document.getElementById('result-countdown');
-
-    let countdownInterval; // Variable para almacenar el ID del intervalo de la cuenta regresiva
+    let countdownInterval;
 
     if (findSlotForm) {
-        findSlotForm.addEventListener('submit', async (event) => {
-            event.preventDefault(); // Prevenir la recarga de la página
-
+        findSlotForm.addEventListener('submit', async function (event) {
+            event.preventDefault();
             const formData = new FormData(findSlotForm);
             const data = Object.fromEntries(formData.entries());
 
-            // Mostrar "Calculando..." y limpiar resultados anteriores
-            findSlotResults.style.display = 'block'; 
-            resultMessage.textContent = 'Calculando...';
+            findSlotResults.style.display = 'block';
+            resultMessage.textContent = 'Calculating...';
             resultDetails.textContent = '';
             resultCountdown.textContent = '';
-            clearInterval(countdownInterval); 
+            clearInterval(countdownInterval);
 
             try {
                 const response = await fetch('/find_closest_slot', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    },
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: new URLSearchParams(data).toString()
                 });
-
                 const result = await response.json();
 
                 if (result.success) {
                     resultMessage.textContent = result.message;
-                    resultDetails.innerHTML = `
-                        <strong>Calculated Date:</strong> ${result.date}<br>
-                        <strong>Calculated Hour (UTC):</strong> ${result.time}
-                    `;
-                    
-                    // Iniciar cuenta regresiva usando el timestamp UTC
-                    if (result.timestamp_utc) {
-                        startCountdown(result.timestamp_utc * 1000, resultCountdown); // Convertir a milisegundos
-                    } else {
-                        // Fallback si por alguna razón no se recibe timestamp_utc (no debería pasar con el nuevo app.py)
-                        const targetDateTime = new Date(`${result.date}T${result.time}:00Z`);
-                        startCountdown(targetDateTime.getTime(), resultCountdown);
-                    }
+                    resultDetails.innerHTML =
+                        '<strong>Calculated Date:</strong> ' + result.date + '<br>' +
+                        '<strong>Calculated Hour (UTC):</strong> ' + result.time;
 
+                    const targetMs = result.timestamp_utc
+                        ? result.timestamp_utc * 1000
+                        : new Date(result.date + 'T' + result.time + ':00Z').getTime();
+                    startCountdown(targetMs, resultCountdown);
+                    scrollToDate(result.date, result.time, showingAllDays, toggleDaysButton, hiddenDayContainers);
                 } else {
-                    resultMessage.textContent = `Error: ${result.message}`;
+                    resultMessage.textContent = 'Error: ' + result.message;
                     resultDetails.textContent = '';
                     resultCountdown.textContent = '';
                 }
-
             } catch (error) {
-                console.error('Error al calcular el tiempo:', error);
-                findSlotResults.style.display = 'block';
-                resultMessage.textContent = 'Ocurrió un error al calcular el tiempo.';
-                resultDetails.textContent = '';
-                resultCountdown.textContent = '';
+                console.error('Error calculating time:', error);
+                resultMessage.textContent = 'An error occurred while calculating.';
             }
         });
     }
 
-    // Esta función permanece igual, ya que ahora el backend siempre devuelve un timestamp_utc
     function startCountdown(targetTimestampMs, displayElement) {
-        clearInterval(countdownInterval); // Limpiar cualquier intervalo anterior
-
+        clearInterval(countdownInterval);
         function update() {
-            const now = new Date().getTime(); // Tiempo actual en milisegundos desde la época
-            let diffMs = targetTimestampMs - now; // Diferencia en milisegundos
-
+            const diffMs = targetTimestampMs - Date.now();
             if (diffMs <= 0) {
-                displayElement.textContent = 'The time calculated is now or it has already passed!';
+                displayElement.textContent = 'The time calculated is now or has already passed!';
                 clearInterval(countdownInterval);
                 return;
             }
-
-            const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-            diffMs -= days * (1000 * 60 * 60 * 24);
-            const hours = Math.floor(diffMs / (1000 * 60 * 60));
-            diffMs -= hours * (1000 * 60 * 60);
-            const minutes = Math.floor(diffMs / (1000 * 60));
-            diffMs -= minutes * (1000 * 60);
-            const seconds = Math.floor(diffMs / 1000);
-
-            displayElement.textContent = `TIME: ${days} Days, ${hours} Hours, ${minutes} mins, ${seconds} seconds`;
+            const days = Math.floor(diffMs / 86400000);
+            const hours = Math.floor((diffMs % 86400000) / 3600000);
+            const minutes = Math.floor((diffMs % 3600000) / 60000);
+            const seconds = Math.floor((diffMs % 60000) / 1000);
+            displayElement.textContent =
+                'TIME: ' + days + ' Days, ' + hours + ' Hours, ' + minutes + ' mins, ' + seconds + ' seconds';
         }
-
-        update(); // Llamada inicial para mostrar el tiempo inmediatamente
-        countdownInterval = setInterval(update, 1000); // Actualizar cada segundo
+        update();
+        countdownInterval = setInterval(update, 1000);
     }
-    
-    // Función de ayuda para capitalizar la primera letra (si no la tienes ya)
-    if (!String.prototype.capitalize) {
-        String.prototype.capitalize = function() {
-            return this.charAt(0).toUpperCase() + this.slice(1);
+
+    function scrollToDate(dateStr, timeStr, showingAll, toggleBtn, hiddenContainers) {
+        const table = document.querySelector('table[data-date="' + dateStr + '"]');
+        if (!table) return;
+        const wrapper = table.closest('.hidden-day-container');
+        if (wrapper && !showingAll) {
+            hiddenContainers.forEach(function (c) { c.style.display = 'block'; });
+            if (toggleBtn) toggleBtn.textContent = 'Show Less Days';
+        }
+        const hour = parseInt(timeStr.split(':')[0]);
+        const targetRow = table.querySelectorAll('tbody tr')[hour];
+        if (targetRow) {
+            targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            targetRow.classList.add('highlight-row');
+            setTimeout(function () { targetRow.classList.remove('highlight-row'); }, 2500);
         }
     }
-    // --- LÓGICA PARA CANCELAR RESERVAS ---
-    const cancelModal = document.getElementById('cancelModal');
+
+    // Cancel modal
     const closeButton = document.querySelector('.close-button');
-    const modalBookingId = document.getElementById('modalBookingId');
-    const modalBookedBy = document.getElementById('modalBookedBy');
-    const confirmCancelName = document.getElementById('confirmCancelName');
-    const confirmCancelButton = document.getElementById('confirmCancelButton');
+    const confirmCancelBtn = document.getElementById('confirmCancelButton');
     const cancelMessage = document.getElementById('cancelMessage');
 
-    let currentBookingIdToCancel = null;
-    let currentBookedByName = null;
+    if (closeButton) closeButton.addEventListener('click', closeCancelModal);
 
-    window.showCancelModal = (bookingId, bookedByName) => { // Ahora recibe los parámetros directamente
-        currentBookingIdToCancel = bookingId;
-        currentBookedByName = bookedByName;
-        
-        modalBookingId.textContent = currentBookingIdToCancel;
-        modalBookedBy.textContent = currentBookedByName;
-        confirmCancelName.value = ''; // Limpiar el input de confirmación
-        cancelMessage.textContent = ''; // Limpiar mensajes anteriores
-        cancelModal.style.display = 'block';
-    };
-
-    // Función para cerrar el modal (igual que antes)
-    window.closeCancelModal = () => {
-        cancelModal.style.display = 'none';
-        currentBookingIdToCancel = null;
-        currentBookedByName = null;
-    };
-
-    window.onclick = (event) => {
-        if (event.target === cancelModal) {
-            closeCancelModal();
-        }
-    };
-
-    if (confirmCancelButton) {
-        confirmCancelButton.addEventListener('click', async () => {
-            const userNameConfirm = confirmCancelName.value.trim();
+    if (confirmCancelBtn) {
+        confirmCancelBtn.addEventListener('click', async function () {
+            const userNameConfirm = document.getElementById('confirmCancelName').value.trim();
 
             if (!userNameConfirm) {
                 cancelMessage.textContent = 'Please enter your name to confirm.';
                 return;
             }
-
             if (userNameConfirm !== currentBookedByName) {
                 cancelMessage.textContent = 'The name entered does not match the booking name.';
                 return;
             }
 
+            cancelMessage.style.color = 'orange';
             cancelMessage.textContent = 'Cancelling...';
 
             try {
                 const response = await fetch('/cancel_booking', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    },
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: new URLSearchParams({
                         booking_id: currentBookingIdToCancel,
                         booked_by_user: userNameConfirm
                     }).toString()
                 });
-
                 const result = await response.json();
 
                 if (result.success) {
-                    cancelMessage.style.color = 'green';
-                    cancelMessage.textContent = result.message;
-                    setTimeout(() => {
-                        closeCancelModal();
-                        location.reload(); // Recargar la página
-                    }, 1500);
+                    // Optimistic cancel — revertir celda a Available sin recargar
+                    const xBtn = document.querySelector(
+                        '.cancel-x[data-booking-id="' + currentBookingIdToCancel + '"]'
+                    );
+                    const cell = xBtn ? xBtn.closest('td.slot') : null;
+                    closeCancelModal();
+                    if (cell) {
+                        cell.className = 'slot available';
+                        cell.innerHTML = 'Available';
+                        cell.removeAttribute('data-listener-attached');
+                        attachSlotListeners();
+                    }
+                    showToast('✅ Booking cancelled successfully.', 'success');
                 } else {
                     cancelMessage.style.color = 'red';
-                    cancelMessage.textContent = `Error: ${result.message}`;
+                    cancelMessage.textContent = 'Error: ' + result.message;
                 }
-
             } catch (error) {
                 console.error('Error cancelling booking:', error);
                 cancelMessage.style.color = 'red';
-                cancelMessage.textContent = 'An unexpected error occurred during cancellation.';
+                cancelMessage.textContent = 'An unexpected error occurred.';
             }
         });
     }
 
-    if (closeButton) {
-        closeButton.addEventListener('click', closeCancelModal);
-    }
-
-    const cancelXButtons = document.querySelectorAll('.cancel-x');
-    cancelXButtons.forEach(xButton => {
-        xButton.addEventListener('click', (event) => {
-            // Detener la propagación del evento para que no se active el clic del slot-item si lo tiene
-            event.stopPropagation(); 
-            const bookingId = xButton.dataset.bookingId;
-            const bookedByName = xButton.dataset.bookedByName;
-            showCancelModal(bookingId, bookedByName);
-        });
-    });
+    // Cancel X buttons del HTML inicial
+    document.querySelectorAll('.cancel-x').forEach(function (xBtn) { attachCancelX(xBtn); });
 
 });

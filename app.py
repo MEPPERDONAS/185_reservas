@@ -260,6 +260,7 @@ def send_discord_notification(message, channel_id=None, max_retries=3):
 
 
 @app.route("/")
+@require_database
 def index():
     with app.app_context():
         now_utc = datetime.now(timezone.utc)
@@ -447,53 +448,41 @@ def find_closest_slot():
 @require_database
 def book_slot():
     with app.app_context():
-        date_str = request.form["date"]
+        date_str   = request.form["date"]
         queue_type = request.form["queue"]
-        time_slot = request.form["time"]
+        time_slot  = request.form["time"]
+        booked_by  = request.form.get("booked_by")
 
-        booked_by = request.form.get("booked_by")
+        is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
 
         if not all([date_str, queue_type, time_slot, booked_by]):
+            if is_ajax:
+                return jsonify({"success": False, "message": "All fields are required."}), 400
             flash("Error: Todos los campos son requeridos.", "error")
             return redirect(url_for("index"))
 
         try:
             booking_date_obj = datetime.strptime(date_str, "%Y-%m-%d").date()
-
             initialize_all_slots_for_day(booking_date_obj)
 
-            existing_conflict_booking = Booking.query.filter(
-                Booking.booked_by == booked_by,
-                Booking.booking_date == booking_date_obj,
-                Booking.time_slot == time_slot,
-                Booking.queue_type != queue_type,
-                not Booking.available,
-            ).first()
-
-            if existing_conflict_booking:
-                flash(
-                    f"Ya tienes una reserva activa para {date_str} a las {time_slot} en la cola de {existing_conflict_booking.queue_type.capitalize()}. "
-                    "No puedes reservar varias colas a la vez.",
-                    "error",
-                )
-                return redirect(url_for("index"))
-
-            # Paso 2: Intentamos realizar una actualización atómica.
             updated_count = Booking.query.filter_by(
                 booking_date=booking_date_obj,
                 time_slot=time_slot,
                 queue_type=queue_type,
-                available=True,  # Solo actualizamos si el slot está marcado como disponible
+                available=True,
             ).update({"booked_by": booked_by, "available": False})
 
             db.session.commit()
 
             if updated_count == 1:
-                flash(
-                    f"Slot on {queue_type.capitalize()} booked by\n[{booked_by}]",
-                    "success",
-                )
+                # Obtener el booking_id recién guardado
+                saved_booking = Booking.query.filter_by(
+                    booking_date=booking_date_obj,
+                    time_slot=time_slot,
+                    queue_type=queue_type,
+                ).first()
 
+                # Notificación Discord en background
                 message = (
                     f"👤 **[{booked_by}]** \nHas booked a slot "
                     f"for **{queue_type.capitalize()}** on:**{date_str} at {time_slot} UTC**\n."
@@ -503,6 +492,19 @@ def book_slot():
                     target=send_discord_notification, args=(message,)
                 )
                 thread.start()
+
+                if is_ajax:
+                    return jsonify({
+                        "success":    True,
+                        "message":    f"Slot booked by [{booked_by}]",
+                        "booking_id": saved_booking.id if saved_booking else None,
+                        "booked_by":  booked_by,
+                        "date":       date_str,
+                        "time":       time_slot,
+                        "queue":      queue_type,
+                    })
+                flash(f"Slot on {queue_type.capitalize()} booked by [{booked_by}]", "success")
+
             else:
                 slot = Booking.query.filter_by(
                     booking_date=booking_date_obj,
@@ -510,26 +512,22 @@ def book_slot():
                     queue_type=queue_type,
                 ).first()
 
-                if not slot:
-                    flash(
-                        f"Error: El slot de {time_slot} en {queue_type.capitalize()} para el {date_str} no existe. Por favor, revisa la función de inicialización de slots.",
-                        "error",
-                    )
-                elif not slot.available:
-                    # El slot existe, pero ya está reservado.
-                    flash(
-                        f"Error: El slot de {time_slot} en {queue_type.capitalize()} para el {date_str} ya está reservado por {slot.booked_by}.",
-                        "error",
-                    )
-                else:
-                    flash(
-                        f"Error: No se pudo reservar el slot de {time_slot} en {queue_type.capitalize()} para el {date_str} por una razón desconocida.",
-                        "error",
-                    )
+                error_msg = (
+                    f"Slot {time_slot} in {queue_type.capitalize()} for {date_str} "
+                    f"is already booked by {slot.booked_by}."
+                    if slot and not slot.available
+                    else f"Slot {time_slot} in {queue_type.capitalize()} for {date_str} not found."
+                )
+
+                if is_ajax:
+                    return jsonify({"success": False, "message": error_msg}), 409
+                flash(error_msg, "error")
 
         except Exception as e:
             db.session.rollback()
             print(f"Ocurrió un error en la reserva: {e}")
+            if is_ajax:
+                return jsonify({"success": False, "message": str(e)}), 500
             flash(f"Ocurrió un error al reservar: {e}", "error")
 
     return redirect(url_for("index"))
