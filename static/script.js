@@ -1,35 +1,19 @@
-// ── Nombre guardado entre sesiones ───────────────────────────
 let savedUserName = localStorage.getItem('bookedByName') || '';
 
-// ── Toast notification ────────────────────────────────────────
 function showToast(message, type = 'success') {
-    document.querySelectorAll('.toast-notification').forEach(t => t.remove());
-    const toast = document.createElement('div');
-    toast.className = 'toast-notification';
-    toast.textContent = message;
-    const bg = type === 'success' ? '#22c55e' : type === 'error' ? '#ef4444' : '#3b82f6';
-    toast.style.cssText = `
-        position:fixed; bottom:28px; right:28px; z-index:99999;
-        padding:14px 22px; border-radius:10px; color:white;
-        font-size:14px; font-weight:500; background:${bg};
-        box-shadow:0 8px 24px rgba(0,0,0,0.35); max-width:340px;
-        line-height:1.4; pointer-events:none;
-        animation: toastIn 0.3s ease, toastOut 0.4s ease 2.6s forwards;
-    `;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3200);
+    const toast = document.getElementById('toast-notification');
+    const fresh = toast.cloneNode(true);
+    toast.parentNode.replaceChild(fresh, toast);
+
+    fresh.textContent = message;
+    fresh.className = `toast-notification ${type}`;
+
+    clearTimeout(fresh._hideTimeout);
+    fresh._hideTimeout = setTimeout(() => {
+        fresh.classList.add('hidden');
+    }, 3000);
 }
 
-const _toastStyle = document.createElement('style');
-_toastStyle.textContent = `
-    @keyframes toastIn  { from{transform:translateY(16px);opacity:0} to{transform:translateY(0);opacity:1} }
-    @keyframes toastOut { to{transform:translateY(10px);opacity:0} }
-    td.slot.available        { cursor: pointer; }
-    td.slot.available:hover  { filter: brightness(1.12); }
-    td.slot.slot-loading     { opacity: 0.6 !important; pointer-events: none !important; }
-    tr.highlight-row td      { background: rgba(250,204,21,0.2) !important; transition: background 0.5s; }
-`;
-document.head.appendChild(_toastStyle);
 
 function attachSlotListeners() {
     document.querySelectorAll('td.slot.available').forEach(cell => {
@@ -86,7 +70,7 @@ function handleSlotClick(cell) {
                     '      title="Cancel this booking">&#x2716;</span>';
                 const xBtn = cell.querySelector('.cancel-x');
                 if (xBtn) attachCancelX(xBtn);
-                showToast('✅ [' + queue.toUpperCase() + '] booked for ' + trimmedName, 'success');
+                showToast('Booked Confirmed for ' + queue.toUpperCase(), 'success');
             } else {
                 revertCell(cell, originalHTML, originalClasses);
                 showToast(data.message || 'This slot is no longer available.', 'error');
@@ -104,10 +88,7 @@ function revertCell(cell, originalHTML, originalClasses) {
     cell.removeAttribute('data-listener-attached');
     attachSlotListeners();
 }
-
-// ════════════════════════════════════════════════════════════
 //  CANCEL BOOKINGS
-// ════════════════════════════════════════════════════════════
 function attachCancelX(xButton) {
     xButton.addEventListener('click', function (e) {
         e.stopPropagation();
@@ -305,7 +286,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         cell.removeAttribute('data-listener-attached');
                         attachSlotListeners();
                     }
-                    showToast('✅ Booking cancelled successfully.', 'success');
+                    showToast('Booking cancelled successfully.', 'success');
                 } else {
                     cancelMessage.style.color = 'red';
                     cancelMessage.textContent = 'Error: ' + result.message;
@@ -321,4 +302,20 @@ document.addEventListener('DOMContentLoaded', function () {
     // Cancel X buttons del HTML inicial
     document.querySelectorAll('.cancel-x').forEach(function (xBtn) { attachCancelX(xBtn); });
 
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    const flashData = document.getElementById('flash-data');
+    if (!flashData) return;
+
+    flashData.querySelectorAll('span').forEach((el, i) => {
+        const category = el.dataset.category;
+        const message = el.dataset.message;
+
+        const type = category === 'error' ? 'error'
+            : category === 'warning' ? 'info'
+                : 'success';
+
+        setTimeout(() => showToast(message, type), i * 400);
+    });
 });

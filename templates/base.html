@@ -26,21 +26,22 @@
     <main>
         {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-        <ul class="flashes">
+        <div id="flash-data" style="display:none">
             {% for category, message in messages %}
-            <li class="{{ category }}">{{ message }}</li>
+            <span data-category="{{ category }}" data-message="{{ message }}"></span>
             {% endfor %}
-        </ul>
+        </div>
         {% endif %}
         {% endwith %}
 
         {% block content %}{% endblock %}
     </main>
-
+    <!-- Toast Notification -->
+    <div id="toast-notification" class="toast-notification hidden"></div>
     <footer class="main-footer">
         <div class="footer-content">
             <div class="footer-buttons">
-                {% if session.get('logged_in') %}
+                {% if session.get('role')== 'admin' %}
                 <a href="{{ url_for('logout') }}" class="nav-button">
                     <i class="fas fa-sign-out-alt"></i> Logout
                 </a>
@@ -49,8 +50,6 @@
                     <i class="fas fa-sign-in-alt"></i> Login
                 </a>
                 {% endif %}
-
-                {# Botón de Discord - se mantiene en el footer #}
                 <a href="https://discord.gg/KjB5rFnm" target="_blank" class="nav-button discord-button">
                     <i class="fab fa-discord"></i> Discord
                 </a>
@@ -61,8 +60,7 @@
 
         </div>
     </footer>
-    {#
-    <script src="{{ url_for('static', filename='script.js') }}"></script> #}
 </body>
+
 
 </html>
